@@ -1,0 +1,55 @@
+import { defineSchema, defineTable } from "convex/server";
+import { v } from "convex/values";
+
+export default defineSchema({
+  dreams: defineTable({
+    userId: v.string(),
+    createdAt: v.number(),
+    audioStorageId: v.optional(v.id("_storage")),
+    transcript: v.optional(v.string()),
+    editedTranscript: v.optional(v.string()),
+    tags: v.array(v.string()),
+    mood: v.optional(v.string()),
+    lucidityRating: v.number(),
+    isFavorite: v.boolean(),
+    // Interpretation (populated by AI action)
+    interpretation: v.optional(
+      v.object({
+        symbols: v.array(
+          v.object({
+            name: v.string(),
+            meaning: v.string(),
+            archetype: v.optional(v.string()),
+          })
+        ),
+        hiddenPatterns: v.array(v.string()),
+        emotionalTheme: v.string(),
+        practicalInsight: v.string(),
+        fullAnalysis: v.string(),
+        generatedAt: v.number(),
+      })
+    ),
+    // Visuals (populated by image gen action)
+    sceneStorageId: v.optional(v.id("_storage")),
+    sceneUrl: v.optional(v.string()),
+    moodBoardUrl: v.optional(v.string()),
+    imagePrompt: v.optional(v.string()),
+    visualStyle: v.optional(v.string()),
+    visualGeneratedAt: v.optional(v.number()),
+    imageError: v.optional(v.string()),
+    // Status flags for real-time UI updates
+    isTranscribing: v.boolean(),
+    isInterpreting: v.boolean(),
+    isGeneratingVisual: v.boolean(),
+  })
+    .index("by_user", ["userId"])
+    .index("by_user_date", ["userId", "createdAt"]),
+
+  usageLimits: defineTable({
+    userId: v.string(),
+    weekStartDate: v.string(),
+    voiceRecordings: v.number(),
+    interpretations: v.number(),
+    visualizations: v.number(),
+  }).index("by_user_week", ["userId", "weekStartDate"]),
+});

@@ -1,0 +1,59 @@
+{
+  "cli": {
+    "version": ">= 16.0.0",
+    "appVersionSource": "remote"
+  },
+  "build": {
+    "development": {
+      "developmentClient": true,
+      "distribution": "internal",
+      "ios": {
+        "simulator": true,
+        "buildConfiguration": "Debug"
+      },
+      "env": {
+        "EXPO_PUBLIC_CONVEX_URL": "https://dashing-marten-583.convex.cloud",
+        "EXPO_PUBLIC_CONVEX_SITE_URL": "https://dashing-marten-583.convex.site",
+        "EXPO_PUBLIC_SUPERWALL_IOS_KEY": "pk_iojepw_NrBBn0iJtt4iM5",
+        "EXPO_PUBLIC_SUPERWALL_ANDROID_KEY": "pk_placeholder_android"
+      }
+    },
+    "preview": {
+      "distribution": "internal",
+      "ios": {
+        "simulator": false,
+        "buildConfiguration": "Release"
+      },
+      "channel": "preview",
+      "env": {
+        "EXPO_PUBLIC_CONVEX_URL": "https://dashing-marten-583.convex.cloud",
+        "EXPO_PUBLIC_CONVEX_SITE_URL": "https://dashing-marten-583.convex.site",
+        "EXPO_PUBLIC_SUPERWALL_IOS_KEY": "pk_iojepw_NrBBn0iJtt4iM5",
+        "EXPO_PUBLIC_SUPERWALL_ANDROID_KEY": "pk_placeholder_android"
+      }
+    },
+    "production": {
+      "distribution": "store",
+      "ios": {
+        "simulator": false,
+        "buildConfiguration": "Release"
+      },
+      "channel": "production",
+      "env": {
+        "EXPO_PUBLIC_CONVEX_URL": "https://dashing-marten-583.convex.cloud",
+        "EXPO_PUBLIC_CONVEX_SITE_URL": "https://dashing-marten-583.convex.site",
+        "EXPO_PUBLIC_SUPERWALL_IOS_KEY": "pk_iojepw_NrBBn0iJtt4iM5",
+        "EXPO_PUBLIC_SUPERWALL_ANDROID_KEY": "pk_placeholder_android"
+      }
+    }
+  },
+  "submit": {
+    "production": {
+      "ios": {
+        "appleId": "lukeking202@gmail.com",
+        "ascAppId": "6758904156",
+        "appleTeamId": "RZ6C94J4GV"
+      }
+    }
+  }
+}

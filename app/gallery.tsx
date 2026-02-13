@@ -1,0 +1,235 @@
+import React, { useRef, useEffect, useCallback } from 'react';
+import {
+  View,
+  StyleSheet,
+  FlatList,
+  Pressable,
+  Dimensions,
+  NativeSyntheticEvent,
+  NativeScrollEvent,
+  ActivityIndicator,
+} from 'react-native';
+import { Image } from 'expo-image';
+import { router, useLocalSearchParams } from 'expo-router';
+import { useQuery } from 'convex/react';
+import { Ionicons } from '@expo/vector-icons';
+import { api } from '../convex/_generated/api';
+import BottomTabBar from '../components/ui/BottomTabBar';
+import { STARDUST_THEME } from '../lib/theme';
+import { RADIUS, SPACING } from '../lib/layout';
+import { StardustText } from '../components/ui/StardustText';
+import ScreenContainer from '../components/ui/ScreenContainer';
+
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
+const GRID_GAP = 12;
+const COLUMN_WIDTH = (SCREEN_WIDTH - SPACING.screenPadding * 2 - GRID_GAP) / 2;
+const IMAGE_HEIGHT = COLUMN_WIDTH * (4 / 3);
+const TAB_BAR_CLEARANCE = 100;
+
+function formatDate(ts: number): string {
+  const d = new Date(ts);
+  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  return `${months[d.getMonth()]} ${d.getDate()}`;
+}
+
+export default function GalleryScreen() {
+  const { highlight } = useLocalSearchParams<{ highlight?: string }>();
+  const galleryDreams = useQuery(api.dreams.listGalleryDreams) ?? [];
+
+  const visualizedCount = galleryDreams.filter((d) => d.sceneUrl).length;
+  const flatListRef = useRef<FlatList>(null);
+
+  useEffect(() => {
+    if (highlight && flatListRef.current && galleryDreams.length > 0) {
+      const index = galleryDreams.findIndex((d) => d._id === highlight);
+      if (index >= 0) {
+        setTimeout(() => {
+          flatListRef.current?.scrollToIndex({
+            index: Math.floor(index / 2),
+            animated: true,
+            viewOffset: SPACING.md,
+          });
+        }, 300);
+      }
+    }
+  }, [highlight, galleryDreams.length]);
+
+  const renderItem = ({ item }: { item: (typeof galleryDreams)[number] }) => {
+    const isHighlighted = highlight === item._id;
+
+    // Shimmer for generating
+    if (item.isGeneratingVisual && !item.sceneUrl) {
+      return (
+        <Pressable
+          style={[styles.cell, isHighlighted && styles.cellHighlighted]}
+          onPress={() => router.push(`/dream/${item._id}`)}
+        >
+          <View style={styles.shimmerContainer}>
+            <ActivityIndicator size="small" color={STARDUST_THEME.gold.muted} />
+            <Ionicons name="brush-outline" size={24} color={STARDUST_THEME.gold.muted} style={{ marginTop: 6 }} />
+            <StardustText variant="label" color={STARDUST_THEME.gold.muted} style={{ marginTop: 8 }}>
+              Painting...
+            </StardustText>
+          </View>
+        </Pressable>
+      );
+    }
+
+    return (
+      <Pressable
+        style={[styles.cell, isHighlighted && styles.cellHighlighted]}
+        onPress={() => router.push(`/dream/${item._id}`)}
+      >
+        <View style={styles.imageWrapper}>
+          <Image
+            source={{ uri: item.sceneUrl! }}
+            style={styles.image}
+            contentFit="cover"
+            transition={600}
+          />
+
+          {/* Date badge — bottom-left */}
+          <View style={styles.dateBadge}>
+            <StardustText variant="timestamp" color={STARDUST_THEME.text.primary} style={{ fontSize: 10 }}>
+              {formatDate(item.createdAt)}
+            </StardustText>
+          </View>
+
+          {/* Style label — top-right */}
+          {item.visualStyle && (
+            <View style={styles.styleBadge}>
+              <StardustText variant="timestamp" color={STARDUST_THEME.gold.warm} style={{ fontSize: 9 }}>
+                {item.visualStyle.toUpperCase()}
+              </StardustText>
+            </View>
+          )}
+        </View>
+
+        {item.titlePreview && (
+          <View style={styles.captionContainer}>
+            <StardustText variant="bodySmall" color={STARDUST_THEME.text.primary} numberOfLines={1}>
+              {item.titlePreview}
+            </StardustText>
+          </View>
+        )}
+      </Pressable>
+    );
+  };
+
+  const renderEmpty = () => (
+    <View style={styles.emptyState}>
+      <Ionicons name="images-outline" size={48} color={STARDUST_THEME.gold.muted} style={{ marginBottom: SPACING.md }} />
+      <StardustText variant="screenTitle" color={STARDUST_THEME.gold.pale} style={{ marginBottom: SPACING.sm, textAlign: 'center' }}>
+        Your dream gallery awaits
+      </StardustText>
+      <StardustText variant="body" color={STARDUST_THEME.text.secondary} align="center" style={{ maxWidth: 280 }}>
+        Visualize your dreams with AI to fill this space with your subconscious art.
+      </StardustText>
+    </View>
+  );
+
+  return (
+    <ScreenContainer>
+      {/* Header */}
+      <View style={styles.header}>
+        <View>
+          <StardustText variant="screenTitle" color={STARDUST_THEME.text.primary}>
+            Gallery
+          </StardustText>
+          <StardustText variant="bodySmall" color={STARDUST_THEME.text.secondary}>
+            {visualizedCount} {visualizedCount === 1 ? 'creation' : 'creations'}
+          </StardustText>
+        </View>
+      </View>
+
+      <FlatList
+        ref={flatListRef}
+        data={galleryDreams}
+        renderItem={renderItem}
+        keyExtractor={(item) => item._id}
+        numColumns={2}
+        columnWrapperStyle={styles.row}
+        ListEmptyComponent={renderEmpty}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.listContent}
+      />
+
+      <BottomTabBar activeTab="gallery" />
+    </ScreenContainer>
+  );
+}
+
+const styles = StyleSheet.create({
+  header: {
+    paddingHorizontal: SPACING.screenPadding,
+    paddingBottom: SPACING.lg,
+  },
+  listContent: {
+    paddingHorizontal: SPACING.screenPadding,
+    paddingBottom: TAB_BAR_CLEARANCE,
+    flexGrow: 1,
+  },
+  row: {
+    gap: GRID_GAP,
+    marginBottom: GRID_GAP,
+  },
+  cell: {
+    width: COLUMN_WIDTH,
+    marginBottom: SPACING.xs,
+  },
+  cellHighlighted: {
+    borderColor: STARDUST_THEME.gold.bright,
+    borderWidth: 1,
+    borderRadius: RADIUS.md,
+  },
+  imageWrapper: {
+    position: 'relative',
+  },
+  image: {
+    width: COLUMN_WIDTH,
+    height: IMAGE_HEIGHT,
+    borderRadius: RADIUS.md,
+    backgroundColor: STARDUST_THEME.bg.secondary,
+    borderWidth: 1,
+    borderColor: STARDUST_THEME.gold.muted + '40',
+  },
+  shimmerContainer: {
+    width: COLUMN_WIDTH,
+    height: IMAGE_HEIGHT,
+    borderRadius: RADIUS.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: STARDUST_THEME.bg.secondary,
+    borderWidth: 1,
+    borderColor: STARDUST_THEME.border,
+    borderStyle: 'dashed',
+  },
+  dateBadge: {
+    position: 'absolute',
+    bottom: 8,
+    left: 8,
+    backgroundColor: 'rgba(10, 10, 15, 0.75)',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+  },
+  styleBadge: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    backgroundColor: 'rgba(10, 10, 15, 0.75)',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+  },
+  captionContainer: {
+    marginTop: SPACING.xs,
+    paddingHorizontal: 2,
+  },
+  emptyState: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingTop: 100,
+  },
+});
