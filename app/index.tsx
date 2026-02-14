@@ -135,7 +135,7 @@ export default function JournalHome() {
   );
 
   return (
-    <ScreenContainer>
+    <ScreenContainer backgroundSource={require('../assets/bg-home.png')}>
       <SectionList
         sections={sections}
         keyExtractor={(item) => item._id}
@@ -180,12 +180,15 @@ export default function JournalHome() {
         { transform: [{ scale: scaleAnim }] }
       ]}>
         <Pressable
-          style={styles.fab}
           onPress={() => router.push('/record')}
           onPressIn={() => Animated.spring(scaleAnim, { toValue: 0.95, useNativeDriver: true }).start()}
           onPressOut={() => Animated.spring(scaleAnim, { toValue: 1, useNativeDriver: true }).start()}
         >
-          <Ionicons name="mic" size={44} color={STARDUST_THEME.text.inverse} />
+          <Image
+            source={require('../assets/record-button.png')}
+            style={styles.fab}
+            resizeMode="contain"
+          />
         </Pressable>
       </Animated.View>
 
@@ -280,11 +283,5 @@ const styles = StyleSheet.create({
   fab: {
     width: 96,
     height: 96,
-    borderRadius: 48,
-    backgroundColor: STARDUST_THEME.gold.warm,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.2)',
   },
 });

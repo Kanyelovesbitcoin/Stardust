@@ -38,7 +38,7 @@ export default function DreamDetailScreen() {
 
   if (dream === undefined) {
     return (
-      <ScreenContainer style={styles.centered}>
+      <ScreenContainer backgroundSource={require('../../assets/bg-settings.png')} style={styles.centered}>
         <ActivityIndicator size="small" color={STARDUST_THEME.gold.warm} />
       </ScreenContainer>
     );
@@ -46,7 +46,7 @@ export default function DreamDetailScreen() {
 
   if (dream === null) {
     return (
-      <ScreenContainer style={styles.centered}>
+      <ScreenContainer backgroundSource={require('../../assets/bg-settings.png')} style={styles.centered}>
         <StardustText variant="body" color={STARDUST_THEME.text.secondary}>Dream not found</StardustText>
         <Pressable onPress={() => router.back()} style={{ marginTop: SPACING.md }}>
           <StardustText variant="button" color={STARDUST_THEME.gold.warm}>Go Back</StardustText>
@@ -120,7 +120,7 @@ export default function DreamDetailScreen() {
     : "Untitled Dream";
 
   return (
-    <ScreenContainer>
+    <ScreenContainer backgroundSource={require('../../assets/bg-settings.png')}>
       {/* 1. Header */}
       <View style={styles.header}>
         <Pressable

@@ -175,8 +175,12 @@ export default function RecordScreen() {
 
   const canSave = mode === 'voice' ? !!recordingUri : !!transcript.trim();
 
+  const recordBg = mode === 'voice'
+    ? require('../assets/bg-voice-recording.png')
+    : require('../assets/bg-type-mode.png');
+
   return (
-    <ScreenContainer>
+    <ScreenContainer backgroundSource={recordBg}>
       <KeyboardAvoidingView
         style={styles.flex}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}

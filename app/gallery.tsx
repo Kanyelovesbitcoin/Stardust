@@ -129,7 +129,7 @@ export default function GalleryScreen() {
   );
 
   return (
-    <ScreenContainer>
+    <ScreenContainer backgroundSource={require('../assets/bg-gallery.png')}>
       {/* Header */}
       <View style={styles.header}>
         <View>

@@ -1,13 +1,16 @@
 import React from 'react';
-import { StyleSheet, ViewStyle, ImageBackground } from 'react-native';
+import { StyleSheet, ViewStyle, ImageBackground, ImageSourcePropType } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { STARDUST_THEME } from '../../lib/theme';
+
+const DEFAULT_BG = require('../../assets/app-background-stars.png');
 
 interface ScreenContainerProps {
   children: React.ReactNode;
   style?: ViewStyle;
   edges?: ('top' | 'bottom' | 'left' | 'right')[];
   background?: boolean;
+  backgroundSource?: ImageSourcePropType;
 }
 
 export default function ScreenContainer({
@@ -15,12 +18,13 @@ export default function ScreenContainer({
   style,
   edges = ['top', 'left', 'right'],
   background = true,
+  backgroundSource,
 }: ScreenContainerProps) {
 
   if (background) {
     return (
       <ImageBackground
-        source={require('../../assets/app-background-stars.png')}
+        source={backgroundSource ?? DEFAULT_BG}
         style={styles.backgroundImage}
         resizeMode="cover"
       >

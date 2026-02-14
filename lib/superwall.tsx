@@ -1,7 +1,6 @@
-import React, { createContext, useContext, useState, useCallback, useEffect, useRef } from 'react';
+import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import { Alert } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { DevPaywallModal } from '../components/ui/DevPaywallModal';
 
 // ─── Safely detect if expo-superwall native module is available ───
 let superwallAvailable = false;
@@ -204,46 +203,36 @@ function SuperwallProProvider({ children }: { children: React.ReactNode }) {
   );
 }
 
-// ─── Dev Fallback Provider (visual paywall modal, no native module) ──
+// ─── Dev Fallback Provider (Alert-based, no native module) ──
 function DevFallbackProvider({ children }: { children: React.ReactNode }) {
   const [devProOverride, setDevProOverride] = useState(false);
-  const [paywallVisible, setPaywallVisible] = useState(false);
-  const [paywallPlacement, setPaywallPlacement] = useState<string | undefined>();
-  const pendingFeatureRef = useRef<(() => void | Promise<void>) | null>(null);
-  const pendingResolveRef = useRef<((result: 'unlocked' | 'dismissed') => void) | null>(null);
 
   const isPro = devProOverride;
   const { hasFreeImageToday, setHasFreeImageToday, refreshFreeImageStatus } = useFreeImageState(isPro);
 
-  /** Show the dev paywall modal. Returns a promise that resolves when dismissed. */
+  /** Show an Alert-based dev paywall. Returns a promise. */
   const presentPaywall = useCallback(
     (placement: string, feature?: () => void | Promise<void>): Promise<'unlocked' | 'dismissed'> => {
       return new Promise<'unlocked' | 'dismissed'>((resolve) => {
-        pendingFeatureRef.current = feature ?? null;
-        pendingResolveRef.current = resolve;
-        setPaywallPlacement(placement);
-        setPaywallVisible(true);
+        Alert.alert(
+          'Stardust Pro (Dev)',
+          `Paywall would appear here for "${placement}". Unlock in dev mode?`,
+          [
+            { text: 'Not now', style: 'cancel', onPress: () => resolve('dismissed') },
+            {
+              text: 'Unlock',
+              onPress: () => {
+                setDevProOverride(true);
+                if (feature) feature();
+                resolve('unlocked');
+              },
+            },
+          ]
+        );
       });
     },
     []
   );
-
-  const handlePaywallDismiss = useCallback(() => {
-    setPaywallVisible(false);
-    pendingFeatureRef.current = null;
-    pendingResolveRef.current?.('dismissed');
-    pendingResolveRef.current = null;
-  }, []);
-
-  const handlePaywallUnlock = useCallback(() => {
-    setDevProOverride(true);
-    setPaywallVisible(false);
-    const feature = pendingFeatureRef.current;
-    pendingFeatureRef.current = null;
-    if (feature) feature();
-    pendingResolveRef.current?.('unlocked');
-    pendingResolveRef.current = null;
-  }, []);
 
   const registerFeature = useCallback(
     (placement: string, feature: () => void | Promise<void>) => {
@@ -313,12 +302,6 @@ function DevFallbackProvider({ children }: { children: React.ReactNode }) {
       }}
     >
       {children}
-      <DevPaywallModal
-        visible={paywallVisible}
-        placement={paywallPlacement}
-        onDismiss={handlePaywallDismiss}
-        onUnlock={handlePaywallUnlock}
-      />
     </StardustProContext.Provider>
   );
 }

@@ -26,7 +26,7 @@ export default function SettingsScreen() {
   // const insets = useSafeAreaInsets(); // Handled by ScreenContainer
 
   return (
-    <ScreenContainer>
+    <ScreenContainer backgroundSource={require('../assets/bg-settings.png')}>
       {/* Header */}
       <View style={styles.header}>
         <Pressable
