@@ -40,6 +40,7 @@ export default function RecordScreen() {
   const [mood, setMood] = useState<string | null>(null);
   const [tags, setTags] = useState<string[]>([]);
   const [tagInput, setTagInput] = useState('');
+  const [category, setCategory] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
   // Voice mode state
@@ -143,12 +144,14 @@ export default function RecordScreen() {
         await createDream({
           audioStorageId: storageId as any,
           mood: mood ?? undefined,
+          category: category ?? undefined,
           tags,
         });
       } else {
         await createDream({
           transcript: transcript.trim(),
           mood: mood ?? undefined,
+          category: category ?? undefined,
           tags,
         });
       }
@@ -305,6 +308,38 @@ export default function RecordScreen() {
           {/* Mood Selector */}
           <MoodSelector selected={mood} onSelect={setMood} />
 
+          {/* Category Selector */}
+          <View style={styles.categorySection}>
+            <Text style={styles.sectionLabel}>Category</Text>
+            <View style={styles.categoryRow}>
+              {([
+                { key: 'ink', label: 'Ink', icon: 'document-text-outline' as const, desc: 'Written reflection' },
+                { key: 'hope', label: 'Hope', icon: 'sparkles-outline' as const, desc: 'Aspirational dream' },
+                { key: 'archive', label: 'Archive', icon: 'leaf-outline' as const, desc: 'Memory keeper' },
+              ]).map((cat) => {
+                const isSelected = category === cat.key;
+                return (
+                  <TouchableOpacity
+                    key={cat.key}
+                    style={[styles.categoryButton, isSelected && styles.categoryButtonActive]}
+                    onPress={() => setCategory(isSelected ? null : cat.key)}
+                    activeOpacity={0.7}
+                  >
+                    <Ionicons
+                      name={cat.icon}
+                      size={20}
+                      color={isSelected ? COLORS.primary : COLORS.textSecondary}
+                    />
+                    <Text style={[styles.categoryLabel, isSelected && styles.categoryLabelActive]}>
+                      {cat.label}
+                    </Text>
+                    <Text style={styles.categoryDesc}>{cat.desc}</Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          </View>
+
           {/* Tags */}
           <View style={styles.tagsSection}>
             <StardustText variant="label" color={STARDUST_THEME.text.secondary} style={styles.sectionLabel}>Dream Tags</StardustText>
@@ -421,6 +456,43 @@ const styles = StyleSheet.create({
     color: COLORS.textPrimary,
     minHeight: 200,
     lineHeight: 26,
+  },
+  categorySection: {
+    marginBottom: SPACING.lg,
+  },
+  categoryRow: {
+    flexDirection: 'row',
+    gap: SPACING.sm,
+  },
+  categoryButton: {
+    flex: 1,
+    alignItems: 'center',
+    paddingVertical: SPACING.md,
+    paddingHorizontal: SPACING.sm,
+    backgroundColor: COLORS.surface,
+    borderRadius: BORDER_RADIUS.lg,
+    borderWidth: 1.5,
+    borderColor: 'transparent',
+    gap: 4,
+  },
+  categoryButtonActive: {
+    borderColor: COLORS.primary,
+    backgroundColor: COLORS.primaryDim,
+  },
+  categoryLabel: {
+    ...TYPOGRAPHY.caption,
+    color: COLORS.textSecondary,
+    fontWeight: '600',
+    fontSize: 13,
+  },
+  categoryLabelActive: {
+    color: COLORS.primaryText,
+  },
+  categoryDesc: {
+    ...TYPOGRAPHY.caption,
+    color: COLORS.textTertiary,
+    fontSize: 9,
+    textAlign: 'center',
   },
   tagsSection: {
     marginBottom: SPACING.lg,

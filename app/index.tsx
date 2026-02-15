@@ -13,8 +13,6 @@ import { useQuery } from 'convex/react';
 import { Ionicons } from '@expo/vector-icons';
 import { api } from '../convex/_generated/api';
 import BottomTabBar from '../components/ui/BottomTabBar';
-import ProBadge from '../components/ui/ProBadge';
-import { useStardustPro } from '../lib/superwall';
 import { STARDUST_THEME } from '../lib/theme';
 import { RADIUS, SPACING } from '../lib/layout';
 import { StardustText } from '../components/ui/StardustText';
@@ -33,7 +31,6 @@ const getGreeting = () => {
 };
 
 export default function JournalHome() {
-  const { isPro } = useStardustPro();
   const dreams = useQuery(api.dreams.listDreams) ?? [];
   const greeting = getGreeting();
 
@@ -168,13 +165,9 @@ export default function JournalHome() {
                 {greeting}
               </StardustText>
             </View>
-            <View style={styles.headerRight}>
-              {isPro && <ProBadge />}
-              <View style={{ width: SPACING.sm }} />
-              <Pressable onPress={() => router.push('/settings')}>
-                <Ionicons name="settings-outline" size={24} color={STARDUST_THEME.text.tertiary} />
-              </Pressable>
-            </View>
+            <Pressable onPress={() => router.push('/settings')}>
+              <Ionicons name="settings-outline" size={24} color={STARDUST_THEME.text.tertiary} />
+            </Pressable>
           </View>
         }
         ListEmptyComponent={
@@ -223,10 +216,6 @@ const styles = StyleSheet.create({
     paddingTop: SPACING.md,
     paddingBottom: SPACING.lg,
   },
-  headerRight: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
   listContent: {
     paddingBottom: 160,
   },
@@ -238,12 +227,12 @@ const styles = StyleSheet.create({
   },
   dreamCard: {
     marginHorizontal: SPACING.screenPadding,
-    marginBottom: SPACING.md,
+    marginBottom: SPACING.lg,
     backgroundColor: 'rgba(255,255,255,0.03)',
     borderColor: 'rgba(255,255,255,0.06)',
     borderWidth: 1,
     borderRadius: RADIUS.lg,
-    padding: SPACING.lg,
+    padding: SPACING.xl,
     borderLeftWidth: 2,
     borderLeftColor: 'rgba(212, 175, 55, 0.4)',
   },
@@ -256,7 +245,7 @@ const styles = StyleSheet.create({
     marginRight: SPACING.md,
   },
   dateRow: {
-    marginBottom: 4,
+    marginBottom: 8,
   },
   dateText: {
     fontSize: 11,
@@ -272,6 +261,21 @@ const styles = StyleSheet.create({
   tagsRow: {
     flexDirection: 'row',
     gap: 6,
+  },
+  iconsRow: {
+    flexDirection: 'row',
+    gap: SPACING.sm,
+    marginTop: SPACING.sm,
+  },
+  iconBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: RADIUS.sm,
+    backgroundColor: 'rgba(255,255,255,0.03)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.05)',
   },
   thumbnailContainer: {
     justifyContent: 'center',

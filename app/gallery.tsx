@@ -105,7 +105,7 @@ export default function GalleryScreen() {
 
         {item.titlePreview && (
           <View style={styles.captionContainer}>
-            <StardustText variant="bodySmall" color={STARDUST_THEME.text.primary} numberOfLines={1}>
+            <StardustText variant="bodySmall" color="#1A1A24" numberOfLines={1}>
               {item.titlePreview}
             </StardustText>
           </View>
@@ -116,11 +116,11 @@ export default function GalleryScreen() {
 
   const renderEmpty = useCallback(() => (
     <View style={styles.emptyState}>
-      <Ionicons name="images-outline" size={48} color={STARDUST_THEME.gold.muted} style={{ marginBottom: SPACING.md }} />
-      <StardustText variant="screenTitle" color={STARDUST_THEME.gold.pale} style={{ marginBottom: SPACING.sm, textAlign: 'center' }}>
+      <Ionicons name="images-outline" size={48} color="#2A2A35" style={{ marginBottom: SPACING.md }} />
+      <StardustText variant="screenTitle" color="#0A0A0F" style={{ marginBottom: SPACING.sm, textAlign: 'center' }}>
         Your dream gallery awaits
       </StardustText>
-      <StardustText variant="body" color={STARDUST_THEME.text.secondary} align="center" style={{ maxWidth: 280 }}>
+      <StardustText variant="body" color="#2A2A35" align="center" style={{ maxWidth: 280 }}>
         Visualize your dreams with AI to fill this space with your subconscious art.
       </StardustText>
     </View>
@@ -132,10 +132,10 @@ export default function GalleryScreen() {
     <ScreenContainer backgroundSource={require('../assets/bg-gallery.png')}>
       <View style={styles.header}>
         <View>
-          <StardustText variant="screenTitle" color={STARDUST_THEME.text.primary}>
+          <StardustText variant="screenTitle" color="#0A0A0F">
             Gallery
           </StardustText>
-          <StardustText variant="bodySmall" color={STARDUST_THEME.text.secondary}>
+          <StardustText variant="bodySmall" color="#2A2A35">
             {visualizedCount} {visualizedCount === 1 ? 'creation' : 'creations'}
           </StardustText>
         </View>
