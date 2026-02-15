@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import {
   Animated,
+  ImageBackground,
   Pressable,
   StyleSheet,
   View,
@@ -21,7 +22,16 @@ import { STARDUST_THEME } from '../lib/theme';
 type IconName = React.ComponentProps<typeof Ionicons>['name'];
 
 const ONBOARDED_KEY = 'hasOnboarded';
-const TOTAL_SLIDES = 6;
+const TOTAL_SLIDES = 5;
+
+// Background texture images for each slide (light parchment → deep watercolor)
+const SLIDE_BACKGROUNDS = [
+  require('../assets/onboarding-bg-1.png'),
+  require('../assets/onboarding-bg-2.png'),
+  require('../assets/onboarding-bg-3.png'),
+  require('../assets/onboarding-bg-4.png'),
+  require('../assets/onboarding-bg-5.png'),
+];
 
 // ─── Slide data ──────────────────────────────────────────
 
@@ -32,7 +42,7 @@ type SlideData = {
   icon: IconName;
   highlights?: { icon: IconName; text: string }[];
   stat?: { value: string; label: string };
-  kind: 'value' | 'feature' | 'social' | 'personal' | 'paywall';
+  kind: 'value' | 'feature' | 'social' | 'personal';
 };
 
 const SLIDES: SlideData[] = [
@@ -103,19 +113,6 @@ const SLIDES: SlideData[] = [
       { icon: 'notifications-outline', text: 'Smart ritual reminders' },
     ],
   },
-  {
-    id: 'paywall',
-    kind: 'paywall',
-    icon: 'star-outline',
-    title: 'Start Your\nFree Trial',
-    subtitle:
-      'Unlock the full Stardust experience. 7 days free, cancel anytime.',
-    highlights: [
-      { icon: 'checkmark-circle', text: '7-day free trial on all plans' },
-      { icon: 'checkmark-circle', text: 'Cancel anytime, no questions asked' },
-      { icon: 'checkmark-circle', text: 'Instant access to all features' },
-    ],
-  },
 ];
 
 // ─── Dot indicator ───────────────────────────────────────
@@ -159,7 +156,6 @@ export default function OnboardingScreen() {
   const { showPaywall, isPremium } = usePaywall();
 
   const [currentSlide, setCurrentSlide] = useState(0);
-  const [isPresentingPaywall, setIsPresentingPaywall] = useState(false);
   const [isHydrating, setIsHydrating] = useState(true);
 
   const fadeAnim = useRef(new Animated.Value(1)).current;
@@ -168,7 +164,7 @@ export default function OnboardingScreen() {
   const heroOpacityAnim = useRef(new Animated.Value(0)).current;
 
   const slide = SLIDES[currentSlide];
-  const isPaywallSlide = slide.kind === 'paywall';
+  const isLastSlide = currentSlide === TOTAL_SLIDES - 1;
   const canGoBack = currentSlide > 0;
 
   // ─── Hydrate ─────────────────────────────────────────
@@ -213,18 +209,6 @@ export default function OnboardingScreen() {
     ]).start();
   }, [currentSlide]);
 
-  // ─── Auto-present Superwall when slide 6 is reached ──
-
-  useEffect(() => {
-    if (!isPaywallSlide) return;
-    if (isPremium) {
-      void completeOnboarding();
-      return;
-    }
-    // Auto-fire the paywall immediately on slide 6
-    void handleUnlock();
-  }, [isPaywallSlide, isPremium]);
-
   // ─── Navigation ──────────────────────────────────────
 
   const animateToSlide = (next: number) => {
@@ -243,7 +227,7 @@ export default function OnboardingScreen() {
   };
 
   const handleContinue = () => {
-    if (isPaywallSlide) {
+    if (isLastSlide) {
       void handleUnlock();
       return;
     }
@@ -265,18 +249,17 @@ export default function OnboardingScreen() {
   };
 
   const handleUnlock = async () => {
-    if (isPresentingPaywall) return;
-    setIsPresentingPaywall(true);
-
     try {
       const unlocked = await showPaywall(PLACEMENTS.APP_LAUNCH);
       if (unlocked || isPremium) {
         await completeOnboarding();
+      } else {
+        // User dismissed paywall — still complete onboarding
+        await completeOnboarding();
       }
     } catch (e) {
       console.error('Paywall error:', e);
-    } finally {
-      setIsPresentingPaywall(false);
+      await completeOnboarding();
     }
   };
 
@@ -286,11 +269,13 @@ export default function OnboardingScreen() {
 
   return (
     <View style={styles.container}>
-      <LinearGradient
-        colors={[STARDUST_THEME.bg.primary, STARDUST_THEME.bg.secondary, STARDUST_THEME.bg.primary]}
-        locations={[0, 0.5, 1]}
+      <ImageBackground
+        source={SLIDE_BACKGROUNDS[currentSlide]}
         style={StyleSheet.absoluteFill}
+        resizeMode="cover"
       />
+      {/* Dark overlay for text readability */}
+      <View style={styles.backgroundOverlay} />
       <GoldenParticles />
 
       {/* Header */}
@@ -370,31 +355,13 @@ export default function OnboardingScreen() {
 
       {/* Footer */}
       <LinearGradient
-        colors={['transparent', STARDUST_THEME.bg.primary, STARDUST_THEME.bg.primary]}
+        colors={['transparent', 'rgba(10, 10, 15, 0.85)', 'rgba(10, 10, 15, 0.95)']}
         locations={[0, 0.25, 1]}
         style={[styles.footer, { paddingBottom: insets.bottom + SPACING.md }]}
       >
-        {isPaywallSlide ? (
-          <View style={styles.footerActions}>
-            <View style={isPresentingPaywall ? styles.ctaDisabled : undefined}>
-              <StardustButton onPress={handleUnlock} fullWidth>
-                {isPresentingPaywall ? 'Opening...' : 'Start Free Trial'}
-              </StardustButton>
-            </View>
-            <StardustText
-              variant="timestamp"
-              align="center"
-              color={STARDUST_THEME.text.tertiary}
-              style={{ marginTop: SPACING.xs }}
-            >
-              7-day free trial · Cancel anytime
-            </StardustText>
-          </View>
-        ) : (
-          <StardustButton onPress={handleContinue} fullWidth>
-            {currentSlide === 0 ? 'Get Started' : 'Continue'}
-          </StardustButton>
-        )}
+        <StardustButton onPress={handleContinue} fullWidth>
+          {currentSlide === 0 ? 'Get Started' : 'Continue'}
+        </StardustButton>
       </LinearGradient>
     </View>
   );
@@ -406,6 +373,10 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: STARDUST_THEME.bg.primary,
+  },
+  backgroundOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(10, 10, 15, 0.55)',
   },
   header: {
     paddingHorizontal: SPACING.screenPadding,
@@ -514,11 +485,5 @@ const styles = StyleSheet.create({
     right: 0,
     paddingHorizontal: SPACING.screenPadding,
     paddingTop: SPACING.xl,
-  },
-  footerActions: {
-    gap: SPACING.xs,
-  },
-  ctaDisabled: {
-    opacity: 0.45,
   },
 });

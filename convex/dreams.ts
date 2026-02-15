@@ -52,6 +52,7 @@ export const createDream = mutation({
   args: {
     transcript: v.optional(v.string()),
     mood: v.optional(v.string()),
+    category: v.optional(v.string()),
     tags: v.optional(v.array(v.string())),
     audioStorageId: v.optional(v.id("_storage")),
   },
@@ -64,6 +65,7 @@ export const createDream = mutation({
       transcript: args.transcript,
       tags: args.tags ?? [],
       mood: args.mood,
+      category: args.category,
       lucidityRating: 0,
       isFavorite: false,
       isTranscribing: hasAudio,

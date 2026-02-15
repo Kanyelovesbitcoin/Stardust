@@ -10,6 +10,7 @@ export default defineSchema({
     editedTranscript: v.optional(v.string()),
     tags: v.array(v.string()),
     mood: v.optional(v.string()),
+    category: v.optional(v.string()), // "ink" | "hope" | "archive"
     lucidityRating: v.number(),
     isFavorite: v.boolean(),
     // Interpretation (populated by AI action)

@@ -13,8 +13,6 @@ import { useQuery } from 'convex/react';
 import { Ionicons } from '@expo/vector-icons';
 import { api } from '../convex/_generated/api';
 import BottomTabBar from '../components/ui/BottomTabBar';
-import ProBadge from '../components/ui/ProBadge';
-import { useStardustPro } from '../lib/superwall';
 import { STARDUST_THEME } from '../lib/theme';
 import { RADIUS, SPACING } from '../lib/layout';
 import { StardustText } from '../components/ui/StardustText';
@@ -34,7 +32,6 @@ const getGreeting = () => {
 };
 
 export default function JournalHome() {
-  const { isPro } = useStardustPro();
   const dreams = useQuery(api.dreams.listDreams) ?? [];
   const greeting = getGreeting();
 
@@ -89,22 +86,42 @@ export default function JournalHome() {
           <View style={styles.cardContent}>
             <View style={styles.cardLeft}>
               <View style={styles.dateRow}>
-                <StardustText variant="label" color={STARDUST_THEME.text.tertiary} style={{ fontSize: 11, letterSpacing: 1 }}>
+                <StardustText variant="label" color={STARDUST_THEME.text.tertiary} style={{ fontSize: 13, letterSpacing: 1.2 }}>
                   {new Date(item.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }).toUpperCase()}
                 </StardustText>
               </View>
 
-              <StardustText variant="cardTitle" color={STARDUST_THEME.text.primary} numberOfLines={1} style={{ marginBottom: 4, fontSize: 18 }}>
+              <StardustText variant="cardTitle" color={STARDUST_THEME.text.primary} numberOfLines={2} style={{ marginBottom: 6, fontSize: 22, lineHeight: 28 }}>
                 {title}
               </StardustText>
 
-              <StardustText variant="bodySmall" color={STARDUST_THEME.text.secondary} numberOfLines={2} style={{ marginBottom: SPACING.md }}>
+              <StardustText variant="body" color={STARDUST_THEME.text.secondary} numberOfLines={3} style={{ marginBottom: SPACING.md, fontSize: 16, lineHeight: 23 }}>
                 {bodyPreview}
               </StardustText>
 
               <View style={styles.tagsRow}>
                 {item.mood && <MoodPill mood={item.mood} />}
               </View>
+
+              {/* Category badge */}
+              {!!item.category && (
+                <View style={styles.iconsRow}>
+                  <View style={styles.iconBadge}>
+                    <Ionicons
+                      name={
+                        item.category === 'ink' ? 'document-text-outline' :
+                        item.category === 'hope' ? 'sparkles-outline' :
+                        'leaf-outline'
+                      }
+                      size={13}
+                      color={STARDUST_THEME.gold.muted}
+                    />
+                    <StardustText variant="label" color={STARDUST_THEME.text.tertiary} style={{ fontSize: 9, marginLeft: 3 }}>
+                      {item.category === 'ink' ? 'Ink' : item.category === 'hope' ? 'Hope' : 'Archive'}
+                    </StardustText>
+                  </View>
+                </View>
+              )}
             </View>
 
             <View style={styles.thumbnailContainer}>
@@ -135,7 +152,7 @@ export default function JournalHome() {
   );
 
   return (
-    <ScreenContainer>
+    <ScreenContainer backgroundSource={require('../assets/bg-home.png')}>
       <SectionList
         sections={sections}
         keyExtractor={(item) => item._id}
@@ -152,13 +169,9 @@ export default function JournalHome() {
                 {greeting}
               </StardustText>
             </View>
-            <View style={styles.headerRight}>
-              {isPro && <ProBadge />}
-              <View style={{ width: SPACING.sm }} />
-              <Pressable onPress={() => router.push('/settings')}>
-                <Ionicons name="settings-outline" size={24} color={STARDUST_THEME.text.tertiary} />
-              </Pressable>
-            </View>
+            <Pressable onPress={() => router.push('/settings')}>
+              <Ionicons name="settings-outline" size={24} color={STARDUST_THEME.text.tertiary} />
+            </Pressable>
           </View>
         }
         ListEmptyComponent={
@@ -180,12 +193,15 @@ export default function JournalHome() {
         { transform: [{ scale: scaleAnim }] }
       ]}>
         <Pressable
-          style={styles.fab}
           onPress={() => router.push('/record')}
           onPressIn={() => Animated.spring(scaleAnim, { toValue: 0.95, useNativeDriver: true }).start()}
           onPressOut={() => Animated.spring(scaleAnim, { toValue: 1, useNativeDriver: true }).start()}
         >
-          <Ionicons name="mic" size={44} color={STARDUST_THEME.text.inverse} />
+          <Image
+            source={require('../assets/record-button.png')}
+            style={styles.fab}
+            resizeMode="contain"
+          />
         </Pressable>
       </Animated.View>
 
@@ -203,10 +219,6 @@ const styles = StyleSheet.create({
     paddingTop: SPACING.md,
     paddingBottom: SPACING.lg,
   },
-  headerRight: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
   listContent: {
     paddingBottom: 160, // Space for tab bar + FAB area
   },
@@ -218,12 +230,12 @@ const styles = StyleSheet.create({
   },
   dreamCard: {
     marginHorizontal: SPACING.screenPadding,
-    marginBottom: SPACING.md,
+    marginBottom: SPACING.lg,
     backgroundColor: 'rgba(255,255,255,0.03)',
     borderColor: 'rgba(255,255,255,0.06)',
     borderWidth: 1,
     borderRadius: RADIUS.lg,
-    padding: SPACING.lg,
+    padding: SPACING.xl,
     borderLeftWidth: 2,
     borderLeftColor: 'rgba(212, 175, 55, 0.4)',
   },
@@ -236,11 +248,26 @@ const styles = StyleSheet.create({
     marginRight: SPACING.md,
   },
   dateRow: {
-    marginBottom: 4,
+    marginBottom: 8,
   },
   tagsRow: {
     flexDirection: 'row',
     gap: 6,
+  },
+  iconsRow: {
+    flexDirection: 'row',
+    gap: SPACING.sm,
+    marginTop: SPACING.sm,
+  },
+  iconBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: RADIUS.sm,
+    backgroundColor: 'rgba(255,255,255,0.03)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.05)',
   },
   thumbnailContainer: {
     justifyContent: 'center',
@@ -280,11 +307,5 @@ const styles = StyleSheet.create({
   fab: {
     width: 96,
     height: 96,
-    borderRadius: 48,
-    backgroundColor: STARDUST_THEME.gold.warm,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.2)',
   },
 });
