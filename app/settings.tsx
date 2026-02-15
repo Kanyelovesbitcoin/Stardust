@@ -1,10 +1,12 @@
 import React from 'react';
-import { View, StyleSheet, ScrollView, Pressable, Linking } from 'react-native';
+import { View, StyleSheet, ScrollView, Pressable, Linking, Alert } from 'react-native';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { usePaywall, PLACEMENTS } from '../lib/hooks/usePaywall';
 import { STARDUST_THEME } from '../lib/theme';
 import { RADIUS, SPACING } from '../lib/layout';
 import { StardustText } from '../components/ui/StardustText';
+import { StardustCard } from '../components/ui/StardustCard';
 import ScreenContainer from '../components/ui/ScreenContainer';
 import { GoldDivider } from '../components/ui/GoldDivider';
 
@@ -12,6 +14,18 @@ const PRIVACY_URL = 'https://stardust.app/privacy';
 const TERMS_URL = 'https://stardust.app/terms';
 
 export default function SettingsScreen() {
+  const { showPaywall, isPremium: isPro } = usePaywall();
+
+  const handleShowPaywall = () => showPaywall(PLACEMENTS.SETTINGS_UPGRADE);
+
+  const handleRestorePurchases = () => {
+    Alert.alert(
+      'Restore Purchases',
+      'Purchase restoration is not available in development mode.',
+      [{ text: 'OK' }]
+    );
+  };
+
   return (
     <ScreenContainer backgroundSource={require('../assets/bg-settings.png')}>
       {/* Header */}
@@ -33,9 +47,40 @@ export default function SettingsScreen() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
       >
+        {/* Pro Card */}
+        <StardustCard
+          style={[styles.proCard, isPro && styles.proCardActive]}
+          onPress={isPro ? undefined : handleShowPaywall}
+        >
+          <View style={styles.proContent}>
+            <View>
+              <StardustText variant="heroTitle" style={{ fontSize: 28, letterSpacing: 2 }} color={STARDUST_THEME.gold.bright}>
+                STARDUST PRO
+              </StardustText>
+              <StardustText variant="bodySmall" color={STARDUST_THEME.text.secondary} style={{ marginTop: 4 }}>
+                {isPro ? "Membership Active" : "Unlock the full power of your dreams"}
+              </StardustText>
+            </View>
+            {isPro ? (
+              <Ionicons name="checkmark-circle" size={28} color={STARDUST_THEME.gold.warm} />
+            ) : (
+              <Ionicons name="chevron-forward" size={24} color={STARDUST_THEME.gold.muted} />
+            )}
+          </View>
+        </StardustCard>
+
+        {/* Restore Purchases */}
+        <View style={styles.sectionGroup}>
+          <SettingRow
+            icon="refresh-outline"
+            label="Restore Purchases"
+            onPress={handleRestorePurchases}
+          />
+        </View>
+
         {/* Legal */}
         <StardustText variant="label" color={STARDUST_THEME.text.tertiary} style={styles.sectionHeader}>
-          LEGAL
+          ABOUT
         </StardustText>
 
         <View style={styles.sectionGroup}>
@@ -110,8 +155,11 @@ const styles = StyleSheet.create({
   proCard: {
     marginBottom: SPACING.xl,
     backgroundColor: STARDUST_THEME.bg.secondary,
+    borderColor: STARDUST_THEME.gold.muted,
+    borderWidth: 1,
   },
   proCardActive: {
+    borderColor: STARDUST_THEME.gold.bright,
     backgroundColor: 'rgba(212, 175, 55, 0.1)',
   },
   proContent: {

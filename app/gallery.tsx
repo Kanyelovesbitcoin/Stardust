@@ -88,6 +88,7 @@ export default function GalleryScreen() {
             recyclingKey={item._id}
           />
 
+          {/* Date badge — top-left */}
           <View style={styles.dateBadge}>
             <StardustText variant="timestamp" color={STARDUST_THEME.text.primary} style={{ fontSize: 10 }}>
               {formatDate(item.createdAt)}
@@ -101,15 +102,16 @@ export default function GalleryScreen() {
               </StardustText>
             </View>
           )}
-        </View>
 
-        {item.titlePreview && (
-          <View style={styles.captionContainer}>
-            <StardustText variant="bodySmall" color="#1A1A24" numberOfLines={1}>
-              {item.titlePreview}
-            </StardustText>
-          </View>
-        )}
+          {/* Caption overlay — bottom */}
+          {item.titlePreview && (
+            <View style={styles.captionOverlay}>
+              <StardustText variant="bodySmall" color="#F5E6C8" numberOfLines={1} style={{ fontSize: 11 }}>
+                {item.titlePreview}
+              </StardustText>
+            </View>
+          )}
+        </View>
       </Pressable>
     );
   }, [highlight]);
@@ -208,7 +210,7 @@ const styles = StyleSheet.create({
   },
   dateBadge: {
     position: 'absolute',
-    bottom: 8,
+    top: 8,
     left: 8,
     backgroundColor: 'rgba(10, 10, 15, 0.75)',
     paddingHorizontal: 6,
@@ -224,9 +226,16 @@ const styles = StyleSheet.create({
     paddingVertical: 2,
     borderRadius: 4,
   },
-  captionContainer: {
-    marginTop: SPACING.xs,
-    paddingHorizontal: 2,
+  captionOverlay: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    paddingHorizontal: 8,
+    paddingVertical: 6,
+    borderBottomLeftRadius: RADIUS.md,
+    borderBottomRightRadius: RADIUS.md,
   },
   emptyState: {
     flex: 1,
