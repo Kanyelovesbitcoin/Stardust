@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
+import * as Haptics from 'expo-haptics';
 import { COLORS, SPACING, TYPOGRAPHY, BORDER_RADIUS, DREAM_MOODS } from '../../lib/constants';
 
 interface MoodSelectorProps {
@@ -8,6 +9,11 @@ interface MoodSelectorProps {
 }
 
 export default function MoodSelector({ selected, onSelect }: MoodSelectorProps) {
+  const handleSelect = (key: string) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    onSelect(key);
+  };
+
   return (
     <View style={styles.container}>
       <Text style={styles.label}>How did the dream feel?</Text>
@@ -24,7 +30,7 @@ export default function MoodSelector({ selected, onSelect }: MoodSelectorProps) 
               selected === mood.key && styles.moodButtonActive,
             ]}
             activeOpacity={0.7}
-            onPress={() => onSelect(mood.key)}
+            onPress={() => handleSelect(mood.key)}
           >
             <Text style={styles.moodEmoji}>{mood.emoji}</Text>
             <Text
@@ -62,11 +68,8 @@ const styles = StyleSheet.create({
     paddingVertical: SPACING.sm + 2,
     paddingHorizontal: SPACING.md,
     minWidth: 72,
-    borderWidth: 1.5,
-    borderColor: 'transparent',
   },
   moodButtonActive: {
-    borderColor: COLORS.primary,
     backgroundColor: COLORS.primaryDim,
   },
   moodEmoji: {

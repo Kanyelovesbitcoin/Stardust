@@ -19,7 +19,7 @@ import { STARDUST_THEME } from '../../lib/theme';
 import { RADIUS, SPACING } from '../../lib/layout';
 import { StardustText } from '../../components/ui/StardustText';
 import { StardustCard } from '../../components/ui/StardustCard';
-import { StardustButton } from '../../components/ui/StardustButton';
+import { DropletButton } from '../../components/ui/DropletButton';
 import { MoodPill } from '../../components/ui/MoodPill';
 import { GoldDivider } from '../../components/ui/GoldDivider';
 import DreamScene from '../../components/visualizer/DreamScene';
@@ -48,7 +48,7 @@ export default function DreamDetailScreen() {
     return (
       <ScreenContainer backgroundSource={require('../../assets/bg-settings.png')} style={styles.centered}>
         <StardustText variant="body" color={STARDUST_THEME.text.secondary}>Dream not found</StardustText>
-        <Pressable onPress={() => router.back()} style={{ marginTop: SPACING.md }}>
+        <Pressable onPress={() => router.back()} style={styles.goBackLink}>
           <StardustText variant="button" color={STARDUST_THEME.gold.warm}>Go Back</StardustText>
         </Pressable>
       </ScreenContainer>
@@ -101,7 +101,6 @@ export default function DreamDetailScreen() {
     }
     if (dream.isGeneratingVisual) return;
 
-    // 1 free daily AI image — then paywall (enforced both client + server side)
     registerFeatureWithDailyFree('visualize_dream', async () => {
       try {
         await requestVisualization({ dreamId: dream._id, isPro });
@@ -119,6 +118,9 @@ export default function DreamDetailScreen() {
     ? dream.transcript.split(/\s+/).slice(0, 5).join(' ') + (dream.transcript.length > 30 ? '...' : '')
     : "Untitled Dream";
 
+  const interpretLabel = dream.isInterpreting ? "Interpreting..." : (interp ? "Re-interpret" : "Interpret");
+  const visualizeLabel = dream.isGeneratingVisual ? "Painting..." : (dream.sceneUrl ? "Re-visualize" : "Visualize");
+
   return (
     <ScreenContainer backgroundSource={require('../../assets/bg-settings.png')}>
       {/* 1. Header */}
@@ -129,7 +131,7 @@ export default function DreamDetailScreen() {
           style={styles.backButton}
         >
           <Ionicons name="arrow-back" size={32} color={STARDUST_THEME.gold.muted} />
-          <StardustText variant="timestamp" color={STARDUST_THEME.text.tertiary} style={{ marginLeft: 4 }}>
+          <StardustText variant="timestamp" color={STARDUST_THEME.text.tertiary} style={styles.backLabel}>
             BACK
           </StardustText>
         </Pressable>
@@ -171,12 +173,12 @@ export default function DreamDetailScreen() {
           {dream.isTranscribing ? (
             <View style={styles.loadingRow}>
               <ActivityIndicator size="small" color={STARDUST_THEME.gold.muted} />
-              <StardustText variant="bodySmall" color={STARDUST_THEME.text.secondary} style={{ marginLeft: 8 }}>
+              <StardustText variant="bodySmall" color={STARDUST_THEME.text.secondary} style={styles.loadingText}>
                 Transcribing dream...
               </StardustText>
             </View>
           ) : (
-            <StardustText variant="body" color={STARDUST_THEME.text.primary} style={{ lineHeight: 24 }}>
+            <StardustText variant="body" color={STARDUST_THEME.text.primary} style={styles.transcriptText}>
               {dream.editedTranscript || dream.transcript || "No details recorded."}
             </StardustText>
           )}
@@ -184,50 +186,51 @@ export default function DreamDetailScreen() {
 
         {/* 5. AI Section */}
         <View style={styles.aiButtons}>
-          <StardustButton
+          <DropletButton
             onPress={handleInterpret}
-            variant="ghost"
-            style={{ flex: 1 }}
-          >
-            {dream.isInterpreting ? "Interpreting..." : (interp ? "Re-interpret" : "Interpret")}
-            {!isPro && <Ionicons name="lock-closed" size={12} color={STARDUST_THEME.gold.warm} style={{ marginLeft: 4 }} />}
-          </StardustButton>
+            title={interpretLabel}
+            variant="primary"
+            size="md"
+            loading={dream.isInterpreting}
+            style={styles.aiButton}
+          />
 
-          <View style={{ width: SPACING.md }} />
-
-          <StardustButton
+          <DropletButton
             onPress={handleVisualize}
-            variant="ghost"
-            style={{ flex: 1 }}
-          >
-            {dream.isGeneratingVisual ? "Painting..." : (dream.sceneUrl ? "Re-visualize" : "Visualize")}
-            {!isPro && (
-              hasFreeImageToday
-                ? <StardustText variant="label" color={STARDUST_THEME.gold.bright} style={{ marginLeft: 4, fontSize: 10 }}>✨ FREE</StardustText>
-                : <Ionicons name="lock-closed" size={12} color={STARDUST_THEME.gold.warm} style={{ marginLeft: 4 }} />
-            )}
-          </StardustButton>
+            title={visualizeLabel}
+            variant="gold"
+            size="md"
+            loading={dream.isGeneratingVisual}
+            style={styles.aiButton}
+          />
         </View>
+
+        {/* Free badge */}
+        {!isPro && hasFreeImageToday && !dream.sceneUrl && (
+          <StardustText variant="label" color={STARDUST_THEME.gold.bright} align="center" style={styles.freeBadge}>
+            1 FREE VISUALIZATION TODAY
+          </StardustText>
+        )}
 
         {/* 6. Interpretation Card */}
         {interp && !dream.isInterpreting && (
           <StardustCard style={styles.interpCard}>
             <View style={styles.interpHeader}>
-              <StardustText variant="cardTitle" color={STARDUST_THEME.gold.muted} style={{ marginBottom: SPACING.sm }}>
+              <StardustText variant="cardTitle" color={STARDUST_THEME.gold.muted} style={styles.interpTitle}>
                 Interpretation
               </StardustText>
               <GoldDivider />
             </View>
 
             <View style={styles.interpSection}>
-              <StardustText variant="label" color={STARDUST_THEME.mood.bizarre} style={{ marginBottom: 4 }}>THEME</StardustText>
-              <StardustText variant="body" color={STARDUST_THEME.text.primary} style={{ fontStyle: 'italic' }}>
+              <StardustText variant="label" color={STARDUST_THEME.mood.bizarre} style={styles.interpLabel}>THEME</StardustText>
+              <StardustText variant="body" color={STARDUST_THEME.text.primary} style={styles.interpTheme}>
                 {cleanText(interp.emotionalTheme)}
               </StardustText>
             </View>
 
             <View style={styles.interpSection}>
-              <StardustText variant="label" color={STARDUST_THEME.mood.bizarre} style={{ marginBottom: 4 }}>ANALYSIS</StardustText>
+              <StardustText variant="label" color={STARDUST_THEME.mood.bizarre} style={styles.interpLabel}>ANALYSIS</StardustText>
               <StardustText variant="body" color={STARDUST_THEME.text.primary}>
                 {cleanText(interp.fullAnalysis)}
               </StardustText>
@@ -235,14 +238,14 @@ export default function DreamDetailScreen() {
 
             <View style={styles.insightBox}>
               <Ionicons name="bulb-outline" size={16} color={STARDUST_THEME.gold.bright} />
-              <StardustText variant="bodySmall" color={STARDUST_THEME.text.primary} style={{ flex: 1 }}>
+              <StardustText variant="bodySmall" color={STARDUST_THEME.text.primary} style={styles.insightText}>
                 {cleanText(interp.practicalInsight)}
               </StardustText>
             </View>
           </StardustCard>
         )}
 
-        {/* 7. Generated Image / Loading / Error */}
+        {/* 7. Generated Image */}
         {(dream.sceneUrl || dream.isGeneratingVisual || dream.imageError) && (
           <View style={styles.imageSection}>
             <DreamScene
@@ -275,7 +278,7 @@ function cleanText(text: string): string {
     .replace(/\*\*\*(.*?)\*\*\*/g, '$1')
     .replace(/\*\*(.*?)\*\*/g, '$1')
     .replace(/\*(.*?)\*/g, '$1')
-    .replace(/^[-–—•]\s+/gm, '')
+    .replace(/^[-\u2013\u2014\u2022]\s+/gm, '')
     .replace(/^#{1,6}\s+/gm, '')
     .replace(/^---+$/gm, '')
     .replace(/\n{3,}/g, '\n\n')
@@ -283,27 +286,28 @@ function cleanText(text: string): string {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: STARDUST_THEME.bg.primary,
-  },
   centered: {
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  goBackLink: {
+    marginTop: SPACING.md,
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: SPACING.screenPadding,
-    // paddingTop handled by ScreenContainer
     paddingBottom: SPACING.md,
-    marginTop: SPACING.sm, // Add some top margin inside safer area
+    marginTop: SPACING.sm,
   },
   backButton: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: SPACING.sm,
+  },
+  backLabel: {
+    marginLeft: 4,
   },
   headerRight: {
     flexDirection: 'row',
@@ -328,12 +332,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: SPACING.sm,
     paddingVertical: 2,
     borderRadius: RADIUS.sm,
-    borderWidth: 1,
-    borderColor: STARDUST_THEME.border,
+    backgroundColor: 'rgba(255, 255, 255, 0.06)',
   },
   transcriptCard: {
     padding: SPACING.lg,
     marginBottom: SPACING.xl,
+  },
+  transcriptText: {
+    lineHeight: 24,
   },
   loadingRow: {
     flexDirection: 'row',
@@ -341,9 +347,20 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     padding: SPACING.md,
   },
+  loadingText: {
+    marginLeft: 8,
+  },
   aiButtons: {
     flexDirection: 'row',
+    gap: SPACING.md,
     marginBottom: SPACING.xl,
+  },
+  aiButton: {
+    flex: 1,
+  },
+  freeBadge: {
+    marginBottom: SPACING.md,
+    marginTop: -SPACING.md,
   },
   interpCard: {
     marginBottom: SPACING.xl,
@@ -352,17 +369,27 @@ const styles = StyleSheet.create({
   interpHeader: {
     marginBottom: SPACING.md,
   },
+  interpTitle: {
+    marginBottom: SPACING.sm,
+  },
+  interpLabel: {
+    marginBottom: 4,
+  },
+  interpTheme: {
+    fontStyle: 'italic',
+  },
   interpSection: {
     marginBottom: SPACING.lg,
   },
   insightBox: {
     flexDirection: 'row',
     gap: SPACING.md,
-    backgroundColor: 'rgba(232, 197, 71, 0.05)', // gold.glow
+    backgroundColor: 'rgba(232, 197, 71, 0.05)',
     padding: SPACING.md,
     borderRadius: RADIUS.md,
-    borderLeftWidth: 2,
-    borderLeftColor: STARDUST_THEME.gold.warm,
+  },
+  insightText: {
+    flex: 1,
   },
   imageSection: {
     marginBottom: SPACING.xl,

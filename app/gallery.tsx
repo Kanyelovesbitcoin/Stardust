@@ -5,8 +5,6 @@ import {
   FlatList,
   Pressable,
   Dimensions,
-  NativeSyntheticEvent,
-  NativeScrollEvent,
   ActivityIndicator,
 } from 'react-native';
 import { Image } from 'expo-image';
@@ -26,10 +24,11 @@ const COLUMN_WIDTH = (SCREEN_WIDTH - SPACING.screenPadding * 2 - GRID_GAP) / 2;
 const IMAGE_HEIGHT = COLUMN_WIDTH * (4 / 3);
 const TAB_BAR_CLEARANCE = 100;
 
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
 function formatDate(ts: number): string {
   const d = new Date(ts);
-  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-  return `${months[d.getMonth()]} ${d.getDate()}`;
+  return `${MONTHS[d.getMonth()]} ${d.getDate()}`;
 }
 
 export default function GalleryScreen() {
@@ -54,10 +53,9 @@ export default function GalleryScreen() {
     }
   }, [highlight, galleryDreams.length]);
 
-  const renderItem = ({ item }: { item: (typeof galleryDreams)[number] }) => {
+  const renderItem = useCallback(({ item }: { item: (typeof galleryDreams)[number] }) => {
     const isHighlighted = highlight === item._id;
 
-    // Shimmer for generating
     if (item.isGeneratingVisual && !item.sceneUrl) {
       return (
         <Pressable
@@ -85,17 +83,17 @@ export default function GalleryScreen() {
             source={{ uri: item.sceneUrl! }}
             style={styles.image}
             contentFit="cover"
-            transition={600}
+            transition={300}
+            cachePolicy="memory-disk"
+            recyclingKey={item._id}
           />
 
-          {/* Date badge — bottom-left */}
           <View style={styles.dateBadge}>
             <StardustText variant="timestamp" color={STARDUST_THEME.text.primary} style={{ fontSize: 10 }}>
               {formatDate(item.createdAt)}
             </StardustText>
           </View>
 
-          {/* Style label — top-right */}
           {item.visualStyle && (
             <View style={styles.styleBadge}>
               <StardustText variant="timestamp" color={STARDUST_THEME.gold.warm} style={{ fontSize: 9 }}>
@@ -114,9 +112,9 @@ export default function GalleryScreen() {
         )}
       </Pressable>
     );
-  };
+  }, [highlight]);
 
-  const renderEmpty = () => (
+  const renderEmpty = useCallback(() => (
     <View style={styles.emptyState}>
       <Ionicons name="images-outline" size={48} color={STARDUST_THEME.gold.muted} style={{ marginBottom: SPACING.md }} />
       <StardustText variant="screenTitle" color={STARDUST_THEME.gold.pale} style={{ marginBottom: SPACING.sm, textAlign: 'center' }}>
@@ -126,11 +124,12 @@ export default function GalleryScreen() {
         Visualize your dreams with AI to fill this space with your subconscious art.
       </StardustText>
     </View>
-  );
+  ), []);
+
+  const keyExtractor = useCallback((item: any) => item._id, []);
 
   return (
     <ScreenContainer backgroundSource={require('../assets/bg-gallery.png')}>
-      {/* Header */}
       <View style={styles.header}>
         <View>
           <StardustText variant="screenTitle" color={STARDUST_THEME.text.primary}>
@@ -146,12 +145,15 @@ export default function GalleryScreen() {
         ref={flatListRef}
         data={galleryDreams}
         renderItem={renderItem}
-        keyExtractor={(item) => item._id}
+        keyExtractor={keyExtractor}
         numColumns={2}
         columnWrapperStyle={styles.row}
         ListEmptyComponent={renderEmpty}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.listContent}
+        removeClippedSubviews
+        maxToRenderPerBatch={6}
+        windowSize={5}
       />
 
       <BottomTabBar activeTab="gallery" />

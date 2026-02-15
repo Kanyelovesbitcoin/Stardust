@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Stack, usePathname } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { ConvexProvider, ConvexReactClient } from 'convex/react';
@@ -6,6 +6,7 @@ import { StardustProProvider } from '../lib/superwall';
 import { usePeriodicPaywall } from '../lib/hooks/usePeriodicPaywall';
 import { initializeNotifications } from '../lib/notifications';
 import { STARDUST_THEME } from '../lib/theme';
+import { preloadAllImages } from '../lib/image-cache';
 import * as SplashScreen from 'expo-splash-screen';
 import { useFonts } from 'expo-font';
 import {
@@ -38,6 +39,8 @@ const convex = new ConvexReactClient(
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
+  const [imagesReady, setImagesReady] = useState(false);
+
   const [loaded, error] = useFonts({
     CormorantGaramond_400Regular,
     CormorantGaramond_500Medium,
@@ -51,12 +54,18 @@ export default function RootLayout() {
   });
 
   useEffect(() => {
-    if (loaded || error) {
+    preloadAllImages()
+      .catch((e) => console.warn('Image preload failed:', e))
+      .finally(() => setImagesReady(true));
+  }, []);
+
+  useEffect(() => {
+    if ((loaded || error) && imagesReady) {
       SplashScreen.hideAsync();
     }
-  }, [loaded, error]);
+  }, [loaded, error, imagesReady]);
 
-  if (!loaded && !error) {
+  if ((!loaded && !error) || !imagesReady) {
     return null;
   }
 

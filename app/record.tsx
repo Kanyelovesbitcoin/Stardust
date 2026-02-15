@@ -1,10 +1,10 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useCallback } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   TextInput,
-  TouchableOpacity,
+  Pressable,
   ScrollView,
   KeyboardAvoidingView,
   Platform,
@@ -14,13 +14,17 @@ import { Audio } from 'expo-av';
 import { router } from 'expo-router';
 import { useMutation } from 'convex/react';
 import { Ionicons } from '@expo/vector-icons';
+import * as Haptics from 'expo-haptics';
 import { api } from '../convex/_generated/api';
 import ScreenContainer from '../components/ui/ScreenContainer';
 import MoodSelector from '../components/journal/MoodSelector';
 import VoiceRecorder from '../components/journal/VoiceRecorder';
+import { DropletButton } from '../components/ui/DropletButton';
+import { StardustText } from '../components/ui/StardustText';
 import { usePeriodicPaywall } from '../lib/hooks/usePeriodicPaywall';
 import { useReviewPrompt } from '../lib/hooks/useReviewPrompt';
 import { onDreamSaved as notifyDreamSaved } from '../lib/notifications';
+import { STARDUST_THEME } from '../lib/theme';
 import { COLORS, SPACING, TYPOGRAPHY, BORDER_RADIUS } from '../lib/constants';
 
 type Mode = 'voice' | 'text';
@@ -187,56 +191,57 @@ export default function RecordScreen() {
       >
         {/* Header */}
         <View style={styles.header}>
-          <TouchableOpacity
+          <Pressable
             onPress={() => router.back()}
-            hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+            hitSlop={12}
           >
-            <Text style={styles.cancelText}>Cancel</Text>
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>New Dream</Text>
-          <TouchableOpacity
+            <StardustText variant="body" color={STARDUST_THEME.text.secondary}>Cancel</StardustText>
+          </Pressable>
+          <StardustText variant="cardTitle" color={STARDUST_THEME.text.primary}>New Dream</StardustText>
+          <DropletButton
             onPress={handleSave}
-            disabled={saving || !canSave}
-            style={[styles.saveButton, (saving || !canSave) && styles.saveButtonDisabled]}
-          >
-            <Text style={styles.saveButtonText}>
-              {saving ? 'Saving...' : 'Save'}
-            </Text>
-          </TouchableOpacity>
+            title={saving ? 'Saving...' : 'Save'}
+            variant="gold"
+            size="sm"
+            loading={saving}
+            disabled={!canSave}
+          />
         </View>
 
         {/* Mode Toggle */}
         <View style={styles.modeToggle}>
-          <TouchableOpacity
+          <Pressable
             style={[styles.modeTab, mode === 'voice' && styles.modeTabActive]}
-            onPress={() => setMode('voice')}
+            onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setMode('voice'); }}
           >
             <Ionicons
               name="mic"
               size={18}
-              color={mode === 'voice' ? COLORS.background : COLORS.textSecondary}
+              color={mode === 'voice' ? STARDUST_THEME.bg.primary : STARDUST_THEME.text.secondary}
             />
-            <Text
-              style={[styles.modeTabText, mode === 'voice' && styles.modeTabTextActive]}
+            <StardustText
+              variant="label"
+              color={mode === 'voice' ? STARDUST_THEME.bg.primary : STARDUST_THEME.text.secondary}
             >
               Voice
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
+            </StardustText>
+          </Pressable>
+          <Pressable
             style={[styles.modeTab, mode === 'text' && styles.modeTabActive]}
-            onPress={() => setMode('text')}
+            onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setMode('text'); }}
           >
             <Ionicons
               name="pencil"
               size={18}
-              color={mode === 'text' ? COLORS.background : COLORS.textSecondary}
+              color={mode === 'text' ? STARDUST_THEME.bg.primary : STARDUST_THEME.text.secondary}
             />
-            <Text
-              style={[styles.modeTabText, mode === 'text' && styles.modeTabTextActive]}
+            <StardustText
+              variant="label"
+              color={mode === 'text' ? STARDUST_THEME.bg.primary : STARDUST_THEME.text.secondary}
             >
               Type
-            </Text>
-          </TouchableOpacity>
+            </StardustText>
+          </Pressable>
         </View>
 
         <ScrollView
@@ -254,30 +259,30 @@ export default function RecordScreen() {
           {mode === 'voice' && recordingUri && (
             <View style={styles.previewCard}>
               <View style={styles.previewTop}>
-                <TouchableOpacity
+                <Pressable
                   style={styles.playButton}
                   onPress={handlePlayPause}
                 >
                   <Ionicons
                     name={isPlaying ? 'pause' : 'play'}
                     size={28}
-                    color={COLORS.primary}
+                    color={STARDUST_THEME.gold.warm}
                   />
-                </TouchableOpacity>
+                </Pressable>
                 <View style={styles.previewInfo}>
-                  <Text style={styles.previewTitle}>Dream Recording</Text>
-                  <Text style={styles.previewDuration}>
+                  <StardustText variant="body" color={STARDUST_THEME.text.primary}>Dream Recording</StardustText>
+                  <StardustText variant="timestamp" color={STARDUST_THEME.text.secondary}>
                     {formatDuration(recordingDuration)}
-                  </Text>
+                  </StardustText>
                 </View>
               </View>
-              <TouchableOpacity
+              <Pressable
                 style={styles.reRecordButton}
                 onPress={handleReRecord}
               >
-                <Ionicons name="refresh" size={16} color={COLORS.recording} />
-                <Text style={styles.reRecordText}>Re-record</Text>
-              </TouchableOpacity>
+                <Ionicons name="refresh" size={16} color={STARDUST_THEME.mood.scared} />
+                <StardustText variant="label" color={STARDUST_THEME.mood.scared}>Re-record</StardustText>
+              </Pressable>
             </View>
           )}
 
@@ -302,21 +307,21 @@ export default function RecordScreen() {
 
           {/* Tags */}
           <View style={styles.tagsSection}>
-            <Text style={styles.sectionLabel}>Dream Tags</Text>
+            <StardustText variant="label" color={STARDUST_THEME.text.secondary} style={styles.sectionLabel}>Dream Tags</StardustText>
             <View style={styles.tagsRow}>
               {tags.map((tag) => (
-                <TouchableOpacity
+                <Pressable
                   key={tag}
                   style={styles.tagPill}
                   onPress={() => removeTag(tag)}
                 >
-                  <Text style={styles.tagText}>{tag}</Text>
+                  <StardustText variant="timestamp" color={STARDUST_THEME.text.primary}>{tag}</StardustText>
                   <Ionicons
                     name="close-circle"
                     size={14}
-                    color={COLORS.primaryText}
+                    color={STARDUST_THEME.gold.muted}
                   />
-                </TouchableOpacity>
+                </Pressable>
               ))}
               <View style={styles.tagInputContainer}>
                 <TextInput
@@ -349,28 +354,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: SPACING.lg,
     paddingVertical: SPACING.md,
   },
-  cancelText: {
-    ...TYPOGRAPHY.body,
-    color: COLORS.textSecondary,
-  },
-  headerTitle: {
-    ...TYPOGRAPHY.subtitle,
-    color: COLORS.textPrimary,
-  },
-  saveButton: {
-    backgroundColor: COLORS.primary,
-    borderRadius: BORDER_RADIUS.md,
-    paddingHorizontal: SPACING.md + 4,
-    paddingVertical: SPACING.sm + 2,
-  },
-  saveButtonDisabled: {
-    opacity: 0.5,
-  },
-  saveButtonText: {
-    ...TYPOGRAPHY.caption,
-    color: COLORS.background,
-    fontWeight: '600',
-  },
   modeToggle: {
     flexDirection: 'row',
     marginHorizontal: SPACING.lg,
@@ -389,15 +372,7 @@ const styles = StyleSheet.create({
     borderRadius: BORDER_RADIUS.sm,
   },
   modeTabActive: {
-    backgroundColor: COLORS.primary,
-  },
-  modeTabText: {
-    ...TYPOGRAPHY.caption,
-    color: COLORS.textSecondary,
-    fontWeight: '600',
-  },
-  modeTabTextActive: {
-    color: COLORS.background,
+    backgroundColor: STARDUST_THEME.gold.warm,
   },
   scrollContent: {
     paddingHorizontal: SPACING.lg,
@@ -418,22 +393,13 @@ const styles = StyleSheet.create({
     width: 52,
     height: 52,
     borderRadius: 26,
-    backgroundColor: COLORS.primaryMuted,
+    backgroundColor: 'rgba(212, 175, 55, 0.1)',
     alignItems: 'center',
     justifyContent: 'center',
   },
   previewInfo: {
     flex: 1,
-  },
-  previewTitle: {
-    ...TYPOGRAPHY.body,
-    color: COLORS.textPrimary,
-    fontWeight: '500',
-  },
-  previewDuration: {
-    ...TYPOGRAPHY.caption,
-    color: COLORS.textSecondary,
-    marginTop: 2,
+    gap: 2,
   },
   reRecordButton: {
     flexDirection: 'row',
@@ -442,13 +408,6 @@ const styles = StyleSheet.create({
     gap: 6,
     marginTop: SPACING.md,
     paddingVertical: SPACING.sm,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: COLORS.surfaceElevated,
-  },
-  reRecordText: {
-    ...TYPOGRAPHY.caption,
-    color: COLORS.recording,
-    fontWeight: '500',
   },
   contentContainer: {
     backgroundColor: COLORS.surface,
@@ -467,8 +426,6 @@ const styles = StyleSheet.create({
     marginBottom: SPACING.lg,
   },
   sectionLabel: {
-    ...TYPOGRAPHY.caption,
-    color: COLORS.textSecondary,
     marginBottom: SPACING.sm,
   },
   tagsRow: {
@@ -481,16 +438,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    backgroundColor: COLORS.primaryDim,
+    backgroundColor: 'rgba(212, 175, 55, 0.1)',
     borderRadius: BORDER_RADIUS.full,
     paddingHorizontal: SPACING.sm + 2,
     paddingVertical: SPACING.xs + 2,
-  },
-  tagText: {
-    ...TYPOGRAPHY.caption,
-    color: COLORS.primaryText,
-    fontWeight: '500',
-    fontSize: 12,
   },
   tagInputContainer: {
     backgroundColor: COLORS.surface,

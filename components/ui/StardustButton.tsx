@@ -1,46 +1,43 @@
-import React, { ReactNode } from 'react';
+import React, { useCallback, useRef } from 'react';
 import { Pressable, StyleSheet, Animated, ViewStyle } from 'react-native';
 import { STARDUST_THEME } from '../../lib/theme';
 import { RADIUS, SPACING } from '../../lib/layout';
 import { StardustText } from './StardustText';
 
 interface StardustButtonProps {
-    children: ReactNode;
+    children: React.ReactNode;
     onPress: () => void;
     variant?: 'primary' | 'ghost';
     fullWidth?: boolean;
-    style?: import('react-native').StyleProp<import('react-native').ViewStyle>;
+    style?: import('react-native').StyleProp<ViewStyle>;
 }
 
-export function StardustButton({
+export const StardustButton = React.memo(function StardustButton({
     children,
     onPress,
     variant = 'primary',
     fullWidth = false,
     style
 }: StardustButtonProps) {
-    const scaleAnim = React.useRef(new Animated.Value(1)).current;
-    const [isPressed, setIsPressed] = React.useState(false);
+    const scaleAnim = useRef(new Animated.Value(1)).current;
 
-    const handlePressIn = () => {
-        setIsPressed(true);
+    const handlePressIn = useCallback(() => {
         Animated.spring(scaleAnim, {
             toValue: 0.96,
             useNativeDriver: true,
-            speed: 12,
+            speed: 50,
             bounciness: 4,
         }).start();
-    };
+    }, [scaleAnim]);
 
-    const handlePressOut = () => {
-        setIsPressed(false);
+    const handlePressOut = useCallback(() => {
         Animated.spring(scaleAnim, {
             toValue: 1,
             useNativeDriver: true,
-            speed: 12,
+            speed: 50,
             bounciness: 4,
         }).start();
-    };
+    }, [scaleAnim]);
 
     const isPrimary = variant === 'primary';
 
@@ -53,8 +50,6 @@ export function StardustButton({
                 style={[
                     styles.base,
                     isPrimary ? styles.primary : styles.ghost,
-                    isPrimary && isPressed && styles.primaryPressed,
-                    !isPrimary && isPressed && styles.ghostPressed,
                     fullWidth && { width: '100%' },
                     style,
                 ]}
@@ -69,7 +64,7 @@ export function StardustButton({
             </Pressable>
         </Animated.View>
     );
-}
+});
 
 const styles = StyleSheet.create({
     base: {
@@ -81,19 +76,10 @@ const styles = StyleSheet.create({
     },
     primary: {
         backgroundColor: STARDUST_THEME.gold.warm,
-        // Add shadow for depth? Prompt didn't specify shadow for button but good practice.
-        // Sticking to prompt: "Background gold.warm, text inverse, rounded-full. Subtle press animation..."
-    },
-    primaryPressed: {
-        backgroundColor: STARDUST_THEME.gold.bright, // "darken gold slightly" -> actually prompt says "darken slightly". bright is usually lighter. Let's use muted or just opacity.
-        opacity: 0.9,
     },
     ghost: {
         backgroundColor: 'transparent',
         borderWidth: 1,
         borderColor: STARDUST_THEME.gold.muted,
-    },
-    ghostPressed: {
-        backgroundColor: 'rgba(196, 162, 101, 0.1)', // gold.warm at 10%
     },
 });

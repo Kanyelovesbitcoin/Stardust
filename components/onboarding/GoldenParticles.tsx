@@ -1,9 +1,9 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, memo } from 'react';
 import { View, StyleSheet, Animated, Dimensions } from 'react-native';
 import { STARDUST_THEME } from '../../lib/theme';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
-const PARTICLE_COUNT = 18;
+const PARTICLE_COUNT = 10;
 
 interface Particle {
   x: number;
@@ -18,14 +18,14 @@ function createParticles(): Particle[] {
   return Array.from({ length: PARTICLE_COUNT }, () => ({
     x: Math.random() * SCREEN_WIDTH,
     y: Math.random() * SCREEN_HEIGHT,
-    size: 2 + Math.random() * 4,
+    size: 2 + Math.random() * 3,
     duration: 3000 + Math.random() * 4000,
     delay: Math.random() * 2000,
-    opacity: 0.1 + Math.random() * 0.3,
+    opacity: 0.15 + Math.random() * 0.25,
   }));
 }
 
-function ParticleDot({ particle }: { particle: Particle }) {
+const ParticleDot = memo(function ParticleDot({ particle }: { particle: Particle }) {
   const floatAnim = useRef(new Animated.Value(0)).current;
   const fadeAnim = useRef(new Animated.Value(0)).current;
 
@@ -73,15 +73,11 @@ function ParticleDot({ particle }: { particle: Particle }) {
           opacity: fadeAnim,
           transform: [{ translateY: floatAnim }],
           backgroundColor: STARDUST_THEME.gold.warm,
-          shadowColor: STARDUST_THEME.gold.glow,
-          shadowOffset: { width: 0, height: 0 },
-          shadowOpacity: 0.6,
-          shadowRadius: particle.size * 2,
         },
       ]}
     />
   );
-}
+});
 
 export function GoldenParticles() {
   const particles = useRef(createParticles()).current;

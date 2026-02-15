@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useRef, useCallback } from 'react';
 import { StyleSheet, TouchableOpacity, Animated } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS } from '../../lib/constants';
@@ -7,24 +7,25 @@ interface FloatingAddButtonProps {
   onPress: () => void;
 }
 
-export default function FloatingAddButton({ onPress }: FloatingAddButtonProps) {
+export default React.memo(function FloatingAddButton({ onPress }: FloatingAddButtonProps) {
   const scale = useRef(new Animated.Value(1)).current;
 
-  const handlePressIn = () => {
+  const handlePressIn = useCallback(() => {
     Animated.spring(scale, {
       toValue: 0.9,
       useNativeDriver: true,
+      speed: 50,
     }).start();
-  };
+  }, [scale]);
 
-  const handlePressOut = () => {
+  const handlePressOut = useCallback(() => {
     Animated.spring(scale, {
       toValue: 1,
       friction: 3,
       tension: 100,
       useNativeDriver: true,
     }).start();
-  };
+  }, [scale]);
 
   return (
     <Animated.View style={[styles.container, { transform: [{ scale }] }]}>
@@ -39,7 +40,7 @@ export default function FloatingAddButton({ onPress }: FloatingAddButtonProps) {
       </TouchableOpacity>
     </Animated.View>
   );
-}
+});
 
 const styles = StyleSheet.create({
   container: {
@@ -54,10 +55,6 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.primary,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: COLORS.primary,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.5,
-    shadowRadius: 12,
-    elevation: 10,
+    elevation: 6,
   },
 });

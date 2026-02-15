@@ -13,7 +13,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { GoldenParticles } from '../components/onboarding/GoldenParticles';
-import { StardustButton } from '../components/ui/StardustButton';
+import { DropletButton } from '../components/ui/DropletButton';
 import { StardustText } from '../components/ui/StardustText';
 import { usePaywall, PLACEMENTS } from '../lib/hooks/usePaywall';
 import { SPACING, RADIUS } from '../lib/layout';
@@ -24,7 +24,6 @@ type IconName = React.ComponentProps<typeof Ionicons>['name'];
 const ONBOARDED_KEY = 'hasOnboarded';
 const TOTAL_SLIDES = 5;
 
-// Background texture images for each slide (light parchment → deep watercolor)
 const SLIDE_BACKGROUNDS = [
   require('../assets/onboarding-bg-1.png'),
   require('../assets/onboarding-bg-2.png'),
@@ -32,8 +31,6 @@ const SLIDE_BACKGROUNDS = [
   require('../assets/onboarding-bg-4.png'),
   require('../assets/onboarding-bg-5.png'),
 ];
-
-// ─── Slide data ──────────────────────────────────────────
 
 type SlideData = {
   id: string;
@@ -51,8 +48,7 @@ const SLIDES: SlideData[] = [
     kind: 'value',
     icon: 'moon-outline',
     title: 'Discover Your\nDreamer Type',
-    subtitle:
-      'Stardust analyzes your dream patterns and builds a personalized protocol to unlock lucid dreaming.',
+    subtitle: 'Stardust analyzes your dream patterns and builds a personalized protocol to unlock lucid dreaming.',
     highlights: [
       { icon: 'sparkles-outline', text: 'AI-powered dream analysis' },
       { icon: 'compass-outline', text: 'Personalized dream protocol' },
@@ -64,8 +60,7 @@ const SLIDES: SlideData[] = [
     kind: 'feature',
     icon: 'mic-outline',
     title: 'Capture Dreams\nEffortlessly',
-    subtitle:
-      'Speak or type your dreams. Our AI transcribes, interprets, and visualizes them instantly.',
+    subtitle: 'Speak or type your dreams. Our AI transcribes, interprets, and visualizes them instantly.',
     highlights: [
       { icon: 'mic-outline', text: 'Voice-to-text dream capture' },
       { icon: 'bulb-outline', text: 'AI symbol interpretation' },
@@ -77,8 +72,7 @@ const SLIDES: SlideData[] = [
     kind: 'feature',
     icon: 'musical-notes-outline',
     title: 'Sleep Sounds\n& Rituals',
-    subtitle:
-      'Curated soundscapes and guided rituals designed to improve sleep quality and dream recall.',
+    subtitle: 'Curated soundscapes and guided rituals designed to improve sleep quality and dream recall.',
     highlights: [
       { icon: 'volume-medium-outline', text: 'Multi-layered sleep soundscapes' },
       { icon: 'moon-outline', text: 'Guided bedtime rituals' },
@@ -90,8 +84,7 @@ const SLIDES: SlideData[] = [
     kind: 'social',
     icon: 'people-outline',
     title: 'Join Thousands of\nLucid Dreamers',
-    subtitle:
-      'One guided workflow replaces scattered apps, ads, and random tips.',
+    subtitle: 'One guided workflow replaces scattered apps, ads, and random tips.',
     stat: { value: '73%', label: 'of users report improved dream recall within 2 weeks' },
     highlights: [
       { icon: 'shield-checkmark-outline', text: 'No ads, no data selling' },
@@ -104,8 +97,7 @@ const SLIDES: SlideData[] = [
     kind: 'personal',
     icon: 'diamond-outline',
     title: 'Your Dream\nJourney Awaits',
-    subtitle:
-      'Everything you need to remember, understand, and control your dreams — in one beautiful app.',
+    subtitle: 'Everything you need to remember, understand, and control your dreams \u2014 in one beautiful app.',
     highlights: [
       { icon: 'infinite-outline', text: 'Unlimited AI interpretations' },
       { icon: 'images-outline', text: 'Unlimited dream artwork' },
@@ -114,8 +106,6 @@ const SLIDES: SlideData[] = [
     ],
   },
 ];
-
-// ─── Dot indicator ───────────────────────────────────────
 
 function DotIndicator({ current, total }: { current: number; total: number }) {
   return (
@@ -134,22 +124,18 @@ function DotIndicator({ current, total }: { current: number; total: number }) {
   );
 }
 
-// ─── Highlight row ───────────────────────────────────────
-
 function HighlightRow({ icon, text }: { icon: IconName; text: string }) {
   return (
     <View style={styles.highlightRow}>
       <View style={styles.highlightIconWrap}>
         <Ionicons name={icon} size={18} color={STARDUST_THEME.gold.warm} />
       </View>
-      <StardustText variant="body" color={STARDUST_THEME.text.primary} style={{ flex: 1 }}>
+      <StardustText variant="body" color={STARDUST_THEME.text.primary} style={styles.highlightText}>
         {text}
       </StardustText>
     </View>
   );
 }
-
-// ─── Main screen ─────────────────────────────────────────
 
 export default function OnboardingScreen() {
   const insets = useSafeAreaInsets();
@@ -166,8 +152,6 @@ export default function OnboardingScreen() {
   const slide = SLIDES[currentSlide];
   const isLastSlide = currentSlide === TOTAL_SLIDES - 1;
   const canGoBack = currentSlide > 0;
-
-  // ─── Hydrate ─────────────────────────────────────────
 
   useEffect(() => {
     let mounted = true;
@@ -189,8 +173,6 @@ export default function OnboardingScreen() {
     return () => { mounted = false; };
   }, []);
 
-  // ─── Hero entrance animation ─────────────────────────
-
   useEffect(() => {
     heroScaleAnim.setValue(0.8);
     heroOpacityAnim.setValue(0);
@@ -208,8 +190,6 @@ export default function OnboardingScreen() {
       }),
     ]).start();
   }, [currentSlide]);
-
-  // ─── Navigation ──────────────────────────────────────
 
   const animateToSlide = (next: number) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -254,7 +234,6 @@ export default function OnboardingScreen() {
       if (unlocked || isPremium) {
         await completeOnboarding();
       } else {
-        // User dismissed paywall — still complete onboarding
         await completeOnboarding();
       }
     } catch (e) {
@@ -262,8 +241,6 @@ export default function OnboardingScreen() {
       await completeOnboarding();
     }
   };
-
-  // ─── Render ──────────────────────────────────────────
 
   if (isHydrating) return null;
 
@@ -274,7 +251,6 @@ export default function OnboardingScreen() {
         style={StyleSheet.absoluteFill}
         resizeMode="cover"
       />
-      {/* Dark overlay for text readability */}
       <View style={styles.backgroundOverlay} />
       <GoldenParticles />
 
@@ -298,7 +274,7 @@ export default function OnboardingScreen() {
           { opacity: fadeAnim, transform: [{ translateY: slideAnim }] },
         ]}
       >
-        {/* Hero icon */}
+        {/* Hero icon — NO border, NO shadow */}
         <Animated.View
           style={[
             styles.heroCircle,
@@ -311,7 +287,6 @@ export default function OnboardingScreen() {
           <Ionicons name={slide.icon} size={40} color={STARDUST_THEME.gold.bright} />
         </Animated.View>
 
-        {/* Title */}
         <StardustText
           variant="heroTitle"
           align="center"
@@ -321,7 +296,6 @@ export default function OnboardingScreen() {
           {slide.title}
         </StardustText>
 
-        {/* Subtitle */}
         <StardustText
           variant="body"
           align="center"
@@ -331,7 +305,6 @@ export default function OnboardingScreen() {
           {slide.subtitle}
         </StardustText>
 
-        {/* Stat card (social proof slide) */}
         {slide.stat ? (
           <View style={styles.statCard}>
             <StardustText variant="heroTitle" color={STARDUST_THEME.gold.bright} style={styles.statValue}>
@@ -343,7 +316,6 @@ export default function OnboardingScreen() {
           </View>
         ) : null}
 
-        {/* Highlight list */}
         {slide.highlights ? (
           <View style={styles.highlightList}>
             {slide.highlights.map((h) => (
@@ -359,15 +331,17 @@ export default function OnboardingScreen() {
         locations={[0, 0.25, 1]}
         style={[styles.footer, { paddingBottom: insets.bottom + SPACING.md }]}
       >
-        <StardustButton onPress={handleContinue} fullWidth>
-          {currentSlide === 0 ? 'Get Started' : 'Continue'}
-        </StardustButton>
+        <DropletButton
+          onPress={handleContinue}
+          title={currentSlide === 0 ? 'Get Started' : 'Continue'}
+          variant="gold"
+          size="lg"
+          fullWidth
+        />
       </LinearGradient>
     </View>
   );
 }
-
-// ─── Styles ──────────────────────────────────────────────
 
 const styles = StyleSheet.create({
   container: {
@@ -420,17 +394,10 @@ const styles = StyleSheet.create({
     width: 96,
     height: 96,
     borderRadius: 48,
-    borderWidth: 1,
-    borderColor: 'rgba(212, 175, 55, 0.2)',
     backgroundColor: 'rgba(212, 175, 55, 0.08)',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: SPACING.lg,
-    shadowColor: 'rgba(212, 175, 55, 0.3)',
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 1,
-    shadowRadius: 20,
-    elevation: 4,
   },
   title: {
     marginBottom: SPACING.sm,
@@ -446,8 +413,6 @@ const styles = StyleSheet.create({
     width: '100%',
     maxWidth: 320,
     borderRadius: RADIUS.lg,
-    borderWidth: 1,
-    borderColor: 'rgba(212, 175, 55, 0.15)',
     backgroundColor: 'rgba(212, 175, 55, 0.06)',
     paddingVertical: SPACING.lg,
     paddingHorizontal: SPACING.xl,
@@ -473,10 +438,11 @@ const styles = StyleSheet.create({
     height: 36,
     borderRadius: 18,
     backgroundColor: 'rgba(212, 175, 55, 0.1)',
-    borderWidth: 1,
-    borderColor: 'rgba(212, 175, 55, 0.15)',
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  highlightText: {
+    flex: 1,
   },
   footer: {
     position: 'absolute',

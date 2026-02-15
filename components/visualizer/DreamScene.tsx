@@ -5,7 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { STARDUST_THEME } from '../../lib/theme';
 import { RADIUS, SPACING } from '../../lib/layout';
 import { StardustText } from '../ui/StardustText';
-import { StardustButton } from '../ui/StardustButton';
+import { DropletButton } from '../ui/DropletButton';
 
 interface DreamSceneProps {
   sceneUrl?: string | null;
@@ -20,7 +20,7 @@ interface DreamSceneProps {
 
 const BLURHASH = '|rF?hV%2WCj[ayj[a|j[az_NaeWBj@ayfRayfQfQM{M|azj[azj19teleM{M|j[WBj[ofj[ayj[j[fQayWCoeoeaya}j[ayfQa{oLj?j[WVj[ayayj[fQoff7teleaya}j[ayj[j[ayofayj[oLofj[WCoeayj[j[fQj[aya}j[ayj[';
 
-export default function DreamScene({
+export default React.memo(function DreamScene({
   sceneUrl,
   isGenerating,
   imageError,
@@ -30,7 +30,6 @@ export default function DreamScene({
   borderRadius = RADIUS.lg,
   showCaption = true,
 }: DreamSceneProps) {
-  // Loading/shimmer state
   if (isGenerating && !sceneUrl) {
     return (
       <View style={[styles.container, { aspectRatio, borderRadius }]}>
@@ -40,13 +39,9 @@ export default function DreamScene({
             name="brush-outline"
             size={28}
             color={STARDUST_THEME.gold.muted}
-            style={{ marginTop: SPACING.sm }}
+            style={styles.shimmerIcon}
           />
-          <StardustText
-            variant="label"
-            color={STARDUST_THEME.gold.muted}
-            style={{ marginTop: SPACING.sm }}
-          >
+          <StardustText variant="label" color={STARDUST_THEME.gold.muted} style={styles.shimmerText}>
             Painting your dream...
           </StardustText>
         </View>
@@ -54,7 +49,6 @@ export default function DreamScene({
     );
   }
 
-  // Error state
   if (imageError && !sceneUrl) {
     return (
       <View style={[styles.container, { aspectRatio, borderRadius }]}>
@@ -64,25 +58,24 @@ export default function DreamScene({
             variant="bodySmall"
             color={STARDUST_THEME.text.secondary}
             align="center"
-            style={{ marginTop: SPACING.sm, maxWidth: 220 }}
+            style={styles.errorText}
           >
             {imageError}
           </StardustText>
           {onRetry && (
-            <StardustButton
+            <DropletButton
               onPress={onRetry}
+              title="Retry"
               variant="ghost"
-              style={{ marginTop: SPACING.md }}
-            >
-              Retry
-            </StardustButton>
+              size="sm"
+              style={styles.retryButton}
+            />
           )}
         </View>
       </View>
     );
   }
 
-  // Image loaded
   if (sceneUrl) {
     return (
       <View>
@@ -91,8 +84,9 @@ export default function DreamScene({
             source={{ uri: sceneUrl }}
             style={[styles.image, { aspectRatio, borderRadius }]}
             contentFit="cover"
-            transition={800}
+            transition={300}
             placeholder={{ blurhash: BLURHASH }}
+            cachePolicy="memory-disk"
           />
         </Pressable>
         {showCaption && (
@@ -100,7 +94,7 @@ export default function DreamScene({
             variant="bodySmall"
             color={STARDUST_THEME.text.tertiary}
             align="center"
-            style={{ marginTop: SPACING.sm }}
+            style={styles.caption}
           >
             Generated based on your dream
           </StardustText>
@@ -109,23 +103,25 @@ export default function DreamScene({
     );
   }
 
-  // No image, not generating, no error — empty state
   return null;
-}
+});
 
 const styles = StyleSheet.create({
   container: {
     width: '100%',
     backgroundColor: STARDUST_THEME.bg.secondary,
     overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: STARDUST_THEME.border,
-    borderStyle: 'dashed',
   },
   shimmer: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  shimmerIcon: {
+    marginTop: SPACING.sm,
+  },
+  shimmerText: {
+    marginTop: SPACING.sm,
   },
   errorContainer: {
     flex: 1,
@@ -133,9 +129,17 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     padding: SPACING.lg,
   },
+  errorText: {
+    marginTop: SPACING.sm,
+    maxWidth: 220,
+  },
+  retryButton: {
+    marginTop: SPACING.md,
+  },
   image: {
     width: '100%',
-    borderWidth: 1,
-    borderColor: STARDUST_THEME.border,
+  },
+  caption: {
+    marginTop: SPACING.sm,
   },
 });

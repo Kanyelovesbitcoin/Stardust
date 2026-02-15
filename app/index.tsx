@@ -1,4 +1,4 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useCallback, useMemo } from 'react';
 import {
   View,
   StyleSheet,
@@ -6,8 +6,8 @@ import {
   Animated,
   SectionList,
   Dimensions,
-  Image,
 } from 'react-native';
+import { Image } from 'expo-image';
 import { router } from 'expo-router';
 import { useQuery } from 'convex/react';
 import { Ionicons } from '@expo/vector-icons';
@@ -21,7 +21,6 @@ import { StardustText } from '../components/ui/StardustText';
 import { StardustCard } from '../components/ui/StardustCard';
 import { MoodPill } from '../components/ui/MoodPill';
 import ScreenContainer from '../components/ui/ScreenContainer';
-import { BlurView } from 'expo-blur';
 
 const { width } = Dimensions.get('window');
 
@@ -40,13 +39,9 @@ export default function JournalHome() {
 
   // FAB Animation
   const scaleAnim = useRef(new Animated.Value(1)).current;
-
-  // Stagger animation values - simpler to animate items on mount
-  // or use a ref map if list changes dynamically. 
-  // For MVP, we can just animate the container or use a simple key-based stagger.
+  const pulseRef = useRef<Animated.CompositeAnimation | null>(null);
 
   useEffect(() => {
-    // Check onboarding
     const checkOnboarding = async () => {
       try {
         const hasOnboarded = await import('@react-native-async-storage/async-storage').then(m => m.default.getItem('hasOnboarded'));
@@ -59,21 +54,38 @@ export default function JournalHome() {
     };
     checkOnboarding();
 
-    // Pulse animation for FAB
     const pulse = Animated.loop(
       Animated.sequence([
         Animated.timing(scaleAnim, { toValue: 1.05, duration: 2000, useNativeDriver: true }),
         Animated.timing(scaleAnim, { toValue: 1, duration: 2000, useNativeDriver: true })
       ])
     );
+    pulseRef.current = pulse;
     pulse.start();
+
+    return () => {
+      pulse.stop();
+    };
   }, []);
 
-  const sections = [
+  const sections = useMemo(() => [
     { title: 'RECENT DREAMS', data: dreams }
-  ];
+  ], [dreams]);
 
-  const renderDreamItem = ({ item, index }: { item: any, index: number }) => {
+  const handleFabPressIn = useCallback(() => {
+    pulseRef.current?.stop();
+    Animated.spring(scaleAnim, { toValue: 0.95, useNativeDriver: true, speed: 50 }).start();
+  }, [scaleAnim]);
+
+  const handleFabPressOut = useCallback(() => {
+    Animated.spring(scaleAnim, { toValue: 1, useNativeDriver: true, speed: 50 }).start();
+  }, [scaleAnim]);
+
+  const handleFabPress = useCallback(() => {
+    router.push('/record');
+  }, []);
+
+  const renderDreamItem = useCallback(({ item }: { item: any }) => {
     const title = item.transcript
       ? item.transcript.split(/\s+/).slice(0, 6).join(' ') + (item.transcript.length > 40 ? '...' : '')
       : "Untitled Dream";
@@ -81,69 +93,73 @@ export default function JournalHome() {
     const bodyPreview = item.transcript || "No details recorded.";
 
     return (
-      <Animated.View style={{ opacity: 1 }}>
-        <StardustCard
-          onPress={() => router.push(`/dream/${item._id}`)}
-          style={styles.dreamCard}
-        >
-          <View style={styles.cardContent}>
-            <View style={styles.cardLeft}>
-              <View style={styles.dateRow}>
-                <StardustText variant="label" color={STARDUST_THEME.text.tertiary} style={{ fontSize: 11, letterSpacing: 1 }}>
-                  {new Date(item.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }).toUpperCase()}
-                </StardustText>
-              </View>
-
-              <StardustText variant="cardTitle" color={STARDUST_THEME.text.primary} numberOfLines={1} style={{ marginBottom: 4, fontSize: 18 }}>
-                {title}
+      <StardustCard
+        onPress={() => router.push(`/dream/${item._id}`)}
+        style={styles.dreamCard}
+      >
+        <View style={styles.cardContent}>
+          <View style={styles.cardLeft}>
+            <View style={styles.dateRow}>
+              <StardustText variant="label" color={STARDUST_THEME.text.tertiary} style={styles.dateText}>
+                {new Date(item.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }).toUpperCase()}
               </StardustText>
-
-              <StardustText variant="bodySmall" color={STARDUST_THEME.text.secondary} numberOfLines={2} style={{ marginBottom: SPACING.md }}>
-                {bodyPreview}
-              </StardustText>
-
-              <View style={styles.tagsRow}>
-                {item.mood && <MoodPill mood={item.mood} />}
-              </View>
             </View>
 
-            <View style={styles.thumbnailContainer}>
-              {item.sceneUrl ? (
-                <Image
-                  source={{ uri: item.sceneUrl }}
-                  style={styles.thumbnail}
-                  resizeMode="cover"
-                />
-              ) : (
-                <View style={styles.thumbnailPlaceholder}>
-                  <Ionicons name="moon-outline" size={16} color={STARDUST_THEME.text.tertiary} />
-                </View>
-              )}
+            <StardustText variant="cardTitle" color={STARDUST_THEME.text.primary} numberOfLines={1} style={styles.titleText}>
+              {title}
+            </StardustText>
+
+            <StardustText variant="bodySmall" color={STARDUST_THEME.text.secondary} numberOfLines={2} style={styles.bodyText}>
+              {bodyPreview}
+            </StardustText>
+
+            <View style={styles.tagsRow}>
+              {item.mood && <MoodPill mood={item.mood} />}
             </View>
           </View>
-        </StardustCard>
-      </Animated.View>
-    );
-  };
 
-  const renderSectionHeader = ({ section: { title } }: { section: { title: string } }) => (
-    <BlurView intensity={20} tint="dark" style={styles.stickyHeader}>
+          <View style={styles.thumbnailContainer}>
+            {item.sceneUrl ? (
+              <Image
+                source={{ uri: item.sceneUrl }}
+                style={styles.thumbnail}
+                contentFit="cover"
+                cachePolicy="memory-disk"
+                recyclingKey={item._id}
+              />
+            ) : (
+              <View style={styles.thumbnailPlaceholder}>
+                <Ionicons name="moon-outline" size={16} color={STARDUST_THEME.text.tertiary} />
+              </View>
+            )}
+          </View>
+        </View>
+      </StardustCard>
+    );
+  }, []);
+
+  const renderSectionHeader = useCallback(({ section: { title } }: { section: { title: string } }) => (
+    <View style={styles.stickyHeader}>
       <StardustText variant="label" color={STARDUST_THEME.text.tertiary}>
         {title}
       </StardustText>
-    </BlurView>
-  );
+    </View>
+  ), []);
+
+  const keyExtractor = useCallback((item: any) => item._id, []);
 
   return (
     <ScreenContainer backgroundSource={require('../assets/bg-home.png')}>
       <SectionList
         sections={sections}
-        keyExtractor={(item) => item._id}
+        keyExtractor={keyExtractor}
         renderItem={renderDreamItem}
         renderSectionHeader={renderSectionHeader}
         stickySectionHeadersEnabled
         contentContainerStyle={styles.listContent}
         showsVerticalScrollIndicator={false}
+        maxToRenderPerBatch={8}
+        windowSize={5}
         ListHeaderComponent={
           <View style={styles.header}>
             <View>
@@ -180,14 +196,15 @@ export default function JournalHome() {
         { transform: [{ scale: scaleAnim }] }
       ]}>
         <Pressable
-          onPress={() => router.push('/record')}
-          onPressIn={() => Animated.spring(scaleAnim, { toValue: 0.95, useNativeDriver: true }).start()}
-          onPressOut={() => Animated.spring(scaleAnim, { toValue: 1, useNativeDriver: true }).start()}
+          onPress={handleFabPress}
+          onPressIn={handleFabPressIn}
+          onPressOut={handleFabPressOut}
         >
           <Image
             source={require('../assets/record-button.png')}
             style={styles.fab}
-            resizeMode="contain"
+            contentFit="contain"
+            cachePolicy="memory"
           />
         </Pressable>
       </Animated.View>
@@ -211,13 +228,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   listContent: {
-    paddingBottom: 160, // Space for tab bar + FAB area
+    paddingBottom: 160,
   },
   stickyHeader: {
     paddingHorizontal: SPACING.screenPadding,
     paddingVertical: SPACING.sm,
     marginBottom: SPACING.sm,
-    // BlurView handles background
+    backgroundColor: 'rgba(10, 10, 15, 0.85)',
   },
   dreamCard: {
     marginHorizontal: SPACING.screenPadding,
@@ -240,6 +257,17 @@ const styles = StyleSheet.create({
   },
   dateRow: {
     marginBottom: 4,
+  },
+  dateText: {
+    fontSize: 11,
+    letterSpacing: 1,
+  },
+  titleText: {
+    marginBottom: 4,
+    fontSize: 18,
+  },
+  bodyText: {
+    marginBottom: SPACING.md,
   },
   tagsRow: {
     flexDirection: 'row',
@@ -271,14 +299,10 @@ const styles = StyleSheet.create({
   },
   fabContainer: {
     position: 'absolute',
-    bottom: 120, // Adjusted for larger size
+    bottom: 120,
     right: 24,
     zIndex: 100,
-    shadowColor: 'rgba(201, 168, 76, 0.4)',
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 1,
-    shadowRadius: 20,
-    elevation: 10,
+    elevation: 6,
   },
   fab: {
     width: 96,

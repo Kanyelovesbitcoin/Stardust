@@ -1,12 +1,13 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import {
   View,
   Text,
   StyleSheet,
-  TouchableOpacity,
+  Pressable,
 } from 'react-native';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import * as Haptics from 'expo-haptics';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { STARDUST_THEME } from '../../lib/theme';
 
@@ -14,67 +15,51 @@ interface BottomTabBarProps {
   activeTab: 'journal' | 'gallery';
 }
 
-export default function BottomTabBar({ activeTab }: BottomTabBarProps) {
+export default React.memo(function BottomTabBar({ activeTab }: BottomTabBarProps) {
   const insets = useSafeAreaInsets();
 
-  const navigateJournal = () => {
+  const navigateJournal = useCallback(() => {
     if (activeTab !== 'journal') {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       router.navigate('/');
     }
-  };
+  }, [activeTab]);
 
-  const navigateGallery = () => {
+  const navigateGallery = useCallback(() => {
     if (activeTab !== 'gallery') {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       router.navigate('/gallery');
     }
-  };
+  }, [activeTab]);
 
   return (
     <View style={[styles.wrapper, { height: TAB_BAR_HEIGHT + insets.bottom, backgroundColor: '#1A1635' }]}>
       <View style={[styles.container, { paddingBottom: insets.bottom }]}>
-        <TouchableOpacity
-          style={styles.tab}
-          activeOpacity={0.7}
-          onPress={navigateJournal}
-        >
+        <Pressable style={styles.tab} onPress={navigateJournal}>
           <Ionicons
             name={activeTab === 'journal' ? 'book' : 'book-outline'}
             size={28}
             color={activeTab === 'journal' ? STARDUST_THEME.gold.bright : 'rgba(255,255,255,0.4)'}
           />
-          <Text
-            style={[
-              styles.tabLabel,
-              activeTab === 'journal' && styles.tabLabelActive,
-            ]}
-          >
+          <Text style={[styles.tabLabel, activeTab === 'journal' && styles.tabLabelActive]}>
             Journal
           </Text>
-        </TouchableOpacity>
+        </Pressable>
 
-        <TouchableOpacity
-          style={styles.tab}
-          activeOpacity={0.7}
-          onPress={navigateGallery}
-        >
+        <Pressable style={styles.tab} onPress={navigateGallery}>
           <Ionicons
             name={activeTab === 'gallery' ? 'prism' : 'prism-outline'}
             size={28}
             color={activeTab === 'gallery' ? STARDUST_THEME.gold.bright : 'rgba(255,255,255,0.4)'}
           />
-          <Text
-            style={[
-              styles.tabLabel,
-              activeTab === 'gallery' && styles.tabLabelActive,
-            ]}
-          >
+          <Text style={[styles.tabLabel, activeTab === 'gallery' && styles.tabLabelActive]}>
             Gallery
           </Text>
-        </TouchableOpacity>
+        </Pressable>
       </View>
     </View>
   );
-}
+});
 
 const TAB_BAR_HEIGHT = 70;
 
@@ -85,8 +70,6 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     zIndex: 1000,
-    borderTopWidth: 1,
-    borderTopColor: 'rgba(212, 175, 55, 0.15)',
   },
   container: {
     flex: 1,

@@ -27,6 +27,7 @@ export default function ScreenContainer({
         source={backgroundSource ?? DEFAULT_BG}
         style={styles.backgroundImage}
         resizeMode="cover"
+        fadeDuration={0}
       >
         <SafeAreaView style={[styles.containerTransparent, style]} edges={edges}>
           {children}

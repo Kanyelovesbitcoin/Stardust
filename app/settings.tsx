@@ -188,12 +188,9 @@ const styles = StyleSheet.create({
   proCard: {
     marginBottom: SPACING.xl,
     backgroundColor: STARDUST_THEME.bg.secondary,
-    borderColor: STARDUST_THEME.gold.muted,
-    borderWidth: 1,
   },
   proCardActive: {
-    borderColor: STARDUST_THEME.gold.bright,
-    backgroundColor: 'rgba(212, 175, 55, 0.1)', // Gold tint
+    backgroundColor: 'rgba(212, 175, 55, 0.1)',
   },
   proContent: {
     flexDirection: 'row',

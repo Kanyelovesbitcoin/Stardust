@@ -67,13 +67,12 @@ export const generateVisualization = internalAction({
         promptData.choices[0]?.message?.content?.trim() ?? "";
       if (!imagePrompt) throw new Error("Empty image prompt from LLM");
 
-      // Step 2: Generate image via Nano Banana (Gemini) through OpenRouter
+      // Step 2: Generate image via FLUX.2 Pro through OpenRouter
       const imageResponse = await fetch(OPENROUTER_URL, {
         method: "POST",
         headers: OPENROUTER_HEADERS(apiKey),
         body: JSON.stringify({
-          model: "google/gemini-2.5-flash-image",
-          modalities: ["image", "text"],
+          model: "black-forest-labs/flux.2-pro",
           messages: [
             {
               role: "user",
@@ -85,40 +84,42 @@ export const generateVisualization = internalAction({
 
       if (!imageResponse.ok) {
         const err = await imageResponse.text();
-        throw new Error(`Image gen error ${imageResponse.status}: ${err}`);
+        throw new Error(`FLUX image gen error ${imageResponse.status}: ${err}`);
       }
 
       const imageData = (await imageResponse.json()) as {
         choices: {
           message: {
             content?: string;
-            images?: {
-              type: string;
-              image_url: { url: string };
-            }[];
           };
         }[];
       };
 
-      const images = imageData.choices?.[0]?.message?.images;
-      if (!images || images.length === 0) {
-        throw new Error("No image in response");
-      }
-
-      // Extract base64 data from data URL (format: data:image/png;base64,...)
-      const dataUrl = images[0].image_url.url;
-      const base64Match = dataUrl.match(
+      // OpenRouter returns base64 image data in the message content
+      const content = imageData.choices?.[0]?.message?.content ?? "";
+      const base64Match = content.match(
         /^data:(image\/\w+);base64,(.+)$/
       );
-      if (!base64Match) {
-        throw new Error("Invalid image data URL format");
+
+      let mimeType: string;
+      let imageArrayBuffer: ArrayBuffer;
+
+      if (base64Match) {
+        // Data URL format
+        mimeType = base64Match[1];
+        imageArrayBuffer = Buffer.from(base64Match[2], "base64").buffer;
+      } else if (content.startsWith("http")) {
+        // URL format — download the image
+        const imageDownload = await fetch(content.trim());
+        if (!imageDownload.ok) throw new Error("Failed to download generated image");
+        imageArrayBuffer = await imageDownload.arrayBuffer();
+        mimeType = imageDownload.headers.get("content-type") || "image/png";
+      } else {
+        throw new Error("Unexpected FLUX response format");
       }
 
-      const mimeType = base64Match[1];
-      const base64Data = base64Match[2];
-
       // Step 3: Process and store image in Convex storage
-      const rawBuffer = Buffer.from(base64Data, "base64");
+      const rawBuffer = Buffer.from(new Uint8Array(imageArrayBuffer));
 
       let finalBuffer: Buffer = rawBuffer;
       let finalMimeType: string = mimeType;
