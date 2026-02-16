@@ -88,9 +88,9 @@ export type DreamType = keyof typeof DREAM_TYPES;
 export const DREAM_TAGS = {
   flying: { key: 'flying', label: 'Flying', image: require('../assets/flying.png') },
   animal: { key: 'animal', label: 'Animal', image: require('../assets/animal.png') },
-  fear: { key: 'fear', label: 'Fear', image: require('../assets/achive.png') },
+  fear: { key: 'fear', label: 'Fear', image: require('../assets/ink.png') },
   hope: { key: 'hope', label: 'Love/Hope', image: require('../assets/hope.png') },
-  favorite: { key: 'favorite', label: 'Favorite', image: require('../assets/ink.png') },
+  favorite: { key: 'favorite', label: 'Favorite', image: require('../assets/achive.png') },
 } as const;
 
 export type DreamTagKey = keyof typeof DREAM_TAGS;

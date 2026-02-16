@@ -19,7 +19,7 @@ import { StardustText } from '../components/ui/StardustText';
 import { StardustCard } from '../components/ui/StardustCard';
 import { MoodPill } from '../components/ui/MoodPill';
 import ScreenContainer from '../components/ui/ScreenContainer';
-import { DREAM_TYPES, DreamType } from '../lib/constants';
+import { DREAM_TYPES, DREAM_TAGS, DreamType, DreamTagKey } from '../lib/constants';
 
 const { width } = Dimensions.get('window');
 
@@ -124,11 +124,24 @@ export default function JournalHome() {
         {/* Tag icons row */}
         {item.tags && item.tags.length > 0 && (
           <View style={styles.tagRow}>
-            {item.tags.slice(0, 3).map((tag: string, i: number) => (
-              <StardustText key={i} variant="bodySmall" color="#6B6358" style={{ fontSize: 13 }}>
-                {tag}
-              </StardustText>
-            ))}
+            {item.tags.slice(0, 4).map((tag: string, i: number) => {
+              const tagDef = DREAM_TAGS[tag as DreamTagKey];
+              if (tagDef) {
+                return (
+                  <View key={i} style={styles.tagItem}>
+                    <Image source={tagDef.image} style={styles.tagImage} contentFit="contain" />
+                    <StardustText variant="bodySmall" color="#6B6358" style={{ fontSize: 11 }}>
+                      {tagDef.label}
+                    </StardustText>
+                  </View>
+                );
+              }
+              return (
+                <StardustText key={i} variant="bodySmall" color="#6B6358" style={{ fontSize: 13 }}>
+                  {tag}
+                </StardustText>
+              );
+            })}
           </View>
         )}
       </Pressable>
@@ -263,9 +276,10 @@ const styles = StyleSheet.create({
     lineHeight: 22,
   },
   strokeImage: {
-    width: 180,
-    height: 80,
+    width: 240,
+    height: 100,
     marginTop: 0,
+    marginRight: -20,
   },
   tealDivider: {
     height: 2.5,
@@ -278,6 +292,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: SPACING.md,
     marginTop: SPACING.sm,
+  },
+  tagItem: {
+    alignItems: 'center',
+  },
+  tagImage: {
+    width: 40,
+    height: 40,
   },
   emptyRecent: {
     marginTop: SPACING.xxl,
