@@ -316,7 +316,7 @@ export default function RecordScreen() {
           {/* Stroke Style Selector */}
           <View style={styles.strokeSection}>
             <Text style={styles.sectionLabelGold}>STROKE STYLE</Text>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.strokeRow}>
+            <View style={styles.strokeGrid}>
               {(Object.keys(DREAM_TYPES) as DreamType[]).map((key) => {
                 const dt = DREAM_TYPES[key];
                 const isSelected = dreamType === key;
@@ -331,13 +331,13 @@ export default function RecordScreen() {
                   </Pressable>
                 );
               })}
-            </ScrollView>
+            </View>
           </View>
 
           {/* Add Tags */}
           <View style={styles.tagsSection}>
             <Text style={styles.sectionLabelGold}>ADD TAGS</Text>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.tagIconRow}>
+            <View style={styles.tagGrid}>
               {(Object.keys(DREAM_TAGS) as DreamTagKey[]).map((key) => {
                 const tag = DREAM_TAGS[key];
                 const isSelected = selectedTags.includes(key);
@@ -352,7 +352,7 @@ export default function RecordScreen() {
                   </Pressable>
                 );
               })}
-            </ScrollView>
+            </View>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -448,25 +448,28 @@ const styles = StyleSheet.create({
     marginBottom: SPACING.md,
     letterSpacing: 2,
   },
-  strokeRow: {
-    gap: SPACING.md,
-    paddingRight: SPACING.lg,
+  strokeGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+    justifyContent: 'space-between',
   },
   strokeItem: {
     alignItems: 'center',
-    paddingVertical: SPACING.sm,
-    paddingHorizontal: SPACING.md,
+    paddingVertical: 12,
+    paddingHorizontal: 8,
     borderRadius: BORDER_RADIUS.lg,
     borderWidth: 2,
     borderColor: 'transparent',
+    width: '47%',
   },
   strokeItemActive: {
     borderColor: '#C4A265',
     backgroundColor: 'rgba(196, 162, 101, 0.08)',
   },
   strokeImage: {
-    width: 200,
-    height: 90,
+    width: '100%',
+    height: 70,
   },
   strokeLabel: {
     ...TYPOGRAPHY.caption,
@@ -481,20 +484,23 @@ const styles = StyleSheet.create({
   tagsSection: {
     marginBottom: SPACING.lg,
   },
-  tagIconRow: {
-    gap: SPACING.lg,
-    paddingRight: SPACING.lg,
+  tagGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 16,
+    justifyContent: 'center',
   },
   tagIconItem: {
     alignItems: 'center',
-    opacity: 0.6,
+    opacity: 0.5,
+    width: '28%',
   },
   tagIconItemActive: {
     opacity: 1,
   },
   tagIconImage: {
-    width: 140,
-    height: 140,
+    width: '100%',
+    height: 100,
   },
   tagIconLabel: {
     ...TYPOGRAPHY.caption,
