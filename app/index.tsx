@@ -259,21 +259,22 @@ const styles = StyleSheet.create({
     marginRight: 20,
   },
   dateText: {
-    fontSize: 14,
+    fontSize: 16,
     letterSpacing: 1.5,
     fontWeight: '700',
-    marginBottom: 8,
+    marginBottom: 10,
   },
   titleText: {
-    marginBottom: 6,
-    fontSize: 24,
+    marginBottom: 8,
+    fontSize: 28,
+    fontWeight: '700',
     color: '#1A1A1A',
   },
   bodyText: {
     marginBottom: SPACING.md,
     color: '#4A4A4A',
-    fontSize: 15,
-    lineHeight: 22,
+    fontSize: 17,
+    lineHeight: 24,
   },
   strokeImage: {
     width: width * 0.7,
