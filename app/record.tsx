@@ -465,8 +465,8 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(196, 162, 101, 0.08)',
   },
   strokeImage: {
-    width: 100,
-    height: 48,
+    width: 180,
+    height: 80,
   },
   strokeLabel: {
     ...TYPOGRAPHY.caption,
@@ -493,8 +493,8 @@ const styles = StyleSheet.create({
     opacity: 1,
   },
   tagIconImage: {
-    width: 56,
-    height: 56,
+    width: 80,
+    height: 80,
   },
   tagIconLabel: {
     ...TYPOGRAPHY.caption,
