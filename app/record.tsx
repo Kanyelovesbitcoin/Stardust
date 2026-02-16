@@ -430,17 +430,17 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(222, 210, 190, 0.5)',
     borderRadius: BORDER_RADIUS.lg,
     padding: SPACING.md,
-    marginBottom: SPACING.lg,
-    minHeight: 220,
+    marginBottom: SPACING.sm,
+    minHeight: 120,
   },
   contentInput: {
     ...TYPOGRAPHY.body,
     color: COLORS.textPrimary,
-    minHeight: 200,
+    minHeight: 100,
     lineHeight: 26,
   },
   strokeSection: {
-    marginBottom: SPACING.lg,
+    marginBottom: SPACING.sm,
   },
   sectionLabelGold: {
     ...TYPOGRAPHY.label,
@@ -451,17 +451,17 @@ const styles = StyleSheet.create({
   strokeGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 12,
+    gap: 8,
     justifyContent: 'space-between',
   },
   strokeItem: {
     alignItems: 'center',
-    paddingVertical: 12,
-    paddingHorizontal: 8,
+    paddingVertical: 8,
+    paddingHorizontal: 6,
     borderRadius: BORDER_RADIUS.lg,
     borderWidth: 2,
     borderColor: 'transparent',
-    width: '47%',
+    width: '48%',
   },
   strokeItemActive: {
     borderColor: '#C4A265',
@@ -469,7 +469,7 @@ const styles = StyleSheet.create({
   },
   strokeImage: {
     width: '100%',
-    height: 70,
+    height: 90,
   },
   strokeLabel: {
     ...TYPOGRAPHY.caption,
@@ -482,12 +482,12 @@ const styles = StyleSheet.create({
     color: '#C4A265',
   },
   tagsSection: {
-    marginBottom: SPACING.lg,
+    marginBottom: SPACING.sm,
   },
   tagGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 16,
+    gap: 10,
     justifyContent: 'center',
   },
   tagIconItem: {
