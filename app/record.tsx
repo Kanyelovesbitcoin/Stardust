@@ -396,7 +396,7 @@ const styles = StyleSheet.create({
     paddingBottom: SPACING.xxl,
   },
   previewCard: {
-    backgroundColor: COLORS.surface,
+    backgroundColor: 'rgba(222, 210, 190, 0.5)',
     borderRadius: BORDER_RADIUS.lg,
     padding: SPACING.md,
     marginBottom: SPACING.lg,
@@ -427,7 +427,7 @@ const styles = StyleSheet.create({
     paddingVertical: SPACING.sm,
   },
   contentContainer: {
-    backgroundColor: COLORS.surface,
+    backgroundColor: 'rgba(222, 210, 190, 0.5)',
     borderRadius: BORDER_RADIUS.lg,
     padding: SPACING.md,
     marginBottom: SPACING.lg,
@@ -465,8 +465,8 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(196, 162, 101, 0.08)',
   },
   strokeImage: {
-    width: 180,
-    height: 80,
+    width: 200,
+    height: 90,
   },
   strokeLabel: {
     ...TYPOGRAPHY.caption,
@@ -493,15 +493,16 @@ const styles = StyleSheet.create({
     opacity: 1,
   },
   tagIconImage: {
-    width: 80,
-    height: 80,
+    width: 140,
+    height: 140,
   },
   tagIconLabel: {
     ...TYPOGRAPHY.caption,
     color: '#9B917F',
-    marginTop: 6,
+    marginTop: 8,
     textAlign: 'center',
-    fontSize: 12,
+    fontSize: 14,
+    fontWeight: '600',
   },
   tagIconLabelActive: {
     color: '#1A1A1A',
