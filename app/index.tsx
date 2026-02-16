@@ -256,8 +256,8 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
   },
   cardLeft: {
-    flex: 0.65,
-    marginRight: 12,
+    flex: 0.6,
+    marginRight: 10,
   },
   dateText: {
     fontSize: 16,
@@ -278,13 +278,13 @@ const styles = StyleSheet.create({
     lineHeight: 24,
   },
   cardRight: {
-    flex: 0.35,
+    flex: 0.4,
     alignItems: 'center',
     justifyContent: 'center',
   },
   strokeImage: {
     width: '100%',
-    aspectRatio: 2.5,
+    aspectRatio: 1.8,
   },
   tealDivider: {
     height: 2.5,

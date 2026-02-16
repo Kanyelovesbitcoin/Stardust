@@ -470,7 +470,7 @@ const styles = StyleSheet.create({
   },
   strokeImage: {
     width: '100%',
-    aspectRatio: 3,
+    aspectRatio: 2,
   },
   strokeLabel: {
     ...TYPOGRAPHY.caption,
@@ -495,7 +495,7 @@ const styles = StyleSheet.create({
   tagIconItem: {
     alignItems: 'center',
     opacity: 0.45,
-    width: '18%',
+    width: '17%',
     minHeight: 48,
   },
   tagIconItemActive: {
