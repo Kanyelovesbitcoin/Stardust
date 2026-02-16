@@ -33,25 +33,29 @@ export default React.memo(function BottomTabBar({ activeTab }: BottomTabBarProps
   }, [activeTab]);
 
   return (
-    <View style={[styles.wrapper, { height: TAB_BAR_HEIGHT + insets.bottom, backgroundColor: '#1A1635' }]}>
+    <View style={[styles.wrapper, { height: TAB_BAR_HEIGHT + insets.bottom }]}>
       <View style={[styles.container, { paddingBottom: insets.bottom }]}>
         <Pressable style={styles.tab} onPress={navigateJournal}>
-          <Ionicons
-            name={activeTab === 'journal' ? 'book' : 'book-outline'}
-            size={28}
-            color={activeTab === 'journal' ? STARDUST_THEME.gold.bright : 'rgba(255,255,255,0.4)'}
-          />
+          <View style={[styles.iconCircle, activeTab === 'journal' && styles.iconCircleActive]}>
+            <Ionicons
+              name={activeTab === 'journal' ? 'book' : 'book-outline'}
+              size={24}
+              color={activeTab === 'journal' ? '#F5F0E6' : '#8B7355'}
+            />
+          </View>
           <Text style={[styles.tabLabel, activeTab === 'journal' && styles.tabLabelActive]}>
             Journal
           </Text>
         </Pressable>
 
         <Pressable style={styles.tab} onPress={navigateGallery}>
-          <Ionicons
-            name={activeTab === 'gallery' ? 'prism' : 'prism-outline'}
-            size={28}
-            color={activeTab === 'gallery' ? STARDUST_THEME.gold.bright : 'rgba(255,255,255,0.4)'}
-          />
+          <View style={[styles.iconCircle, activeTab === 'gallery' && styles.iconCircleActive]}>
+            <Ionicons
+              name={activeTab === 'gallery' ? 'image' : 'image-outline'}
+              size={24}
+              color={activeTab === 'gallery' ? '#F5F0E6' : '#8B7355'}
+            />
+          </View>
           <Text style={[styles.tabLabel, activeTab === 'gallery' && styles.tabLabelActive]}>
             Gallery
           </Text>
@@ -70,6 +74,9 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     zIndex: 1000,
+    backgroundColor: 'rgba(245, 240, 230, 0.95)',
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(139, 115, 85, 0.15)',
   },
   container: {
     flex: 1,
@@ -83,15 +90,25 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     height: TAB_BAR_HEIGHT,
   },
+  iconCircle: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  iconCircleActive: {
+    backgroundColor: '#C4A265',
+  },
   tabLabel: {
     fontSize: 12,
-    color: 'rgba(255,255,255,0.4)',
-    marginTop: 4,
+    color: '#8B7355',
+    marginTop: 2,
     fontWeight: '500',
     letterSpacing: 0.5,
   },
   tabLabelActive: {
-    color: STARDUST_THEME.gold.bright,
+    color: '#1A1A1A',
     fontWeight: '700',
   },
 });
