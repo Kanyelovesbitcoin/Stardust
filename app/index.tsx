@@ -125,7 +125,7 @@ export default function JournalHome() {
         {item.tags && item.tags.length > 0 && (
           <View style={styles.tagRow}>
             {item.tags.slice(0, 3).map((tag: string, i: number) => (
-              <StardustText key={i} variant="bodySmall" color="#6B6358" style={{ fontSize: 11 }}>
+              <StardustText key={i} variant="bodySmall" color="#6B6358" style={{ fontSize: 13 }}>
                 {tag}
               </StardustText>
             ))}
@@ -233,7 +233,8 @@ const styles = StyleSheet.create({
   },
   dreamCard: {
     marginHorizontal: SPACING.screenPadding,
-    marginBottom: SPACING.xl,
+    marginBottom: 28,
+    paddingVertical: 20,
   },
   cardContent: {
     flexDirection: 'row',
@@ -242,34 +243,35 @@ const styles = StyleSheet.create({
   },
   cardLeft: {
     flex: 1,
-    marginRight: SPACING.md,
+    marginRight: 20,
   },
   dateText: {
-    fontSize: 12,
+    fontSize: 14,
     letterSpacing: 1.5,
     fontWeight: '700',
-    marginBottom: 6,
+    marginBottom: 8,
   },
   titleText: {
-    marginBottom: 4,
-    fontSize: 22,
+    marginBottom: 6,
+    fontSize: 24,
     color: '#1A1A1A',
   },
   bodyText: {
-    marginBottom: SPACING.sm,
+    marginBottom: SPACING.md,
     color: '#4A4A4A',
-    lineHeight: 20,
+    fontSize: 15,
+    lineHeight: 22,
   },
   strokeImage: {
-    width: 100,
-    height: 40,
-    marginTop: 8,
+    width: 120,
+    height: 56,
+    marginTop: 4,
   },
   tealDivider: {
     height: 2.5,
     backgroundColor: '#7BAFD4',
     borderRadius: 2,
-    marginTop: SPACING.sm,
+    marginTop: SPACING.md,
     opacity: 0.7,
   },
   tagRow: {
