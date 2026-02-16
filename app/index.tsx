@@ -112,8 +112,8 @@ export default function JournalHome() {
           )}
         </View>
 
-        {/* Body preview below */}
-        <StardustText variant="bodySmall" color="#4A4A4A" numberOfLines={2} style={styles.bodyText}>
+        {/* Body preview — single line */}
+        <StardustText variant="bodySmall" color="#4A4A4A" numberOfLines={1} style={styles.bodyText}>
           {bodyPreview}
         </StardustText>
 
@@ -267,16 +267,15 @@ const styles = StyleSheet.create({
     color: '#1A1A1A',
   },
   strokeImage: {
-    width: width * 0.35,
-    aspectRatio: 2.2,
+    width: width * 0.45,
+    aspectRatio: 1.8,
     marginLeft: 8,
   },
   bodyText: {
     color: '#4A4A4A',
-    fontSize: 16,
-    lineHeight: 22,
+    fontSize: 15,
+    lineHeight: 20,
     marginBottom: SPACING.sm,
-    paddingRight: SPACING.xl,
   },
   tealDivider: {
     height: 2.5,
@@ -293,11 +292,11 @@ const styles = StyleSheet.create({
   },
   tagItem: {
     alignItems: 'center',
-    minWidth: 48,
+    minWidth: 56,
   },
   tagImage: {
-    width: 48,
-    height: 48,
+    width: 64,
+    height: 64,
   },
   emptyRecent: {
     marginTop: SPACING.xxl,
