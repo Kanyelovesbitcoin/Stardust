@@ -10,6 +10,7 @@ import {
   Platform,
   Alert,
 } from 'react-native';
+import { Image } from 'expo-image';
 import { Audio } from 'expo-av';
 import { router } from 'expo-router';
 import { useMutation } from 'convex/react';
@@ -25,7 +26,7 @@ import { usePeriodicPaywall } from '../lib/hooks/usePeriodicPaywall';
 import { useReviewPrompt } from '../lib/hooks/useReviewPrompt';
 import { onDreamSaved as notifyDreamSaved } from '../lib/notifications';
 import { STARDUST_THEME } from '../lib/theme';
-import { COLORS, SPACING, TYPOGRAPHY, BORDER_RADIUS } from '../lib/constants';
+import { COLORS, SPACING, TYPOGRAPHY, BORDER_RADIUS, DREAM_TYPES, DREAM_TAGS, DreamType, DreamTagKey } from '../lib/constants';
 
 type Mode = 'voice' | 'text';
 
@@ -38,9 +39,10 @@ export default function RecordScreen() {
   const [mode, setMode] = useState<Mode>('voice');
   const [transcript, setTranscript] = useState('');
   const [mood, setMood] = useState<string | null>(null);
+  const [dreamType, setDreamType] = useState<DreamType | null>(null);
+  const [selectedTags, setSelectedTags] = useState<DreamTagKey[]>([]);
   const [tags, setTags] = useState<string[]>([]);
   const [tagInput, setTagInput] = useState('');
-  const [category, setCategory] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
   // Voice mode state
@@ -59,6 +61,12 @@ export default function RecordScreen() {
 
   const removeTag = (tag: string) => {
     setTags(tags.filter((t) => t !== tag));
+  };
+
+  const toggleTag = (key: DreamTagKey) => {
+    setSelectedTags((prev) =>
+      prev.includes(key) ? prev.filter((t) => t !== key) : [...prev, key]
+    );
   };
 
   const handleRecordingComplete = (uri: string, durationMs: number) => {
@@ -144,15 +152,15 @@ export default function RecordScreen() {
         await createDream({
           audioStorageId: storageId as any,
           mood: mood ?? undefined,
-          category: category ?? undefined,
-          tags,
+          dreamType: dreamType ?? undefined,
+          tags: [...selectedTags, ...tags],
         });
       } else {
         await createDream({
           transcript: transcript.trim(),
           mood: mood ?? undefined,
-          category: category ?? undefined,
-          tags,
+          dreamType: dreamType ?? undefined,
+          tags: [...selectedTags, ...tags],
         });
       }
 
@@ -305,72 +313,46 @@ export default function RecordScreen() {
             </View>
           )}
 
-          {/* Mood Selector */}
-          <MoodSelector selected={mood} onSelect={setMood} />
-
-          {/* Category Selector */}
-          <View style={styles.categorySection}>
-            <Text style={styles.sectionLabel}>Category</Text>
-            <View style={styles.categoryRow}>
-              {([
-                { key: 'ink', label: 'Ink', icon: 'document-text-outline' as const, desc: 'Written reflection' },
-                { key: 'hope', label: 'Hope', icon: 'sparkles-outline' as const, desc: 'Aspirational dream' },
-                { key: 'archive', label: 'Archive', icon: 'leaf-outline' as const, desc: 'Memory keeper' },
-              ]).map((cat) => {
-                const isSelected = category === cat.key;
+          {/* Stroke Style Selector */}
+          <View style={styles.strokeSection}>
+            <Text style={styles.sectionLabelGold}>STROKE STYLE</Text>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.strokeRow}>
+              {(Object.keys(DREAM_TYPES) as DreamType[]).map((key) => {
+                const dt = DREAM_TYPES[key];
+                const isSelected = dreamType === key;
                 return (
-                  <TouchableOpacity
-                    key={cat.key}
-                    style={[styles.categoryButton, isSelected && styles.categoryButtonActive]}
-                    onPress={() => setCategory(isSelected ? null : cat.key)}
-                    activeOpacity={0.7}
+                  <Pressable
+                    key={key}
+                    style={[styles.strokeItem, isSelected && styles.strokeItemActive]}
+                    onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setDreamType(isSelected ? null : key); }}
                   >
-                    <Ionicons
-                      name={cat.icon}
-                      size={20}
-                      color={isSelected ? COLORS.primary : COLORS.textSecondary}
-                    />
-                    <Text style={[styles.categoryLabel, isSelected && styles.categoryLabelActive]}>
-                      {cat.label}
-                    </Text>
-                    <Text style={styles.categoryDesc}>{cat.desc}</Text>
-                  </TouchableOpacity>
+                    <Image source={dt.image} style={styles.strokeImage} contentFit="contain" />
+                    <Text style={[styles.strokeLabel, isSelected && styles.strokeLabelActive]}>{dt.label}</Text>
+                  </Pressable>
                 );
               })}
-            </View>
+            </ScrollView>
           </View>
 
-          {/* Tags */}
+          {/* Add Tags */}
           <View style={styles.tagsSection}>
-            <StardustText variant="label" color={STARDUST_THEME.text.secondary} style={styles.sectionLabel}>Dream Tags</StardustText>
-            <View style={styles.tagsRow}>
-              {tags.map((tag) => (
-                <Pressable
-                  key={tag}
-                  style={styles.tagPill}
-                  onPress={() => removeTag(tag)}
-                >
-                  <StardustText variant="timestamp" color={STARDUST_THEME.text.primary}>{tag}</StardustText>
-                  <Ionicons
-                    name="close-circle"
-                    size={14}
-                    color={STARDUST_THEME.gold.muted}
-                  />
-                </Pressable>
-              ))}
-              <View style={styles.tagInputContainer}>
-                <TextInput
-                  style={styles.tagInput}
-                  placeholder="+ tag"
-                  placeholderTextColor={COLORS.textTertiary}
-                  value={tagInput}
-                  onChangeText={setTagInput}
-                  onSubmitEditing={addTag}
-                  returnKeyType="done"
-                  maxLength={30}
-                />
-              </View>
-            </View>
+            <Text style={styles.sectionLabelGold}>ADD TAGS</Text>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.tagIconRow}>
+              {(Object.keys(DREAM_TAGS) as DreamTagKey[]).map((key) => {
+                const tag = DREAM_TAGS[key];
+                const isSelected = selectedTags.includes(key);
+                return (
+                  <Pressable
+                    key={key}
+                    style={[styles.tagIconItem, isSelected && styles.tagIconItemActive]}
+                    onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); toggleTag(key); }}
+                  >
+                    <Image source={tag.image} style={styles.tagIconImage} contentFit="contain" />
+                    <Text style={[styles.tagIconLabel, isSelected && styles.tagIconLabelActive]}>{tag.label}</Text>
+                  </Pressable>
+                );
+              })}
+            </ScrollView>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -457,75 +439,71 @@ const styles = StyleSheet.create({
     minHeight: 200,
     lineHeight: 26,
   },
-  categorySection: {
+  strokeSection: {
     marginBottom: SPACING.lg,
   },
-  categoryRow: {
-    flexDirection: 'row',
-    gap: SPACING.sm,
+  sectionLabelGold: {
+    ...TYPOGRAPHY.label,
+    color: '#8B7355',
+    marginBottom: SPACING.md,
+    letterSpacing: 2,
   },
-  categoryButton: {
-    flex: 1,
+  strokeRow: {
+    gap: SPACING.md,
+    paddingRight: SPACING.lg,
+  },
+  strokeItem: {
     alignItems: 'center',
-    paddingVertical: SPACING.md,
-    paddingHorizontal: SPACING.sm,
-    backgroundColor: COLORS.surface,
+    paddingVertical: SPACING.sm,
+    paddingHorizontal: SPACING.md,
     borderRadius: BORDER_RADIUS.lg,
-    borderWidth: 1.5,
+    borderWidth: 2,
     borderColor: 'transparent',
-    gap: 4,
   },
-  categoryButtonActive: {
-    borderColor: COLORS.primary,
-    backgroundColor: COLORS.primaryDim,
+  strokeItemActive: {
+    borderColor: '#C4A265',
+    backgroundColor: 'rgba(196, 162, 101, 0.08)',
   },
-  categoryLabel: {
+  strokeImage: {
+    width: 100,
+    height: 48,
+  },
+  strokeLabel: {
     ...TYPOGRAPHY.caption,
-    color: COLORS.textSecondary,
+    color: '#6B6358',
     fontWeight: '600',
-    fontSize: 13,
-  },
-  categoryLabelActive: {
-    color: COLORS.primaryText,
-  },
-  categoryDesc: {
-    ...TYPOGRAPHY.caption,
-    color: COLORS.textTertiary,
-    fontSize: 9,
+    marginTop: 6,
     textAlign: 'center',
+  },
+  strokeLabelActive: {
+    color: '#C4A265',
   },
   tagsSection: {
     marginBottom: SPACING.lg,
   },
-  sectionLabel: {
-    marginBottom: SPACING.sm,
+  tagIconRow: {
+    gap: SPACING.lg,
+    paddingRight: SPACING.lg,
   },
-  tagsRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: SPACING.sm,
+  tagIconItem: {
     alignItems: 'center',
+    opacity: 0.6,
   },
-  tagPill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    backgroundColor: 'rgba(212, 175, 55, 0.1)',
-    borderRadius: BORDER_RADIUS.full,
-    paddingHorizontal: SPACING.sm + 2,
-    paddingVertical: SPACING.xs + 2,
+  tagIconItemActive: {
+    opacity: 1,
   },
-  tagInputContainer: {
-    backgroundColor: COLORS.surface,
-    borderRadius: BORDER_RADIUS.full,
-    paddingHorizontal: SPACING.sm + 2,
-    paddingVertical: SPACING.xs,
+  tagIconImage: {
+    width: 56,
+    height: 56,
   },
-  tagInput: {
+  tagIconLabel: {
     ...TYPOGRAPHY.caption,
-    color: COLORS.textPrimary,
+    color: '#9B917F',
+    marginTop: 6,
+    textAlign: 'center',
     fontSize: 12,
-    minWidth: 50,
-    paddingVertical: 0,
+  },
+  tagIconLabelActive: {
+    color: '#1A1A1A',
   },
 });

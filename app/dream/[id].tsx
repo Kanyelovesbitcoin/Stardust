@@ -1,4 +1,5 @@
 import React from 'react';
+import { Image } from 'expo-image';
 import {
   View,
   StyleSheet,
@@ -24,6 +25,7 @@ import { MoodPill } from '../../components/ui/MoodPill';
 import { GoldDivider } from '../../components/ui/GoldDivider';
 import DreamScene from '../../components/visualizer/DreamScene';
 import type { Id } from '../../convex/_generated/dataModel';
+import { DREAM_TAGS, DreamTagKey } from '../../lib/constants';
 
 export default function DreamDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -130,8 +132,8 @@ export default function DreamDetailScreen() {
           hitSlop={24}
           style={styles.backButton}
         >
-          <Ionicons name="arrow-back" size={32} color={STARDUST_THEME.gold.muted} />
-          <StardustText variant="timestamp" color={STARDUST_THEME.text.tertiary} style={styles.backLabel}>
+          <Ionicons name="arrow-back" size={24} color="#8B7355" />
+          <StardustText variant="bodySmall" color="#8B7355" style={styles.backLabel}>
             BACK
           </StardustText>
         </Pressable>
@@ -154,18 +156,25 @@ export default function DreamDetailScreen() {
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
 
-        {/* 2. Title & Mood */}
-        <StardustText variant="cardTitle" color={STARDUST_THEME.gold.pale} style={styles.dreamTitle}>
+        {/* 2. Title & Tags */}
+        <StardustText variant="cardTitle" color="#1A1A1A" style={styles.dreamTitle}>
           {title}
         </StardustText>
 
         <View style={styles.moodRow}>
-          {dream.mood && <MoodPill mood={dream.mood} />}
-          {dream.tags.map(tag => (
-            <View key={tag} style={styles.tagPill}>
-              <StardustText variant="timestamp" color={STARDUST_THEME.text.secondary}>#{tag}</StardustText>
-            </View>
-          ))}
+          {dream.tags.map((tag: string) => {
+            const tagDef = DREAM_TAGS[tag as DreamTagKey];
+            return (
+              <View key={tag} style={styles.tagPill}>
+                {tagDef && (
+                  <Image source={tagDef.image} style={{ width: 18, height: 18, marginRight: 4 }} contentFit="contain" />
+                )}
+                <StardustText variant="bodySmall" color="#1A1A1A">
+                  {tagDef?.label ?? tag}
+                </StardustText>
+              </View>
+            );
+          })}
         </View>
 
         {/* 4. Transcript Card */}
@@ -186,23 +195,13 @@ export default function DreamDetailScreen() {
 
         {/* 5. AI Section */}
         <View style={styles.aiButtons}>
-          <DropletButton
-            onPress={handleInterpret}
-            title={interpretLabel}
-            variant="primary"
-            size="md"
-            loading={dream.isInterpreting}
-            style={styles.aiButton}
-          />
+          <Pressable onPress={handleInterpret} style={styles.outlineButton}>
+            <StardustText variant="button" color="#8B7355">{interpretLabel}</StardustText>
+          </Pressable>
 
-          <DropletButton
-            onPress={handleVisualize}
-            title={visualizeLabel}
-            variant="gold"
-            size="md"
-            loading={dream.isGeneratingVisual}
-            style={styles.aiButton}
-          />
+          <Pressable onPress={handleVisualize} style={styles.outlineButton}>
+            <StardustText variant="button" color="#8B7355">{visualizeLabel}</StardustText>
+          </Pressable>
         </View>
 
         {/* Free badge */}
@@ -329,17 +328,25 @@ const styles = StyleSheet.create({
     marginBottom: SPACING.lg,
   },
   tagPill: {
-    paddingHorizontal: SPACING.sm,
-    paddingVertical: 2,
-    borderRadius: RADIUS.sm,
-    backgroundColor: 'rgba(255, 255, 255, 0.06)',
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: RADIUS.full,
+    backgroundColor: 'rgba(240, 238, 232, 0.9)',
+    borderWidth: 1,
+    borderColor: 'rgba(0, 0, 0, 0.08)',
   },
   transcriptCard: {
     padding: SPACING.lg,
     marginBottom: SPACING.xl,
+    backgroundColor: '#1A1A1A',
+    borderRadius: RADIUS.xl,
   },
   transcriptText: {
-    lineHeight: 24,
+    lineHeight: 26,
+    color: '#F0EEE8',
+    fontSize: 16,
   },
   loadingRow: {
     flexDirection: 'row',
@@ -355,8 +362,14 @@ const styles = StyleSheet.create({
     gap: SPACING.md,
     marginBottom: SPACING.xl,
   },
-  aiButton: {
+  outlineButton: {
     flex: 1,
+    paddingVertical: 14,
+    borderRadius: RADIUS.full,
+    borderWidth: 1.5,
+    borderColor: 'rgba(139, 115, 85, 0.3)',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   freeBadge: {
     marginBottom: SPACING.md,

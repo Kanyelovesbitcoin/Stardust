@@ -19,6 +19,7 @@ import { StardustText } from '../components/ui/StardustText';
 import { StardustCard } from '../components/ui/StardustCard';
 import { MoodPill } from '../components/ui/MoodPill';
 import ScreenContainer from '../components/ui/ScreenContainer';
+import { DREAM_TYPES, DreamType } from '../lib/constants';
 
 const { width } = Dimensions.get('window');
 
@@ -88,56 +89,55 @@ export default function JournalHome() {
       : "Untitled Dream";
 
     const bodyPreview = item.transcript || "No details recorded.";
+    const strokeType = item.dreamType as DreamType | undefined;
+    const strokeImage = strokeType && DREAM_TYPES[strokeType]?.image;
 
     return (
-      <StardustCard
+      <Pressable
         onPress={() => router.push(`/dream/${item._id}`)}
         style={styles.dreamCard}
       >
         <View style={styles.cardContent}>
           <View style={styles.cardLeft}>
-            <View style={styles.dateRow}>
-              <StardustText variant="label" color={STARDUST_THEME.text.tertiary} style={styles.dateText}>
-                {new Date(item.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }).toUpperCase()}
-              </StardustText>
-            </View>
+            <StardustText variant="label" color="#8B7355" style={styles.dateText}>
+              {new Date(item.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }).toUpperCase()}
+            </StardustText>
 
-            <StardustText variant="cardTitle" color={STARDUST_THEME.text.primary} numberOfLines={1} style={styles.titleText}>
+            <StardustText variant="cardTitle" color="#1A1A1A" numberOfLines={2} style={styles.titleText}>
               {title}
             </StardustText>
 
-            <StardustText variant="bodySmall" color={STARDUST_THEME.text.secondary} numberOfLines={2} style={styles.bodyText}>
+            <StardustText variant="bodySmall" color="#4A4A4A" numberOfLines={2} style={styles.bodyText}>
               {bodyPreview}
             </StardustText>
-
-            <View style={styles.tagsRow}>
-              {item.mood && <MoodPill mood={item.mood} />}
-            </View>
           </View>
 
-          <View style={styles.thumbnailContainer}>
-            {item.sceneUrl ? (
-              <Image
-                source={{ uri: item.sceneUrl }}
-                style={styles.thumbnail}
-                contentFit="cover"
-                cachePolicy="memory-disk"
-                recyclingKey={item._id}
-              />
-            ) : (
-              <View style={styles.thumbnailPlaceholder}>
-                <Ionicons name="moon-outline" size={16} color={STARDUST_THEME.text.tertiary} />
-              </View>
-            )}
-          </View>
+          {/* Watercolor stroke on the right */}
+          {strokeImage && (
+            <Image source={strokeImage} style={styles.strokeImage} contentFit="contain" />
+          )}
         </View>
-      </StardustCard>
+
+        {/* Teal divider */}
+        <View style={styles.tealDivider} />
+
+        {/* Tag icons row */}
+        {item.tags && item.tags.length > 0 && (
+          <View style={styles.tagRow}>
+            {item.tags.slice(0, 3).map((tag: string, i: number) => (
+              <StardustText key={i} variant="bodySmall" color="#6B6358" style={{ fontSize: 11 }}>
+                {tag}
+              </StardustText>
+            ))}
+          </View>
+        )}
+      </Pressable>
     );
   }, []);
 
   const renderSectionHeader = useCallback(({ section: { title } }: { section: { title: string } }) => (
     <View style={styles.stickyHeader}>
-      <StardustText variant="label" color={STARDUST_THEME.text.tertiary}>
+      <StardustText variant="label" color="#8B7355">
         {title}
       </StardustText>
     </View>
@@ -160,30 +160,33 @@ export default function JournalHome() {
         ListHeaderComponent={
           <View style={styles.header}>
             <View>
-              <StardustText variant="heroTitle" color={STARDUST_THEME.gold.bright} style={{ fontSize: 28, letterSpacing: 6 }}>STARDUST</StardustText>
-              <StardustText variant="body" color={STARDUST_THEME.text.secondary} style={{ letterSpacing: 0.5, marginTop: 4, opacity: 0.8 }}>
+              <StardustText variant="heroTitle" color="#1A1A1A" style={{ fontSize: 36, letterSpacing: 1, fontStyle: 'italic' }}>Droplett</StardustText>
+              <StardustText variant="body" color="#6B6358" style={{ letterSpacing: 0.5, marginTop: 2 }}>
                 {greeting}
               </StardustText>
             </View>
-            <Pressable onPress={() => router.push('/settings')}>
-              <Ionicons name="settings-outline" size={24} color={STARDUST_THEME.text.tertiary} />
-            </Pressable>
+            <View style={styles.headerRight}>
+              <StardustText variant="label" color="#C4A265" style={{ marginRight: 12 }}>PRO</StardustText>
+              <Pressable onPress={() => router.push('/settings')}>
+                <Ionicons name="settings-outline" size={24} color="#1A1A1A" />
+              </Pressable>
+            </View>
           </View>
         }
         ListEmptyComponent={
           <View style={styles.emptyRecent}>
-            <Ionicons name="moon-outline" size={32} color={STARDUST_THEME.gold.muted} style={{ marginBottom: SPACING.md }} />
-            <StardustText variant="dreamTitle" color={STARDUST_THEME.text.secondary} align="center">
+            <Ionicons name="moon-outline" size={32} color="#C4A265" style={{ marginBottom: SPACING.md }} />
+            <StardustText variant="dreamTitle" color="#4A4A4A" align="center">
               Your journal awaits its first story
             </StardustText>
-            <StardustText variant="bodySmall" color={STARDUST_THEME.text.tertiary} align="center" style={{ marginTop: SPACING.sm }}>
-              Tap the mic to record your first dream
+            <StardustText variant="bodySmall" color="#6B6358" align="center" style={{ marginTop: SPACING.sm }}>
+              Tap the button to record your first dream
             </StardustText>
           </View>
         }
       />
 
-      {/* FAB - Bottom Right */}
+      {/* FAB - Record Dream */}
       <Animated.View style={[
         styles.fabContainer,
         { transform: [{ scale: scaleAnim }] }
@@ -216,6 +219,10 @@ const styles = StyleSheet.create({
     paddingTop: SPACING.md,
     paddingBottom: SPACING.lg,
   },
+  headerRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
   listContent: {
     paddingBottom: 160,
   },
@@ -223,78 +230,52 @@ const styles = StyleSheet.create({
     paddingHorizontal: SPACING.screenPadding,
     paddingVertical: SPACING.sm,
     marginBottom: SPACING.sm,
-    backgroundColor: 'rgba(10, 10, 15, 0.85)',
   },
   dreamCard: {
     marginHorizontal: SPACING.screenPadding,
-    marginBottom: SPACING.lg,
-    backgroundColor: 'rgba(255,255,255,0.03)',
-    borderColor: 'rgba(255,255,255,0.06)',
-    borderWidth: 1,
-    borderRadius: RADIUS.lg,
-    padding: SPACING.xl,
-    borderLeftWidth: 2,
-    borderLeftColor: 'rgba(212, 175, 55, 0.4)',
+    marginBottom: SPACING.xl,
   },
   cardContent: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    alignItems: 'flex-start',
   },
   cardLeft: {
     flex: 1,
     marginRight: SPACING.md,
   },
-  dateRow: {
-    marginBottom: 8,
-  },
   dateText: {
-    fontSize: 11,
-    letterSpacing: 1,
+    fontSize: 12,
+    letterSpacing: 1.5,
+    fontWeight: '700',
+    marginBottom: 6,
   },
   titleText: {
     marginBottom: 4,
-    fontSize: 18,
+    fontSize: 22,
+    color: '#1A1A1A',
   },
   bodyText: {
-    marginBottom: SPACING.md,
+    marginBottom: SPACING.sm,
+    color: '#4A4A4A',
+    lineHeight: 20,
   },
-  tagsRow: {
-    flexDirection: 'row',
-    gap: 6,
+  strokeImage: {
+    width: 100,
+    height: 40,
+    marginTop: 8,
   },
-  iconsRow: {
-    flexDirection: 'row',
-    gap: SPACING.sm,
+  tealDivider: {
+    height: 2.5,
+    backgroundColor: '#7BAFD4',
+    borderRadius: 2,
     marginTop: SPACING.sm,
+    opacity: 0.7,
   },
-  iconBadge: {
+  tagRow: {
     flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: RADIUS.sm,
-    backgroundColor: 'rgba(255,255,255,0.03)',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.05)',
-  },
-  thumbnailContainer: {
-    justifyContent: 'center',
-  },
-  thumbnail: {
-    width: 64,
-    height: 64,
-    borderRadius: RADIUS.md,
-    backgroundColor: 'rgba(255,255,255,0.1)',
-  },
-  thumbnailPlaceholder: {
-    width: 64,
-    height: 64,
-    borderRadius: RADIUS.md,
-    backgroundColor: 'rgba(255,255,255,0.03)',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.05)',
-    alignItems: 'center',
-    justifyContent: 'center',
+    gap: SPACING.md,
+    marginTop: SPACING.sm,
   },
   emptyRecent: {
     marginTop: SPACING.xxl,

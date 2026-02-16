@@ -11,6 +11,7 @@ export default defineSchema({
     tags: v.array(v.string()),
     mood: v.optional(v.string()),
     category: v.optional(v.string()), // "ink" | "hope" | "archive"
+    dreamType: v.optional(v.string()), // "nightmare" | "lucid" | "vivid" | "ocean"
     lucidityRating: v.number(),
     isFavorite: v.boolean(),
     // Interpretation (populated by AI action)

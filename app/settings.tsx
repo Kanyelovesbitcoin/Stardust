@@ -55,7 +55,7 @@ export default function SettingsScreen() {
           <View style={styles.proContent}>
             <View>
               <StardustText variant="heroTitle" style={{ fontSize: 28, letterSpacing: 2 }} color={STARDUST_THEME.gold.bright}>
-                STARDUST PRO
+                DROPLETT PRO
               </StardustText>
               <StardustText variant="bodySmall" color={STARDUST_THEME.text.secondary} style={{ marginTop: 4 }}>
                 {isPro ? "Membership Active" : "Unlock the full power of your dreams"}

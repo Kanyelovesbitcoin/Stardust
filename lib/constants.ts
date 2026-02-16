@@ -73,3 +73,24 @@ export const DREAM_MOODS = [
   { key: 'sad', emoji: '😢', label: 'Sad' },
   { key: 'neutral', emoji: '😐', label: 'Neutral' },
 ] as const;
+
+// Watercolor stroke styles — each dream gets one
+export const DREAM_TYPES = {
+  nightmare: { key: 'nightmare', label: 'Nightmare', image: require('../assets/purple stroke.png') },
+  lucid: { key: 'lucid', label: 'Lucid', image: require('../assets/yellow stroke.png') },
+  vivid: { key: 'vivid', label: 'Vivid', image: require('../assets/redish stoke.png') },
+  ocean: { key: 'ocean', label: 'Ocean', image: require('../assets/blue stroke.png') },
+} as const;
+
+export type DreamType = keyof typeof DREAM_TYPES;
+
+// Tag icons with watercolor artwork
+export const DREAM_TAGS = {
+  flying: { key: 'flying', label: 'Flying', image: require('../assets/flying.png') },
+  animal: { key: 'animal', label: 'Animal', image: require('../assets/animal.png') },
+  fear: { key: 'fear', label: 'Fear', image: require('../assets/achive.png') },
+  hope: { key: 'hope', label: 'Love/Hope', image: require('../assets/hope.png') },
+  favorite: { key: 'favorite', label: 'Favorite', image: require('../assets/ink.png') },
+} as const;
+
+export type DreamTagKey = keyof typeof DREAM_TAGS;
