@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import {
   Animated,
+  Dimensions,
   ImageBackground,
   Pressable,
   StyleSheet,
@@ -11,13 +12,25 @@ import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
+import { StatusBar } from 'expo-status-bar';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { GoldenParticles } from '../components/onboarding/GoldenParticles';
-import { DropletButton } from '../components/ui/DropletButton';
 import { StardustText } from '../components/ui/StardustText';
 import { usePaywall, PLACEMENTS } from '../lib/hooks/usePaywall';
 import { SPACING, RADIUS } from '../lib/layout';
-import { STARDUST_THEME } from '../lib/theme';
+
+const { width: SCREEN_W, height: SCREEN_H } = Dimensions.get('window');
+
+// ─── Droplet theme (onboarding-only) ─────────────────────
+const DROPLET = {
+  navy: '#1B3A5C',
+  blue: '#2E6B9E',
+  lightBlue: '#4A90C4',
+  mutedBlue: '#7BAFD4',
+  paper: '#F0EEE8',
+  title: '#1A1A1A',
+  body: '#3A3A3A',
+  muted: '#5A5A5A',
+} as const;
 
 type IconName = React.ComponentProps<typeof Ionicons>['name'];
 
@@ -31,6 +44,8 @@ const SLIDE_BACKGROUNDS = [
   require('../assets/onboarding-bg-4.png'),
   require('../assets/onboarding-bg-5.png'),
 ];
+
+// ─── Slide data ──────────────────────────────────────────
 
 type SlideData = {
   id: string;
@@ -48,7 +63,8 @@ const SLIDES: SlideData[] = [
     kind: 'value',
     icon: 'moon-outline',
     title: 'Discover Your\nDreamer Type',
-    subtitle: 'Stardust analyzes your dream patterns and builds a personalized protocol to unlock lucid dreaming.',
+    subtitle:
+      'Stardust analyzes your dream patterns and builds a personalized protocol to unlock lucid dreaming.',
     highlights: [
       { icon: 'sparkles-outline', text: 'AI-powered dream analysis' },
       { icon: 'compass-outline', text: 'Personalized dream protocol' },
@@ -60,7 +76,8 @@ const SLIDES: SlideData[] = [
     kind: 'feature',
     icon: 'mic-outline',
     title: 'Capture Dreams\nEffortlessly',
-    subtitle: 'Speak or type your dreams. Our AI transcribes, interprets, and visualizes them instantly.',
+    subtitle:
+      'Speak or type your dreams. Our AI transcribes, interprets, and visualizes them instantly.',
     highlights: [
       { icon: 'mic-outline', text: 'Voice-to-text dream capture' },
       { icon: 'bulb-outline', text: 'AI symbol interpretation' },
@@ -72,7 +89,8 @@ const SLIDES: SlideData[] = [
     kind: 'feature',
     icon: 'musical-notes-outline',
     title: 'Sleep Sounds\n& Rituals',
-    subtitle: 'Curated soundscapes and guided rituals designed to improve sleep quality and dream recall.',
+    subtitle:
+      'Curated soundscapes and guided rituals designed to improve sleep quality and dream recall.',
     highlights: [
       { icon: 'volume-medium-outline', text: 'Multi-layered sleep soundscapes' },
       { icon: 'moon-outline', text: 'Guided bedtime rituals' },
@@ -84,7 +102,8 @@ const SLIDES: SlideData[] = [
     kind: 'social',
     icon: 'people-outline',
     title: 'Join Thousands of\nLucid Dreamers',
-    subtitle: 'One guided workflow replaces scattered apps, ads, and random tips.',
+    subtitle:
+      'One guided workflow replaces scattered apps, ads, and random tips.',
     stat: { value: '73%', label: 'of users report improved dream recall within 2 weeks' },
     highlights: [
       { icon: 'shield-checkmark-outline', text: 'No ads, no data selling' },
@@ -97,7 +116,8 @@ const SLIDES: SlideData[] = [
     kind: 'personal',
     icon: 'diamond-outline',
     title: 'Your Dream\nJourney Awaits',
-    subtitle: 'Everything you need to remember, understand, and control your dreams \u2014 in one beautiful app.',
+    subtitle:
+      'Everything you need to remember, understand, and control your dreams — in one beautiful app.',
     highlights: [
       { icon: 'infinite-outline', text: 'Unlimited AI interpretations' },
       { icon: 'images-outline', text: 'Unlimited dream artwork' },
@@ -106,6 +126,133 @@ const SLIDES: SlideData[] = [
     ],
   },
 ];
+
+// ─── Droplet particles (blue, onboarding-only) ──────────
+
+const PARTICLE_COUNT = 18;
+
+interface Particle {
+  x: number;
+  y: number;
+  size: number;
+  duration: number;
+  delay: number;
+  opacity: number;
+}
+
+function createParticles(): Particle[] {
+  return Array.from({ length: PARTICLE_COUNT }, () => ({
+    x: Math.random() * SCREEN_W,
+    y: Math.random() * SCREEN_H,
+    size: 2 + Math.random() * 4,
+    duration: 3000 + Math.random() * 4000,
+    delay: Math.random() * 2000,
+    opacity: 0.1 + Math.random() * 0.3,
+  }));
+}
+
+function DropletParticleDot({ particle }: { particle: Particle }) {
+  const floatAnim = useRef(new Animated.Value(0)).current;
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    const floatLoop = Animated.loop(
+      Animated.sequence([
+        Animated.timing(floatAnim, {
+          toValue: -20 - Math.random() * 30,
+          duration: particle.duration,
+          useNativeDriver: true,
+        }),
+        Animated.timing(floatAnim, {
+          toValue: 0,
+          duration: particle.duration,
+          useNativeDriver: true,
+        }),
+      ])
+    );
+
+    const fadeIn = Animated.timing(fadeAnim, {
+      toValue: particle.opacity,
+      duration: 1000,
+      delay: particle.delay,
+      useNativeDriver: true,
+    });
+
+    fadeIn.start(() => floatLoop.start());
+
+    return () => {
+      floatLoop.stop();
+      fadeIn.stop();
+    };
+  }, []);
+
+  return (
+    <Animated.View
+      style={{
+        position: 'absolute',
+        left: particle.x,
+        top: particle.y,
+        width: particle.size,
+        height: particle.size,
+        borderRadius: particle.size / 2,
+        opacity: fadeAnim,
+        transform: [{ translateY: floatAnim }],
+        backgroundColor: DROPLET.mutedBlue,
+        shadowColor: DROPLET.lightBlue,
+        shadowOffset: { width: 0, height: 0 },
+        shadowOpacity: 0.6,
+        shadowRadius: particle.size * 2,
+      }}
+    />
+  );
+}
+
+function DropletParticles() {
+  const particles = useRef(createParticles()).current;
+  return (
+    <View style={StyleSheet.absoluteFill} pointerEvents="none">
+      {particles.map((p, i) => (
+        <DropletParticleDot key={i} particle={p} />
+      ))}
+    </View>
+  );
+}
+
+// ─── Droplet CTA button (onboarding-only) ────────────────
+
+function DropletButton({ onPress, children }: { onPress: () => void; children: string }) {
+  const scaleAnim = useRef(new Animated.Value(1)).current;
+  const [isPressed, setIsPressed] = useState(false);
+
+  const handlePressIn = () => {
+    setIsPressed(true);
+    Animated.spring(scaleAnim, { toValue: 0.96, useNativeDriver: true, speed: 12, bounciness: 4 }).start();
+  };
+  const handlePressOut = () => {
+    setIsPressed(false);
+    Animated.spring(scaleAnim, { toValue: 1, useNativeDriver: true, speed: 12, bounciness: 4 }).start();
+  };
+
+  return (
+    <Animated.View style={[{ transform: [{ scale: scaleAnim }], width: '100%' }]}>
+      <Pressable
+        onPress={onPress}
+        onPressIn={handlePressIn}
+        onPressOut={handlePressOut}
+        style={[
+          styles.ctaButton,
+          isPressed && styles.ctaButtonPressed,
+        ]}
+      >
+        <StardustText variant="button" color="#FFFFFF" align="center">
+          {children}
+        </StardustText>
+      </Pressable>
+    </Animated.View>
+  );
+}
+
+// ─── Dot indicator ───────────────────────────────────────
 
 function DotIndicator({ current, total }: { current: number; total: number }) {
   return (
@@ -124,18 +271,22 @@ function DotIndicator({ current, total }: { current: number; total: number }) {
   );
 }
 
+// ─── Highlight row ───────────────────────────────────────
+
 function HighlightRow({ icon, text }: { icon: IconName; text: string }) {
   return (
     <View style={styles.highlightRow}>
       <View style={styles.highlightIconWrap}>
-        <Ionicons name={icon} size={18} color={STARDUST_THEME.gold.warm} />
+        <Ionicons name={icon} size={18} color={DROPLET.blue} />
       </View>
-      <StardustText variant="body" color={STARDUST_THEME.text.primary} style={styles.highlightText}>
+      <StardustText variant="body" color={DROPLET.body} style={{ flex: 1 }}>
         {text}
       </StardustText>
     </View>
   );
 }
+
+// ─── Main screen ─────────────────────────────────────────
 
 export default function OnboardingScreen() {
   const insets = useSafeAreaInsets();
@@ -152,6 +303,8 @@ export default function OnboardingScreen() {
   const slide = SLIDES[currentSlide];
   const isLastSlide = currentSlide === TOTAL_SLIDES - 1;
   const canGoBack = currentSlide > 0;
+
+  // ─── Hydrate ─────────────────────────────────────────
 
   useEffect(() => {
     let mounted = true;
@@ -173,6 +326,8 @@ export default function OnboardingScreen() {
     return () => { mounted = false; };
   }, []);
 
+  // ─── Hero entrance animation ─────────────────────────
+
   useEffect(() => {
     heroScaleAnim.setValue(0.8);
     heroOpacityAnim.setValue(0);
@@ -190,6 +345,8 @@ export default function OnboardingScreen() {
       }),
     ]).start();
   }, [currentSlide]);
+
+  // ─── Navigation ──────────────────────────────────────
 
   const animateToSlide = (next: number) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -242,23 +399,30 @@ export default function OnboardingScreen() {
     }
   };
 
+  // ─── Render ──────────────────────────────────────────
+
   if (isHydrating) return null;
 
   return (
     <View style={styles.container}>
+      <StatusBar style="dark" />
       <ImageBackground
         source={SLIDE_BACKGROUNDS[currentSlide]}
         style={StyleSheet.absoluteFill}
         resizeMode="cover"
       />
+      {/* Light overlay for text readability */}
       <View style={styles.backgroundOverlay} />
-      <GoldenParticles />
+      {/* Blue water-stain radial gradients */}
+      <View style={styles.waterStain1} />
+      <View style={styles.waterStain2} />
+      <DropletParticles />
 
       {/* Header */}
       <View style={[styles.header, { paddingTop: insets.top + SPACING.sm }]}>
         {canGoBack ? (
           <Pressable onPress={handleBack} hitSlop={12} style={styles.backButton}>
-            <Ionicons name="arrow-back" size={20} color={STARDUST_THEME.gold.muted} />
+            <Ionicons name="arrow-back" size={20} color={DROPLET.mutedBlue} />
           </Pressable>
         ) : (
           <View style={styles.backButton} />
@@ -274,7 +438,7 @@ export default function OnboardingScreen() {
           { opacity: fadeAnim, transform: [{ translateY: slideAnim }] },
         ]}
       >
-        {/* Hero icon — NO border, NO shadow */}
+        {/* Hero icon */}
         <Animated.View
           style={[
             styles.heroCircle,
@@ -284,38 +448,42 @@ export default function OnboardingScreen() {
             },
           ]}
         >
-          <Ionicons name={slide.icon} size={40} color={STARDUST_THEME.gold.bright} />
+          <Ionicons name={slide.icon} size={40} color={DROPLET.blue} />
         </Animated.View>
 
+        {/* Title */}
         <StardustText
           variant="heroTitle"
           align="center"
-          color={STARDUST_THEME.gold.pale}
+          color={DROPLET.title}
           style={styles.title}
         >
           {slide.title}
         </StardustText>
 
+        {/* Subtitle */}
         <StardustText
           variant="body"
           align="center"
-          color={STARDUST_THEME.text.secondary}
+          color={DROPLET.muted}
           style={styles.subtitle}
         >
           {slide.subtitle}
         </StardustText>
 
+        {/* Stat card (social proof slide) */}
         {slide.stat ? (
           <View style={styles.statCard}>
-            <StardustText variant="heroTitle" color={STARDUST_THEME.gold.bright} style={styles.statValue}>
+            <StardustText variant="heroTitle" color={DROPLET.blue} style={styles.statValue}>
               {slide.stat.value}
             </StardustText>
-            <StardustText variant="bodySmall" color={STARDUST_THEME.text.secondary} align="center">
+            <StardustText variant="bodySmall" color={DROPLET.muted} align="center">
               {slide.stat.label}
             </StardustText>
           </View>
         ) : null}
 
+        {/* Highlight list */}
         {slide.highlights ? (
           <View style={styles.highlightList}>
             {slide.highlights.map((h) => (
@@ -327,30 +495,46 @@ export default function OnboardingScreen() {
 
       {/* Footer */}
       <LinearGradient
-        colors={['transparent', 'rgba(10, 10, 15, 0.85)', 'rgba(10, 10, 15, 0.95)']}
+        colors={['transparent', 'rgba(240, 238, 232, 0.85)', 'rgba(240, 238, 232, 0.95)']}
         locations={[0, 0.25, 1]}
         style={[styles.footer, { paddingBottom: insets.bottom + SPACING.md }]}
       >
-        <DropletButton
-          onPress={handleContinue}
-          title={currentSlide === 0 ? 'Get Started' : 'Continue'}
-          variant="gold"
-          size="lg"
-          fullWidth
-        />
+        <DropletButton onPress={handleContinue}>
+          {currentSlide === 0 ? 'Get Started' : 'Continue'}
+        </DropletButton>
       </LinearGradient>
     </View>
   );
 }
 
+// ─── Styles ──────────────────────────────────────────────
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: STARDUST_THEME.bg.primary,
+    backgroundColor: DROPLET.paper,
   },
   backgroundOverlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(10, 10, 15, 0.55)',
+    backgroundColor: 'rgba(240, 238, 232, 0.45)',
+  },
+  waterStain1: {
+    position: 'absolute',
+    borderRadius: 999,
+    top: SCREEN_H * 0.05,
+    left: SCREEN_W * 0.05,
+    width: SCREEN_W * 0.55,
+    height: SCREEN_H * 0.45,
+    backgroundColor: 'rgba(27, 58, 92, 0.12)',
+  },
+  waterStain2: {
+    position: 'absolute',
+    borderRadius: 999,
+    top: SCREEN_H * 0.5,
+    left: SCREEN_W * 0.4,
+    width: SCREEN_W * 0.55,
+    height: SCREEN_H * 0.45,
+    backgroundColor: 'rgba(46, 107, 158, 0.08)',
   },
   header: {
     paddingHorizontal: SPACING.screenPadding,
@@ -374,15 +558,15 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: 'rgba(255,255,255,0.15)',
+    backgroundColor: 'rgba(27, 58, 92, 0.35)',
   },
   dotActive: {
     width: 24,
     borderRadius: 4,
-    backgroundColor: STARDUST_THEME.gold.warm,
+    backgroundColor: DROPLET.navy,
   },
   dotComplete: {
-    backgroundColor: STARDUST_THEME.gold.muted,
+    backgroundColor: DROPLET.blue,
   },
   slideContent: {
     flex: 1,
@@ -394,10 +578,17 @@ const styles = StyleSheet.create({
     width: 96,
     height: 96,
     borderRadius: 48,
-    backgroundColor: 'rgba(212, 175, 55, 0.08)',
+    borderWidth: 1,
+    borderColor: 'rgba(46, 107, 158, 0.2)',
+    backgroundColor: 'rgba(46, 107, 158, 0.1)',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: SPACING.lg,
+    shadowColor: '#2E6B9E',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.3,
+    shadowRadius: 20,
+    elevation: 4,
   },
   title: {
     marginBottom: SPACING.sm,
@@ -413,7 +604,9 @@ const styles = StyleSheet.create({
     width: '100%',
     maxWidth: 320,
     borderRadius: RADIUS.lg,
-    backgroundColor: 'rgba(212, 175, 55, 0.06)',
+    borderWidth: 1,
+    borderColor: 'rgba(46, 107, 158, 0.2)',
+    backgroundColor: 'rgba(46, 107, 158, 0.1)',
     paddingVertical: SPACING.lg,
     paddingHorizontal: SPACING.xl,
     alignItems: 'center',
@@ -437,12 +630,24 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: 'rgba(212, 175, 55, 0.1)',
+    backgroundColor: 'rgba(46, 107, 158, 0.1)',
+    borderWidth: 1,
+    borderColor: 'rgba(46, 107, 158, 0.15)',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  highlightText: {
-    flex: 1,
+  ctaButton: {
+    height: 48,
+    borderRadius: RADIUS.full,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: SPACING.xl,
+    backgroundColor: DROPLET.navy,
+    width: '100%',
+  },
+  ctaButtonPressed: {
+    backgroundColor: '#153252',
+    opacity: 0.9,
   },
   footer: {
     position: 'absolute',

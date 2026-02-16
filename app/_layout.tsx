@@ -93,7 +93,10 @@ export default function RootLayout() {
           <Stack.Screen name="settings" />
           <Stack.Screen
             name="onboarding"
-            options={{ animation: 'fade' }}
+            options={{
+              animation: 'fade',
+              contentStyle: { backgroundColor: '#F0EEE8' },
+            }}
           />
         </Stack>
       </StardustProProvider>
