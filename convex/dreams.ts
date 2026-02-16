@@ -50,6 +50,7 @@ export const generateUploadUrl = mutation({
 
 export const createDream = mutation({
   args: {
+    title: v.optional(v.string()),
     transcript: v.optional(v.string()),
     mood: v.optional(v.string()),
     category: v.optional(v.string()),
@@ -62,6 +63,7 @@ export const createDream = mutation({
     const dreamId = await ctx.db.insert("dreams", {
       userId: "local", // Placeholder until auth is added
       createdAt: Date.now(),
+      title: args.title,
       audioStorageId: args.audioStorageId,
       transcript: args.transcript,
       tags: args.tags ?? [],

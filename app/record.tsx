@@ -37,6 +37,7 @@ export default function RecordScreen() {
   const { trackDreamForReview } = useReviewPrompt();
 
   const [mode, setMode] = useState<Mode>('voice');
+  const [title, setTitle] = useState('');
   const [transcript, setTranscript] = useState('');
   const [mood, setMood] = useState<string | null>(null);
   const [dreamType, setDreamType] = useState<DreamType | null>(null);
@@ -150,6 +151,7 @@ export default function RecordScreen() {
         const { storageId } = (await uploadResponse.json()) as { storageId: string };
 
         await createDream({
+          title: title.trim() || undefined,
           audioStorageId: storageId as any,
           mood: mood ?? undefined,
           dreamType: dreamType ?? undefined,
@@ -157,6 +159,7 @@ export default function RecordScreen() {
         });
       } else {
         await createDream({
+          title: title.trim() || undefined,
           transcript: transcript.trim(),
           mood: mood ?? undefined,
           dreamType: dreamType ?? undefined,
@@ -261,6 +264,17 @@ export default function RecordScreen() {
           contentContainerStyle={styles.scrollContent}
           keyboardShouldPersistTaps="handled"
         >
+          {/* Title Input */}
+          <TextInput
+            style={styles.titleInput}
+            placeholder="One-word title..."
+            placeholderTextColor="#B5A98C"
+            value={title}
+            onChangeText={(t) => setTitle(t.replace(/\s/g, ''))}
+            maxLength={20}
+            autoCapitalize="words"
+          />
+
           {/* Voice Mode */}
           {mode === 'voice' && !recordingUri && (
             <VoiceRecorder onRecordingComplete={handleRecordingComplete} />
@@ -394,6 +408,16 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingHorizontal: SPACING.lg,
     paddingBottom: SPACING.xxl,
+  },
+  titleInput: {
+    fontSize: 28,
+    fontWeight: '700',
+    fontStyle: 'italic',
+    color: '#1A1A1A',
+    marginBottom: SPACING.sm,
+    paddingVertical: 8,
+    borderBottomWidth: 1.5,
+    borderBottomColor: 'rgba(139, 115, 85, 0.2)',
   },
   previewCard: {
     backgroundColor: 'rgba(222, 210, 190, 0.5)',

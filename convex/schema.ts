@@ -6,6 +6,7 @@ export default defineSchema({
     userId: v.string(),
     createdAt: v.number(),
     audioStorageId: v.optional(v.id("_storage")),
+    title: v.optional(v.string()),
     transcript: v.optional(v.string()),
     editedTranscript: v.optional(v.string()),
     tags: v.array(v.string()),

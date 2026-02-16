@@ -84,9 +84,9 @@ export default function JournalHome() {
   }, []);
 
   const renderDreamItem = useCallback(({ item }: { item: any }) => {
-    const title = item.transcript
-      ? item.transcript.split(/\s+/).slice(0, 6).join(' ') + (item.transcript.length > 40 ? '...' : '')
-      : "Untitled Dream";
+    // Short title: use custom title field or first word of transcript
+    const shortTitle = item.title
+      || (item.transcript ? item.transcript.split(/\s+/)[0] : "Dream");
 
     const bodyPreview = item.transcript || "No details recorded.";
     const strokeType = item.dreamType as DreamType | undefined;
@@ -97,28 +97,25 @@ export default function JournalHome() {
         onPress={() => router.push(`/dream/${item._id}`)}
         style={styles.dreamCard}
       >
-        <View style={styles.cardContent}>
-          <View style={styles.cardLeft}>
-            <StardustText variant="label" color="#8B7355" style={styles.dateText}>
-              {new Date(item.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }).toUpperCase()}
-            </StardustText>
+        {/* Date */}
+        <StardustText variant="label" color="#8B7355" style={styles.dateText}>
+          {new Date(item.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }).toUpperCase()}
+        </StardustText>
 
-            <StardustText variant="cardTitle" color="#1A1A1A" numberOfLines={2} style={styles.titleText}>
-              {title}
-            </StardustText>
-
-            <StardustText variant="bodySmall" color="#4A4A4A" numberOfLines={2} style={styles.bodyText}>
-              {bodyPreview}
-            </StardustText>
-          </View>
-
-          {/* Watercolor stroke on the right */}
+        {/* Title row: short title + large stroke */}
+        <View style={styles.titleRow}>
+          <StardustText variant="cardTitle" color="#1A1A1A" numberOfLines={1} style={styles.titleText}>
+            {shortTitle}
+          </StardustText>
           {strokeImage && (
-            <View style={styles.cardRight}>
-              <Image source={strokeImage} style={styles.strokeImage} contentFit="contain" />
-            </View>
+            <Image source={strokeImage} style={styles.strokeImage} contentFit="contain" />
           )}
         </View>
+
+        {/* Body preview below */}
+        <StardustText variant="bodySmall" color="#4A4A4A" numberOfLines={2} style={styles.bodyText}>
+          {bodyPreview}
+        </StardustText>
 
         {/* Teal divider */}
         <View style={styles.tealDivider} />
@@ -126,7 +123,7 @@ export default function JournalHome() {
         {/* Tag icons row */}
         {item.tags && item.tags.length > 0 && (
           <View style={styles.tagRow}>
-            {item.tags.slice(0, 4).map((tag: string, i: number) => {
+            {item.tags.slice(0, 5).map((tag: string, i: number) => {
               const tagDef = DREAM_TAGS[tag as DreamTagKey];
               if (tagDef) {
                 return (
@@ -251,40 +248,35 @@ const styles = StyleSheet.create({
     marginBottom: 28,
     paddingVertical: 20,
   },
-  cardContent: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-  },
-  cardLeft: {
-    flex: 0.6,
-    marginRight: 10,
-  },
   dateText: {
-    fontSize: 16,
+    fontSize: 14,
     letterSpacing: 1.5,
     fontWeight: '700',
-    marginBottom: 10,
+    marginBottom: 6,
+  },
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
   },
   titleText: {
-    marginBottom: 8,
-    fontSize: 28,
+    flex: 1,
+    fontSize: 32,
     fontWeight: '700',
+    fontStyle: 'italic',
     color: '#1A1A1A',
   },
-  bodyText: {
-    marginBottom: SPACING.md,
-    color: '#4A4A4A',
-    fontSize: 17,
-    lineHeight: 24,
-  },
-  cardRight: {
-    flex: 0.4,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
   strokeImage: {
-    width: '100%',
-    aspectRatio: 1.8,
+    width: width * 0.35,
+    aspectRatio: 2.2,
+    marginLeft: 8,
+  },
+  bodyText: {
+    color: '#4A4A4A',
+    fontSize: 16,
+    lineHeight: 22,
+    marginBottom: SPACING.sm,
+    paddingRight: SPACING.xl,
   },
   tealDivider: {
     height: 2.5,
