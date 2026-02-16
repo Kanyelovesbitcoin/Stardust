@@ -263,9 +263,9 @@ const styles = StyleSheet.create({
     lineHeight: 22,
   },
   strokeImage: {
-    width: 120,
-    height: 56,
-    marginTop: 4,
+    width: 180,
+    height: 80,
+    marginTop: 0,
   },
   tealDivider: {
     height: 2.5,
