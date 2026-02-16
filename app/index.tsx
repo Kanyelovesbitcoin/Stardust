@@ -276,10 +276,10 @@ const styles = StyleSheet.create({
     lineHeight: 22,
   },
   strokeImage: {
-    width: width * 0.55,
-    height: 120,
-    marginTop: -10,
-    marginRight: -30,
+    width: width * 0.7,
+    height: 160,
+    marginTop: -20,
+    marginRight: -40,
   },
   tealDivider: {
     height: 2.5,
@@ -297,8 +297,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   tagImage: {
-    width: 56,
-    height: 56,
+    width: 72,
+    height: 72,
   },
   emptyRecent: {
     marginTop: SPACING.xxl,
