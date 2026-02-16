@@ -457,8 +457,8 @@ const styles = StyleSheet.create({
   },
   strokeItem: {
     alignItems: 'center',
-    paddingVertical: 4,
-    paddingHorizontal: 4,
+    paddingVertical: 8,
+    paddingHorizontal: 6,
     borderRadius: BORDER_RADIUS.md,
     borderWidth: 2,
     borderColor: 'transparent',
@@ -470,15 +470,15 @@ const styles = StyleSheet.create({
   },
   strokeImage: {
     width: '100%',
-    height: 60,
+    aspectRatio: 3,
   },
   strokeLabel: {
     ...TYPOGRAPHY.caption,
     color: '#6B6358',
     fontWeight: '600',
-    marginTop: 4,
+    marginTop: 6,
     textAlign: 'center',
-    fontSize: 14,
+    fontSize: 15,
   },
   strokeLabelActive: {
     color: '#C4A265',
@@ -496,20 +496,21 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     opacity: 0.45,
     width: '18%',
+    minHeight: 48,
   },
   tagIconItemActive: {
     opacity: 1,
   },
   tagIconImage: {
     width: '100%',
-    height: 70,
+    aspectRatio: 1,
   },
   tagIconLabel: {
     ...TYPOGRAPHY.caption,
     color: '#9B917F',
-    marginTop: 4,
+    marginTop: 6,
     textAlign: 'center',
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: '600',
   },
   tagIconLabelActive: {

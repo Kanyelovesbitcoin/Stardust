@@ -114,7 +114,9 @@ export default function JournalHome() {
 
           {/* Watercolor stroke on the right */}
           {strokeImage && (
-            <Image source={strokeImage} style={styles.strokeImage} contentFit="contain" />
+            <View style={styles.cardRight}>
+              <Image source={strokeImage} style={styles.strokeImage} contentFit="contain" />
+            </View>
           )}
         </View>
 
@@ -251,12 +253,11 @@ const styles = StyleSheet.create({
   },
   cardContent: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'flex-start',
   },
   cardLeft: {
-    flex: 1,
-    marginRight: 20,
+    flex: 0.65,
+    marginRight: 12,
   },
   dateText: {
     fontSize: 16,
@@ -276,11 +277,14 @@ const styles = StyleSheet.create({
     fontSize: 17,
     lineHeight: 24,
   },
+  cardRight: {
+    flex: 0.35,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   strokeImage: {
-    width: width * 0.7,
-    height: 160,
-    marginTop: -20,
-    marginRight: -40,
+    width: '100%',
+    aspectRatio: 2.5,
   },
   tealDivider: {
     height: 2.5,
@@ -291,15 +295,17 @@ const styles = StyleSheet.create({
   },
   tagRow: {
     flexDirection: 'row',
-    gap: SPACING.md,
+    flexWrap: 'wrap',
+    gap: 12,
     marginTop: SPACING.sm,
   },
   tagItem: {
     alignItems: 'center',
+    minWidth: 48,
   },
   tagImage: {
-    width: 72,
-    height: 72,
+    width: 48,
+    height: 48,
   },
   emptyRecent: {
     marginTop: SPACING.xxl,
