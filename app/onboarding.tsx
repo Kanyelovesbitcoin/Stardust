@@ -7,6 +7,7 @@ import {
   StyleSheet,
   View,
 } from 'react-native';
+import { Image } from 'expo-image';
 import { Video, ResizeMode } from 'expo-av';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router } from 'expo-router';
@@ -53,6 +54,7 @@ type SlideData = {
   title: string;
   subtitle: string;
   icon: IconName;
+  heroImage: ReturnType<typeof require>;
   highlights?: { icon: IconName; text: string }[];
   stat?: { value: string; label: string };
   kind: 'value' | 'feature' | 'social' | 'personal';
@@ -63,6 +65,7 @@ const SLIDES: SlideData[] = [
     id: 'where-dreams-begin',
     kind: 'value',
     icon: 'moon-outline',
+    heroImage: require('../assets/flying.png'),
     title: 'Where Dreams\nBegin',
     subtitle:
       'Every night your mind goes somewhere. Droplett is where you bring it back.',
@@ -76,6 +79,7 @@ const SLIDES: SlideData[] = [
     id: 'let-dreams-take-flight',
     kind: 'feature',
     icon: 'navigate-outline',
+    heroImage: require('../assets/animal.png'),
     title: 'Let Your Dreams\nTake Flight',
     subtitle:
       'Your subconscious is speaking. AI helps you understand what it\'s saying.',
@@ -89,6 +93,7 @@ const SLIDES: SlideData[] = [
     id: 'crafted-like-a-dream',
     kind: 'feature',
     icon: 'color-palette-outline',
+    heroImage: require('../assets/ink.png'),
     title: 'Crafted Like\na Dream',
     subtitle:
       'Droplett isn\'t just a journal. It\'s a hand-painted world your dreams live inside.',
@@ -102,6 +107,7 @@ const SLIDES: SlideData[] = [
     id: 'dreams-in-full-bloom',
     kind: 'personal',
     icon: 'flower-outline',
+    heroImage: require('../assets/hope.png'),
     title: 'Your Dreams,\nIn Full Bloom',
     subtitle:
       'Watch your dream life grow. The more you capture, the more you understand yourself.',
@@ -115,6 +121,7 @@ const SLIDES: SlideData[] = [
     id: 'universe-inside-you',
     kind: 'value',
     icon: 'planet-outline',
+    heroImage: require('../assets/star.png'),
     title: 'A Universe\nInside You',
     subtitle:
       'Everything you need to remember, explore, and understand your dreams — bottled in one beautiful app.',
@@ -540,7 +547,7 @@ export default function OnboardingScreen() {
           { opacity: fadeAnim, transform: [{ translateY: slideAnim }] },
         ]}
       >
-        {/* Hero icon */}
+        {/* Hero watercolor image */}
         <Animated.View
           style={[
             styles.heroCircle,
@@ -550,7 +557,11 @@ export default function OnboardingScreen() {
             },
           ]}
         >
-          <Ionicons name={slide.icon} size={40} color={DROPLET.blue} />
+          <Image
+            source={slide.heroImage}
+            style={styles.heroImage}
+            contentFit="cover"
+          />
         </Animated.View>
 
         {/* Title */}
@@ -677,20 +688,22 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   heroCircle: {
-    width: 96,
-    height: 96,
-    borderRadius: 48,
-    borderWidth: 1,
-    borderColor: 'rgba(46, 107, 158, 0.2)',
-    backgroundColor: 'rgba(46, 107, 158, 0.1)',
-    alignItems: 'center',
-    justifyContent: 'center',
+    width: 200,
+    height: 200,
+    borderRadius: 100,
+    overflow: 'hidden',
+    backgroundColor: '#0A0A14',
+    alignSelf: 'center',
     marginBottom: SPACING.lg,
-    shadowColor: '#2E6B9E',
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.3,
-    shadowRadius: 20,
-    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.4,
+    shadowRadius: 16,
+    elevation: 10,
+  },
+  heroImage: {
+    width: '100%',
+    height: '100%',
   },
   title: {
     marginBottom: SPACING.sm,
