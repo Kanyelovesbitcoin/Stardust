@@ -39,12 +39,15 @@ type IconName = React.ComponentProps<typeof Ionicons>['name'];
 const ONBOARDED_KEY = 'hasOnboarded';
 const TOTAL_SLIDES = 5;
 
+// Slide backgrounds — flower (index 3) and star (index 4) both use the
+// lighter parchment texture from slide 1 (onboarding-bg-1.png) instead
+// of their original dark/busy backgrounds.
 const SLIDE_BACKGROUNDS = [
-  require('../assets/onboarding-bg-1.png'),
-  require('../assets/onboarding-bg-2.png'),
-  require('../assets/onboarding-bg-3.png'),
-  require('../assets/onboarding-bg-4.png'),
-  require('../assets/onboarding-bg-5.png'),
+  require('../assets/onboarding-bg-1.png'), // wings  — original
+  require('../assets/onboarding-bg-2.png'), // cat    — original
+  require('../assets/onboarding-bg-3.png'), // jar    — original
+  require('../assets/onboarding-bg-1.png'), // flower — lighter parchment (was bg-4)
+  require('../assets/onboarding-bg-1.png'), // star   — lighter parchment (was bg-5)
 ];
 
 // ─── Slide data ──────────────────────────────────────────
@@ -259,7 +262,7 @@ function DropletButton({ onPress, children }: { onPress: () => void; children: s
 }
 
 // ─── Dot indicator ───────────────────────────────────────
-// Total visual steps: 5 slides + 1 demo = 6 dots
+// Total visual steps: 5 slides + 1 demo + 1 rating = 7 dots
 
 function DotIndicator({ current, total }: { current: number; total: number }) {
   return (
@@ -278,44 +281,6 @@ function DotIndicator({ current, total }: { current: number; total: number }) {
   );
 }
 
-// ─── Social proof quote ──────────────────────────────────
-
-function ReviewQuote({ onRatePress }: { onRatePress: () => void }) {
-  const scaleAnim = useRef(new Animated.Value(1)).current;
-
-  const handlePress = () => {
-    Animated.sequence([
-      Animated.timing(scaleAnim, { toValue: 0.96, duration: 80, useNativeDriver: true }),
-      Animated.spring(scaleAnim, { toValue: 1, speed: 18, bounciness: 6, useNativeDriver: true }),
-    ]).start();
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    onRatePress();
-  };
-
-  return (
-    <Animated.View style={[styles.reviewCard, { transform: [{ scale: scaleAnim }] }]}>
-      <StardustText variant="body" color={DROPLET.body} style={styles.reviewText}>
-        "I never realized how much my dreams were trying to tell me until Droplett. It's like a therapy session for my subconscious."
-      </StardustText>
-      <StardustText variant="bodySmall" color={DROPLET.muted} style={[styles.reviewAuthor, { marginBottom: SPACING.md }]}>
-        — Maya R., Beta Tester
-      </StardustText>
-
-      {/* Tappable star row → triggers App Store review prompt */}
-      <Pressable onPress={handlePress} style={styles.rateButton} hitSlop={8}>
-        <View style={styles.reviewStars}>
-          {[0,1,2,3,4].map(i => (
-            <Ionicons key={i} name="star" size={20} color="#C4A140" />
-          ))}
-        </View>
-        <StardustText variant="label" color={DROPLET.navy} style={styles.rateLabel}>
-          Rate Droplett
-        </StardustText>
-      </Pressable>
-    </Animated.View>
-  );
-}
-
 // ─── Highlight row ───────────────────────────────────────
 
 function HighlightRow({ icon, text }: { icon: IconName; text: string }) {
@@ -331,11 +296,12 @@ function HighlightRow({ icon, text }: { icon: IconName; text: string }) {
   );
 }
 
-// ─── Demo video slide ────────────────────────────────────
+// ─── Demo video slide (slide 6 of 7) ────────────────────
 
 function DemoSlide({ onContinue }: { onContinue: () => void }) {
   const videoRef = useRef<Video>(null);
   const fadeAnim = useRef(new Animated.Value(0)).current;
+  const hasAdvanced = useRef(false);
   const insets = useSafeAreaInsets();
 
   const PREVIEW_W = SCREEN_W * 0.65;
@@ -344,20 +310,6 @@ function DemoSlide({ onContinue }: { onContinue: () => void }) {
   useEffect(() => {
     Animated.timing(fadeAnim, { toValue: 1, duration: 400, useNativeDriver: true }).start();
   }, []);
-
-  const handleRatePress = async () => {
-    try {
-      const StoreReview = require('expo-store-review');
-      const isAvailable = await StoreReview.isAvailableAsync();
-      if (isAvailable) {
-        await StoreReview.requestReview();
-      }
-    } catch (e) {
-      // Not available in Expo Go — silently ignore
-    }
-    // Short delay so the review sheet can appear, then head to paywall
-    setTimeout(onContinue, 600);
-  };
 
   return (
     <Animated.View style={[StyleSheet.absoluteFill, { opacity: fadeAnim }]}>
@@ -369,10 +321,10 @@ function DemoSlide({ onContinue }: { onContinue: () => void }) {
       <View style={[StyleSheet.absoluteFillObject, styles.waterStain2]} />
       <DropletParticles />
 
-      {/* Header dots — same as other slides */}
+      {/* Header dots — 7 total, demo is index 5 */}
       <View style={[styles.header, { paddingTop: insets.top + SPACING.sm }]}>
         <View style={styles.backButton} />
-        <DotIndicator current={5} total={6} />
+        <DotIndicator current={5} total={7} />
         <View style={styles.backButton} />
       </View>
 
@@ -406,15 +358,13 @@ function DemoSlide({ onContinue }: { onContinue: () => void }) {
             isLooping={false}
             isMuted={false}
             onPlaybackStatusUpdate={(status) => {
-              if (status.isLoaded && status.didJustFinish) {
+              if (status.isLoaded && status.didJustFinish && !hasAdvanced.current) {
+                hasAdvanced.current = true;
                 onContinue();
               }
             }}
           />
         </View>
-
-        {/* Social proof — soft landing before paywall */}
-        <ReviewQuote onRatePress={handleRatePress} />
       </View>
 
       {/* Footer CTA */}
@@ -431,6 +381,149 @@ function DemoSlide({ onContinue }: { onContinue: () => void }) {
   );
 }
 
+// ─── Rating slide (slide 7 of 7, standalone) ────────────
+
+function RatingSlide({ onRate, onSkip }: { onRate: () => void; onSkip: () => void }) {
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const insets = useSafeAreaInsets();
+
+  // Per-star scale animations for a staggered bounce on tap
+  const starScales = useRef([0, 1, 2, 3, 4].map(() => new Animated.Value(1))).current;
+  const [starsLit, setStarsLit] = useState(0);
+  // Guard against re-entrant taps (star + button, or rapid multi-star taps)
+  const ratingInProgress = useRef(false);
+
+  useEffect(() => {
+    Animated.timing(fadeAnim, { toValue: 1, duration: 400, useNativeDriver: true }).start();
+  }, []);
+
+  const handleStarPress = async (index: number) => {
+    if (ratingInProgress.current) return;
+    ratingInProgress.current = true;
+
+    // Light all stars up to the tapped index
+    setStarsLit(index + 1);
+
+    // Staggered bounce animation across stars 0..index only
+    const animations = [0, 1, 2, 3, 4]
+      .filter((i) => i <= index)
+      .map((i) =>
+        Animated.sequence([
+          Animated.delay(i * 60),
+          Animated.spring(starScales[i], {
+            toValue: 1.4,
+            speed: 20,
+            bounciness: 8,
+            useNativeDriver: true,
+          }),
+          Animated.spring(starScales[i], {
+            toValue: 1,
+            speed: 14,
+            bounciness: 4,
+            useNativeDriver: true,
+          }),
+        ])
+      );
+    Animated.parallel(animations).start();
+
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+
+    // Trigger native App Store review sheet
+    try {
+      const StoreReview = require('expo-store-review');
+      const isAvailable = await StoreReview.isAvailableAsync();
+      if (isAvailable) {
+        await StoreReview.requestReview();
+      }
+    } catch (_e) {
+      // Not available in Expo Go — silently ignore
+    }
+
+    // Short pause so the OS sheet can appear before we move on
+    setTimeout(onRate, 800);
+  };
+
+  return (
+    <Animated.View style={[StyleSheet.absoluteFill, { opacity: fadeAnim }]}>
+      <StatusBar style="dark" />
+
+      {/* Lighter parchment background — same as wings / slide 1 */}
+      <ImageBackground
+        source={require('../assets/onboarding-bg-1.png')}
+        style={StyleSheet.absoluteFill}
+        resizeMode="cover"
+      />
+      <View style={[StyleSheet.absoluteFillObject, styles.backgroundOverlay]} />
+      <View style={[StyleSheet.absoluteFillObject, styles.waterStain1]} />
+      <View style={[StyleSheet.absoluteFillObject, styles.waterStain2]} />
+      <DropletParticles />
+
+      {/* Header dots — rating is index 6 (last) */}
+      <View style={[styles.header, { paddingTop: insets.top + SPACING.sm }]}>
+        <View style={styles.backButton} />
+        <DotIndicator current={6} total={7} />
+        <View style={styles.backButton} />
+      </View>
+
+      {/* Content */}
+      <View style={styles.ratingContent}>
+        {/* Serif headline */}
+        <StardustText
+          variant="heroTitle"
+          align="center"
+          color={DROPLET.title}
+          style={styles.ratingHeadline}
+        >
+          Loving Droplett?
+        </StardustText>
+
+        {/* Subtitle */}
+        <StardustText
+          variant="body"
+          align="center"
+          color={DROPLET.muted}
+          style={styles.ratingSubtitle}
+        >
+          Your review helps other dreamers find us
+        </StardustText>
+
+        {/* Five tappable gold stars */}
+        <View style={styles.starsRow}>
+          {[0, 1, 2, 3, 4].map((i) => (
+            <Pressable
+              key={i}
+              onPress={() => handleStarPress(i)}
+              hitSlop={10}
+            >
+              <Animated.View style={{ transform: [{ scale: starScales[i] }] }}>
+                <Ionicons
+                  name={i < starsLit ? 'star' : 'star-outline'}
+                  size={44}
+                  color="#C4A140"
+                />
+              </Animated.View>
+            </Pressable>
+          ))}
+        </View>
+
+        {/* Navy "Rate Droplett" CTA */}
+        <View style={styles.ratingCta}>
+          <DropletButton onPress={() => handleStarPress(4)}>
+            Rate Droplett
+          </DropletButton>
+        </View>
+
+        {/* Soft "Maybe Later" escape hatch */}
+        <Pressable onPress={onSkip} hitSlop={12} style={styles.skipButton}>
+          <StardustText variant="bodySmall" color={DROPLET.muted} align="center">
+            Maybe Later
+          </StardustText>
+        </Pressable>
+      </View>
+    </Animated.View>
+  );
+}
+
 // ─── Main screen ─────────────────────────────────────────
 
 export default function OnboardingScreen() {
@@ -439,6 +532,7 @@ export default function OnboardingScreen() {
 
   const [currentSlide, setCurrentSlide] = useState(0);
   const [showDemo, setShowDemo] = useState(false);
+  const [showRating, setShowRating] = useState(false);
   const [isHydrating, setIsHydrating] = useState(true);
 
   const fadeAnim = useRef(new Animated.Value(1)).current;
@@ -475,7 +569,7 @@ export default function OnboardingScreen() {
   // ─── Hero entrance animation ─────────────────────────
 
   useEffect(() => {
-    if (showDemo) return;
+    if (showDemo || showRating) return;
     heroScaleAnim.setValue(0.8);
     heroOpacityAnim.setValue(0);
     Animated.parallel([
@@ -491,7 +585,7 @@ export default function OnboardingScreen() {
         useNativeDriver: true,
       }),
     ]).start();
-  }, [currentSlide, showDemo]);
+  }, [currentSlide, showDemo, showRating]);
 
   // ─── Navigation ──────────────────────────────────────
 
@@ -512,7 +606,7 @@ export default function OnboardingScreen() {
 
   const handleContinue = () => {
     if (isLastSlide) {
-      // After last slide → show demo
+      // After last value slide → show demo
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       setShowDemo(true);
       return;
@@ -552,8 +646,19 @@ export default function OnboardingScreen() {
     }
   };
 
-  // After demo video ends / user taps Continue → paywall
+  // Demo video ends or user taps Continue → show rating slide
   const handleDemoComplete = () => {
+    setShowDemo(false);
+    setShowRating(true);
+  };
+
+  // User rates (tapped stars) → paywall
+  const handleRateComplete = () => {
+    void handleUnlock();
+  };
+
+  // User taps "Maybe Later" → skip straight to paywall
+  const handleSkipRating = () => {
     void handleUnlock();
   };
 
@@ -561,7 +666,17 @@ export default function OnboardingScreen() {
 
   if (isHydrating) return null;
 
-  // Demo video overlay (shown after slide 5)
+  // Rating slide (standalone, after demo)
+  if (showRating) {
+    return (
+      <RatingSlide
+        onRate={handleRateComplete}
+        onSkip={handleSkipRating}
+      />
+    );
+  }
+
+  // Demo video overlay (shown after slide 5, before rating)
   if (showDemo) {
     return <DemoSlide onContinue={handleDemoComplete} />;
   }
@@ -590,8 +705,8 @@ export default function OnboardingScreen() {
         ) : (
           <View style={styles.backButton} />
         )}
-        {/* 6 dots: 5 slides + 1 demo */}
-        <DotIndicator current={currentSlide} total={6} />
+        {/* 7 dots: 5 slides + 1 demo + 1 rating */}
+        <DotIndicator current={currentSlide} total={7} />
         <View style={styles.backButton} />
       </View>
 
@@ -602,10 +717,10 @@ export default function OnboardingScreen() {
           { opacity: fadeAnim, transform: [{ translateY: slideAnim }] },
         ]}
       >
-        {/* Hero watercolor image */}
+        {/* Hero watercolor image — raw transparent PNG, no circle/container */}
         <Animated.View
           style={[
-            styles.heroCircle,
+            styles.heroImageWrap,
             {
               transform: [{ scale: heroScaleAnim }],
               opacity: heroOpacityAnim,
@@ -615,7 +730,7 @@ export default function OnboardingScreen() {
           <Image
             source={slide.heroImage}
             style={styles.heroImage}
-            contentFit="cover"
+            contentFit="contain"
           />
         </Animated.View>
 
@@ -742,19 +857,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  heroCircle: {
+  // Hero image — raw transparent PNG, floats naturally, no clip/circle
+  heroImageWrap: {
     width: 180,
     height: 180,
-    borderRadius: 90,
-    overflow: 'hidden',
-    backgroundColor: '#0A0A14',
     alignSelf: 'center',
     marginBottom: SPACING.lg,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.4,
-    shadowRadius: 16,
-    elevation: 10,
   },
   heroImage: {
     width: '100%',
@@ -766,7 +874,6 @@ const styles = StyleSheet.create({
     lineHeight: 38,
   },
   subtitle: {
-    // Match gap between list items so spacing feels even top and bottom
     marginBottom: SPACING.md,
     maxWidth: 340,
     lineHeight: 22,
@@ -830,57 +937,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: SPACING.screenPadding,
     paddingTop: SPACING.xl,
   },
-  // Social proof review card
-  reviewCard: {
-    marginTop: SPACING.lg,
-    width: '100%',
-    maxWidth: 340,
-    backgroundColor: 'rgba(240, 238, 232, 0.92)',
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: 'rgba(196, 161, 64, 0.25)',
-    paddingVertical: SPACING.md,
-    paddingHorizontal: SPACING.lg,
-    shadowColor: '#8B7355',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.15,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  reviewText: {
-    fontStyle: 'italic',
-    lineHeight: 22,
-    marginBottom: SPACING.sm,
-  },
-  reviewFooter: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: SPACING.sm,
-  },
-  reviewStars: {
-    flexDirection: 'row',
-    gap: 3,
-  },
-  reviewAuthor: {
-    fontStyle: 'italic',
-  },
-  rateButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: SPACING.sm,
-    backgroundColor: 'rgba(196, 161, 64, 0.1)',
-    borderWidth: 1,
-    borderColor: 'rgba(196, 161, 64, 0.35)',
-    borderRadius: 24,
-    paddingVertical: 10,
-    paddingHorizontal: SPACING.lg,
-  },
-  rateLabel: {
-    color: DROPLET.navy,
-    letterSpacing: 1,
-  },
-  // Demo slide styles
+  // Demo slide
   demoContent: {
     flex: 1,
     alignItems: 'center',
@@ -898,5 +955,39 @@ const styles = StyleSheet.create({
     elevation: 16,
     borderWidth: 2,
     borderColor: 'rgba(27, 58, 92, 0.15)',
+  },
+  // Rating slide
+  ratingContent: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: SPACING.screenPadding + 4,
+  },
+  ratingHeadline: {
+    fontSize: 34,
+    lineHeight: 42,
+    marginBottom: SPACING.sm,
+  },
+  ratingSubtitle: {
+    maxWidth: 280,
+    lineHeight: 22,
+    marginBottom: SPACING.xl + SPACING.sm,
+    textAlign: 'center',
+  },
+  starsRow: {
+    flexDirection: 'row',
+    gap: SPACING.md,
+    marginBottom: SPACING.xl + SPACING.sm,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  ratingCta: {
+    width: '100%',
+    maxWidth: 320,
+    marginBottom: SPACING.md,
+  },
+  skipButton: {
+    paddingVertical: SPACING.sm,
+    paddingHorizontal: SPACING.lg,
   },
 });
