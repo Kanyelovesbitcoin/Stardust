@@ -162,6 +162,7 @@ const styles = StyleSheet.create({
   container: {
     alignItems: 'center',
     paddingVertical: SPACING.xl,
+    overflow: 'visible',
   },
   micButtonOuter: {
     width: 130,

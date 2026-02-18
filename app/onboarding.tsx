@@ -293,49 +293,74 @@ function DemoSlide({ onContinue }: { onContinue: () => void }) {
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const insets = useSafeAreaInsets();
 
+  const PREVIEW_W = SCREEN_W * 0.65;
+  const PREVIEW_H = PREVIEW_W * (16 / 9);
+
   useEffect(() => {
     Animated.timing(fadeAnim, { toValue: 1, duration: 400, useNativeDriver: true }).start();
   }, []);
 
   return (
-    <Animated.View style={[StyleSheet.absoluteFill, { opacity: fadeAnim, backgroundColor: '#000' }]}>
-      <StatusBar style="light" />
+    <Animated.View style={[StyleSheet.absoluteFill, { opacity: fadeAnim }]}>
+      <StatusBar style="dark" />
 
-      {/* Full-screen video */}
-      <Video
-        ref={videoRef}
-        source={require('../assets/demo.mp4')}
-        style={StyleSheet.absoluteFill}
-        resizeMode={ResizeMode.COVER}
-        shouldPlay
-        isLooping={false}
-        isMuted={false}
-        onPlaybackStatusUpdate={(status) => {
-          if (status.isLoaded && status.didJustFinish) {
-            onContinue();
-          }
-        }}
-      />
+      {/* Onboarding parchment background — matches surrounding slides */}
+      <View style={[StyleSheet.absoluteFill, { backgroundColor: DROPLET.paper }]} />
+      <View style={[StyleSheet.absoluteFillObject, styles.waterStain1]} />
+      <View style={[StyleSheet.absoluteFillObject, styles.waterStain2]} />
+      <DropletParticles />
 
-      {/* Subtle top gradient for dot indicator */}
-      <LinearGradient
-        colors={['rgba(0,0,0,0.55)', 'transparent']}
-        locations={[0, 1]}
-        style={[styles.demoTopGradient, { paddingTop: insets.top + SPACING.sm }]}
-        pointerEvents="none"
-      >
+      {/* Header dots — same as other slides */}
+      <View style={[styles.header, { paddingTop: insets.top + SPACING.sm }]}>
+        <View style={styles.backButton} />
         <DotIndicator current={5} total={6} />
-      </LinearGradient>
+        <View style={styles.backButton} />
+      </View>
 
-      {/* Bottom gradient + skip / continue */}
-      <LinearGradient
-        colors={['transparent', 'rgba(0,0,0,0.75)', 'rgba(0,0,0,0.92)']}
-        locations={[0, 0.4, 1]}
-        style={[styles.demoFooter, { paddingBottom: insets.bottom + SPACING.md }]}
-      >
-        <StardustText variant="bodySmall" color="rgba(255,255,255,0.6)" align="center" style={{ marginBottom: SPACING.md }}>
-          See Droplett in action
+      {/* Centred device-frame preview */}
+      <View style={styles.demoContent}>
+        <StardustText
+          variant="heroTitle"
+          align="center"
+          color={DROPLET.title}
+          style={[styles.title, { marginBottom: SPACING.sm }]}
+        >
+          See It In Action
         </StardustText>
+        <StardustText
+          variant="body"
+          align="center"
+          color={DROPLET.muted}
+          style={[styles.subtitle, { marginBottom: SPACING.lg }]}
+        >
+          A quick look inside Droplett
+        </StardustText>
+
+        {/* Device frame */}
+        <View style={[styles.deviceFrame, { width: PREVIEW_W, height: PREVIEW_H }]}>
+          <Video
+            ref={videoRef}
+            source={require('../assets/demo.mp4')}
+            style={{ width: PREVIEW_W, height: PREVIEW_H }}
+            resizeMode={ResizeMode.COVER}
+            shouldPlay
+            isLooping={false}
+            isMuted={false}
+            onPlaybackStatusUpdate={(status) => {
+              if (status.isLoaded && status.didJustFinish) {
+                onContinue();
+              }
+            }}
+          />
+        </View>
+      </View>
+
+      {/* Footer CTA */}
+      <LinearGradient
+        colors={['transparent', 'rgba(240, 238, 232, 0.85)', 'rgba(240, 238, 232, 0.95)']}
+        locations={[0, 0.25, 1]}
+        style={[styles.footer, { paddingBottom: insets.bottom + SPACING.md }]}
+      >
         <DropletButton onPress={onContinue}>
           Continue
         </DropletButton>
@@ -735,23 +760,22 @@ const styles = StyleSheet.create({
     paddingTop: SPACING.xl,
   },
   // Demo slide styles
-  demoTopGradient: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    height: 120,
+  demoContent: {
+    flex: 1,
     alignItems: 'center',
-    paddingTop: SPACING.sm,
-    zIndex: 2,
-  },
-  demoFooter: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
+    justifyContent: 'center',
     paddingHorizontal: SPACING.screenPadding,
-    paddingTop: SPACING.xl,
-    zIndex: 2,
+  },
+  deviceFrame: {
+    borderRadius: 20,
+    overflow: 'hidden',
+    backgroundColor: '#000',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.35,
+    shadowRadius: 20,
+    elevation: 16,
+    borderWidth: 2,
+    borderColor: 'rgba(27, 58, 92, 0.15)',
   },
 });

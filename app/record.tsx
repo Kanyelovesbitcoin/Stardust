@@ -259,7 +259,7 @@ export default function RecordScreen() {
         </View>
 
         <ScrollView
-          style={styles.flex}
+          style={[styles.flex, { overflow: 'visible' }]}
           showsVerticalScrollIndicator={false}
           contentContainerStyle={styles.scrollContent}
           keyboardShouldPersistTaps="handled"
