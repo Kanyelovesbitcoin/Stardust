@@ -304,8 +304,15 @@ function DemoSlide({ onContinue }: { onContinue: () => void }) {
   const hasAdvanced = useRef(false);
   const insets = useSafeAreaInsets();
 
-  const PREVIEW_W = SCREEN_W * 0.65;
-  const PREVIEW_H = PREVIEW_W * (16 / 9);
+  // Fill most of the screen between the header and footer CTA.
+  // 88% width lets a thin parchment border breathe on the sides.
+  // Height is constrained so the Continue button never gets pushed off-screen.
+  const PREVIEW_W = SCREEN_W * 0.88;
+  const FOOTER_H = 80 + insets.bottom;
+  const HEADER_H = 52 + insets.top;
+  const AVAILABLE_H = SCREEN_H - HEADER_H - FOOTER_H - SPACING.md * 2;
+  // Cap at available height so it always fits without scrolling
+  const PREVIEW_H = Math.min(PREVIEW_W * (16 / 9), AVAILABLE_H);
 
   useEffect(() => {
     Animated.timing(fadeAnim, { toValue: 1, duration: 400, useNativeDriver: true }).start();
@@ -328,30 +335,13 @@ function DemoSlide({ onContinue }: { onContinue: () => void }) {
         <View style={styles.backButton} />
       </View>
 
-      {/* Centred device-frame preview */}
+      {/* Full-height centred device-frame — video dominates the screen */}
       <View style={styles.demoContent}>
-        <StardustText
-          variant="heroTitle"
-          align="center"
-          color={DROPLET.title}
-          style={[styles.title, { marginBottom: SPACING.sm }]}
-        >
-          See It In Action
-        </StardustText>
-        <StardustText
-          variant="body"
-          align="center"
-          color={DROPLET.muted}
-          style={[styles.subtitle, { marginBottom: SPACING.lg }]}
-        >
-          A quick look inside Droplett
-        </StardustText>
-
-        {/* Device frame */}
+        {/* Device frame fills the available vertical space */}
         <View style={[styles.deviceFrame, { width: PREVIEW_W, height: PREVIEW_H }]}>
           <Video
             ref={videoRef}
-            source={require('../assets/demo.mp4')}
+            source={require('../assets/best-demo.mp4')}
             style={{ width: PREVIEW_W, height: PREVIEW_H }}
             resizeMode={ResizeMode.COVER}
             shouldPlay
@@ -367,7 +357,7 @@ function DemoSlide({ onContinue }: { onContinue: () => void }) {
         </View>
       </View>
 
-      {/* Footer CTA */}
+      {/* Footer CTA — sits below the video */}
       <LinearGradient
         colors={['transparent', 'rgba(240, 238, 232, 0.85)', 'rgba(240, 238, 232, 0.95)']}
         locations={[0, 0.25, 1]}
