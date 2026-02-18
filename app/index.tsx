@@ -297,6 +297,8 @@ const styles = StyleSheet.create({
   tagImage: {
     width: 64,
     height: 64,
+    borderRadius: 32,
+    overflow: 'hidden',
   },
   emptyRecent: {
     marginTop: SPACING.xxl,

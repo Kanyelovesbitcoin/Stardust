@@ -167,7 +167,7 @@ export default function DreamDetailScreen() {
             return (
               <View key={tag} style={styles.tagPill}>
                 {tagDef && (
-                  <Image source={tagDef.image} style={{ width: 18, height: 18, marginRight: 4 }} contentFit="contain" />
+                  <Image source={tagDef.image} style={{ width: 18, height: 18, marginRight: 4, borderRadius: 9, overflow: 'hidden' }} contentFit="contain" />
                 )}
                 <StardustText variant="bodySmall" color="#1A1A1A">
                   {tagDef?.label ?? tag}

@@ -7,6 +7,7 @@ import {
   StyleSheet,
   View,
 } from 'react-native';
+import { Video, ResizeMode } from 'expo-av';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -59,69 +60,67 @@ type SlideData = {
 
 const SLIDES: SlideData[] = [
   {
-    id: 'dreamer-type',
+    id: 'where-dreams-begin',
     kind: 'value',
     icon: 'moon-outline',
-    title: 'Discover Your\nDreamer Type',
+    title: 'Where Dreams\nBegin',
     subtitle:
-      'Stardust analyzes your dream patterns and builds a personalized protocol to unlock lucid dreaming.',
+      'Every night your mind goes somewhere. Droplett is where you bring it back.',
     highlights: [
-      { icon: 'sparkles-outline', text: 'AI-powered dream analysis' },
-      { icon: 'compass-outline', text: 'Personalized dream protocol' },
-      { icon: 'trending-up-outline', text: 'Track your progress over time' },
+      { icon: 'alarm-outline', text: 'Capture dreams the moment you wake' },
+      { icon: 'mic-outline', text: 'Voice or text — whatever comes naturally' },
+      { icon: 'checkmark-circle-outline', text: 'Nothing gets lost again' },
     ],
   },
   {
-    id: 'journal-feature',
+    id: 'let-dreams-take-flight',
     kind: 'feature',
-    icon: 'mic-outline',
-    title: 'Capture Dreams\nEffortlessly',
+    icon: 'navigate-outline',
+    title: 'Let Your Dreams\nTake Flight',
     subtitle:
-      'Speak or type your dreams. Our AI transcribes, interprets, and visualizes them instantly.',
+      'Your subconscious is speaking. AI helps you understand what it\'s saying.',
     highlights: [
-      { icon: 'mic-outline', text: 'Voice-to-text dream capture' },
-      { icon: 'bulb-outline', text: 'AI symbol interpretation' },
-      { icon: 'image-outline', text: 'AI-generated dream art' },
+      { icon: 'sparkles-outline', text: 'AI-powered dream interpretation' },
+      { icon: 'eye-outline', text: 'Symbol and emotion analysis' },
+      { icon: 'trending-up-outline', text: 'Patterns revealed over time' },
     ],
   },
   {
-    id: 'sounds-feature',
+    id: 'crafted-like-a-dream',
     kind: 'feature',
-    icon: 'musical-notes-outline',
-    title: 'Sleep Sounds\n& Rituals',
+    icon: 'color-palette-outline',
+    title: 'Crafted Like\na Dream',
     subtitle:
-      'Curated soundscapes and guided rituals designed to improve sleep quality and dream recall.',
+      'Droplett isn\'t just a journal. It\'s a hand-painted world your dreams live inside.',
     highlights: [
-      { icon: 'volume-medium-outline', text: 'Multi-layered sleep soundscapes' },
-      { icon: 'moon-outline', text: 'Guided bedtime rituals' },
-      { icon: 'timer-outline', text: 'Smart fade timer technology' },
+      { icon: 'image-outline', text: 'Watercolor parchment textures' },
+      { icon: 'brush-outline', text: 'Four ink styles: Nightmare, Lucid, Vivid, Ocean' },
+      { icon: 'diamond-outline', text: 'Every dream gets its own visual identity' },
     ],
   },
   {
-    id: 'social-proof',
-    kind: 'social',
-    icon: 'people-outline',
-    title: 'Join Thousands of\nLucid Dreamers',
-    subtitle:
-      'One guided workflow replaces scattered apps, ads, and random tips.',
-    stat: { value: '73%', label: 'of users report improved dream recall within 2 weeks' },
-    highlights: [
-      { icon: 'shield-checkmark-outline', text: 'No ads, no data selling' },
-      { icon: 'flash-outline', text: 'All-in-one dream system' },
-      { icon: 'lock-closed-outline', text: 'End-to-end encrypted journals' },
-    ],
-  },
-  {
-    id: 'value-prop',
+    id: 'dreams-in-full-bloom',
     kind: 'personal',
-    icon: 'diamond-outline',
-    title: 'Your Dream\nJourney Awaits',
+    icon: 'flower-outline',
+    title: 'Your Dreams,\nIn Full Bloom',
     subtitle:
-      'Everything you need to remember, understand, and control your dreams — in one beautiful app.',
+      'Watch your dream life grow. The more you capture, the more you understand yourself.',
+    highlights: [
+      { icon: 'flame-outline', text: 'Dream streak tracking' },
+      { icon: 'analytics-outline', text: 'Pattern insights over weeks' },
+      { icon: 'person-outline', text: 'Your personal dream language emerges' },
+    ],
+  },
+  {
+    id: 'universe-inside-you',
+    kind: 'value',
+    icon: 'planet-outline',
+    title: 'A Universe\nInside You',
+    subtitle:
+      'Everything you need to remember, explore, and understand your dreams — bottled in one beautiful app.',
     highlights: [
       { icon: 'infinite-outline', text: 'Unlimited AI interpretations' },
-      { icon: 'images-outline', text: 'Unlimited dream artwork' },
-      { icon: 'analytics-outline', text: 'Dream pattern insights' },
+      { icon: 'images-outline', text: 'AI-generated dream artwork' },
       { icon: 'notifications-outline', text: 'Smart ritual reminders' },
     ],
   },
@@ -253,6 +252,7 @@ function DropletButton({ onPress, children }: { onPress: () => void; children: s
 }
 
 // ─── Dot indicator ───────────────────────────────────────
+// Total visual steps: 5 slides + 1 demo = 6 dots
 
 function DotIndicator({ current, total }: { current: number; total: number }) {
   return (
@@ -286,6 +286,64 @@ function HighlightRow({ icon, text }: { icon: IconName; text: string }) {
   );
 }
 
+// ─── Demo video slide ────────────────────────────────────
+
+function DemoSlide({ onContinue }: { onContinue: () => void }) {
+  const videoRef = useRef<Video>(null);
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const insets = useSafeAreaInsets();
+
+  useEffect(() => {
+    Animated.timing(fadeAnim, { toValue: 1, duration: 400, useNativeDriver: true }).start();
+  }, []);
+
+  return (
+    <Animated.View style={[StyleSheet.absoluteFill, { opacity: fadeAnim, backgroundColor: '#000' }]}>
+      <StatusBar style="light" />
+
+      {/* Full-screen video */}
+      <Video
+        ref={videoRef}
+        source={require('../assets/demo.mp4')}
+        style={StyleSheet.absoluteFill}
+        resizeMode={ResizeMode.COVER}
+        shouldPlay
+        isLooping={false}
+        isMuted={false}
+        onPlaybackStatusUpdate={(status) => {
+          if (status.isLoaded && status.didJustFinish) {
+            onContinue();
+          }
+        }}
+      />
+
+      {/* Subtle top gradient for dot indicator */}
+      <LinearGradient
+        colors={['rgba(0,0,0,0.55)', 'transparent']}
+        locations={[0, 1]}
+        style={[styles.demoTopGradient, { paddingTop: insets.top + SPACING.sm }]}
+        pointerEvents="none"
+      >
+        <DotIndicator current={5} total={6} />
+      </LinearGradient>
+
+      {/* Bottom gradient + skip / continue */}
+      <LinearGradient
+        colors={['transparent', 'rgba(0,0,0,0.75)', 'rgba(0,0,0,0.92)']}
+        locations={[0, 0.4, 1]}
+        style={[styles.demoFooter, { paddingBottom: insets.bottom + SPACING.md }]}
+      >
+        <StardustText variant="bodySmall" color="rgba(255,255,255,0.6)" align="center" style={{ marginBottom: SPACING.md }}>
+          See Droplett in action
+        </StardustText>
+        <DropletButton onPress={onContinue}>
+          Continue
+        </DropletButton>
+      </LinearGradient>
+    </Animated.View>
+  );
+}
+
 // ─── Main screen ─────────────────────────────────────────
 
 export default function OnboardingScreen() {
@@ -293,6 +351,7 @@ export default function OnboardingScreen() {
   const { showPaywall, isPremium } = usePaywall();
 
   const [currentSlide, setCurrentSlide] = useState(0);
+  const [showDemo, setShowDemo] = useState(false);
   const [isHydrating, setIsHydrating] = useState(true);
 
   const fadeAnim = useRef(new Animated.Value(1)).current;
@@ -302,7 +361,7 @@ export default function OnboardingScreen() {
 
   const slide = SLIDES[currentSlide];
   const isLastSlide = currentSlide === TOTAL_SLIDES - 1;
-  const canGoBack = currentSlide > 0;
+  const canGoBack = currentSlide > 0 || showDemo;
 
   // ─── Hydrate ─────────────────────────────────────────
 
@@ -329,6 +388,7 @@ export default function OnboardingScreen() {
   // ─── Hero entrance animation ─────────────────────────
 
   useEffect(() => {
+    if (showDemo) return;
     heroScaleAnim.setValue(0.8);
     heroOpacityAnim.setValue(0);
     Animated.parallel([
@@ -344,7 +404,7 @@ export default function OnboardingScreen() {
         useNativeDriver: true,
       }),
     ]).start();
-  }, [currentSlide]);
+  }, [currentSlide, showDemo]);
 
   // ─── Navigation ──────────────────────────────────────
 
@@ -365,13 +425,19 @@ export default function OnboardingScreen() {
 
   const handleContinue = () => {
     if (isLastSlide) {
-      void handleUnlock();
+      // After last slide → show demo
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      setShowDemo(true);
       return;
     }
     animateToSlide(currentSlide + 1);
   };
 
   const handleBack = () => {
+    if (showDemo) {
+      setShowDemo(false);
+      return;
+    }
     if (!canGoBack) return;
     animateToSlide(currentSlide - 1);
   };
@@ -399,9 +465,19 @@ export default function OnboardingScreen() {
     }
   };
 
+  // After demo video ends / user taps Continue → paywall
+  const handleDemoComplete = () => {
+    void handleUnlock();
+  };
+
   // ─── Render ──────────────────────────────────────────
 
   if (isHydrating) return null;
+
+  // Demo video overlay (shown after slide 5)
+  if (showDemo) {
+    return <DemoSlide onContinue={handleDemoComplete} />;
+  }
 
   return (
     <View style={styles.container}>
@@ -427,7 +503,8 @@ export default function OnboardingScreen() {
         ) : (
           <View style={styles.backButton} />
         )}
-        <DotIndicator current={currentSlide} total={TOTAL_SLIDES} />
+        {/* 6 dots: 5 slides + 1 demo */}
+        <DotIndicator current={currentSlide} total={6} />
         <View style={styles.backButton} />
       </View>
 
@@ -500,7 +577,7 @@ export default function OnboardingScreen() {
         style={[styles.footer, { paddingBottom: insets.bottom + SPACING.md }]}
       >
         <DropletButton onPress={handleContinue}>
-          {currentSlide === 0 ? 'Get Started' : 'Continue'}
+          {currentSlide === 0 ? 'Get Started' : isLastSlide ? 'See It In Action' : 'Continue'}
         </DropletButton>
       </LinearGradient>
     </View>
@@ -656,5 +733,25 @@ const styles = StyleSheet.create({
     right: 0,
     paddingHorizontal: SPACING.screenPadding,
     paddingTop: SPACING.xl,
+  },
+  // Demo slide styles
+  demoTopGradient: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 120,
+    alignItems: 'center',
+    paddingTop: SPACING.sm,
+    zIndex: 2,
+  },
+  demoFooter: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    paddingHorizontal: SPACING.screenPadding,
+    paddingTop: SPACING.xl,
+    zIndex: 2,
   },
 });

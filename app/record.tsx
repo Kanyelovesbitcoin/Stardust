@@ -528,6 +528,8 @@ const styles = StyleSheet.create({
   tagIconImage: {
     width: '100%',
     aspectRatio: 1,
+    borderRadius: 999,
+    overflow: 'hidden',
   },
   tagIconLabel: {
     ...TYPOGRAPHY.caption,
