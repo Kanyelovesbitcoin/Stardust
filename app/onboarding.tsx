@@ -278,6 +278,44 @@ function DotIndicator({ current, total }: { current: number; total: number }) {
   );
 }
 
+// ─── Social proof quote ──────────────────────────────────
+
+function ReviewQuote({ onRatePress }: { onRatePress: () => void }) {
+  const scaleAnim = useRef(new Animated.Value(1)).current;
+
+  const handlePress = () => {
+    Animated.sequence([
+      Animated.timing(scaleAnim, { toValue: 0.96, duration: 80, useNativeDriver: true }),
+      Animated.spring(scaleAnim, { toValue: 1, speed: 18, bounciness: 6, useNativeDriver: true }),
+    ]).start();
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    onRatePress();
+  };
+
+  return (
+    <Animated.View style={[styles.reviewCard, { transform: [{ scale: scaleAnim }] }]}>
+      <StardustText variant="body" color={DROPLET.body} style={styles.reviewText}>
+        "I never realized how much my dreams were trying to tell me until Droplett. It's like a therapy session for my subconscious."
+      </StardustText>
+      <StardustText variant="bodySmall" color={DROPLET.muted} style={[styles.reviewAuthor, { marginBottom: SPACING.md }]}>
+        — Maya R., Beta Tester
+      </StardustText>
+
+      {/* Tappable star row → triggers App Store review prompt */}
+      <Pressable onPress={handlePress} style={styles.rateButton} hitSlop={8}>
+        <View style={styles.reviewStars}>
+          {[0,1,2,3,4].map(i => (
+            <Ionicons key={i} name="star" size={20} color="#C4A140" />
+          ))}
+        </View>
+        <StardustText variant="label" color={DROPLET.navy} style={styles.rateLabel}>
+          Rate Droplett
+        </StardustText>
+      </Pressable>
+    </Animated.View>
+  );
+}
+
 // ─── Highlight row ───────────────────────────────────────
 
 function HighlightRow({ icon, text }: { icon: IconName; text: string }) {
@@ -286,7 +324,7 @@ function HighlightRow({ icon, text }: { icon: IconName; text: string }) {
       <View style={styles.highlightIconWrap}>
         <Ionicons name={icon} size={18} color={DROPLET.blue} />
       </View>
-      <StardustText variant="body" color={DROPLET.body} style={{ flex: 1 }}>
+      <StardustText variant="body" color={DROPLET.body} style={{ flex: 1, lineHeight: 22 }}>
         {text}
       </StardustText>
     </View>
@@ -306,6 +344,20 @@ function DemoSlide({ onContinue }: { onContinue: () => void }) {
   useEffect(() => {
     Animated.timing(fadeAnim, { toValue: 1, duration: 400, useNativeDriver: true }).start();
   }, []);
+
+  const handleRatePress = async () => {
+    try {
+      const StoreReview = require('expo-store-review');
+      const isAvailable = await StoreReview.isAvailableAsync();
+      if (isAvailable) {
+        await StoreReview.requestReview();
+      }
+    } catch (e) {
+      // Not available in Expo Go — silently ignore
+    }
+    // Short delay so the review sheet can appear, then head to paywall
+    setTimeout(onContinue, 600);
+  };
 
   return (
     <Animated.View style={[StyleSheet.absoluteFill, { opacity: fadeAnim }]}>
@@ -360,6 +412,9 @@ function DemoSlide({ onContinue }: { onContinue: () => void }) {
             }}
           />
         </View>
+
+        {/* Social proof — soft landing before paywall */}
+        <ReviewQuote onRatePress={handleRatePress} />
       </View>
 
       {/* Footer CTA */}
@@ -688,9 +743,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   heroCircle: {
-    width: 200,
-    height: 200,
-    borderRadius: 100,
+    width: 180,
+    height: 180,
+    borderRadius: 90,
     overflow: 'hidden',
     backgroundColor: '#0A0A14',
     alignSelf: 'center',
@@ -711,7 +766,8 @@ const styles = StyleSheet.create({
     lineHeight: 38,
   },
   subtitle: {
-    marginBottom: SPACING.lg,
+    // Match gap between list items so spacing feels even top and bottom
+    marginBottom: SPACING.md,
     maxWidth: 340,
     lineHeight: 22,
   },
@@ -738,18 +794,20 @@ const styles = StyleSheet.create({
   },
   highlightRow: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     gap: SPACING.md,
   },
   highlightIconWrap: {
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: 'rgba(46, 107, 158, 0.1)',
+    backgroundColor: 'rgba(27, 58, 92, 0.12)',
     borderWidth: 1,
-    borderColor: 'rgba(46, 107, 158, 0.15)',
+    borderColor: 'rgba(27, 58, 92, 0.2)',
     alignItems: 'center',
     justifyContent: 'center',
+    marginTop: 2,
+    flexShrink: 0,
   },
   ctaButton: {
     height: 48,
@@ -771,6 +829,56 @@ const styles = StyleSheet.create({
     right: 0,
     paddingHorizontal: SPACING.screenPadding,
     paddingTop: SPACING.xl,
+  },
+  // Social proof review card
+  reviewCard: {
+    marginTop: SPACING.lg,
+    width: '100%',
+    maxWidth: 340,
+    backgroundColor: 'rgba(240, 238, 232, 0.92)',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(196, 161, 64, 0.25)',
+    paddingVertical: SPACING.md,
+    paddingHorizontal: SPACING.lg,
+    shadowColor: '#8B7355',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  reviewText: {
+    fontStyle: 'italic',
+    lineHeight: 22,
+    marginBottom: SPACING.sm,
+  },
+  reviewFooter: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.sm,
+  },
+  reviewStars: {
+    flexDirection: 'row',
+    gap: 3,
+  },
+  reviewAuthor: {
+    fontStyle: 'italic',
+  },
+  rateButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: SPACING.sm,
+    backgroundColor: 'rgba(196, 161, 64, 0.1)',
+    borderWidth: 1,
+    borderColor: 'rgba(196, 161, 64, 0.35)',
+    borderRadius: 24,
+    paddingVertical: 10,
+    paddingHorizontal: SPACING.lg,
+  },
+  rateLabel: {
+    color: DROPLET.navy,
+    letterSpacing: 1,
   },
   // Demo slide styles
   demoContent: {
