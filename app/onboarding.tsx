@@ -416,24 +416,25 @@ function RatingSlide({ onRate, onSkip }: { onRate: (stars: number) => void; onSk
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
   };
 
-  // Continue: trigger Apple review in try/finally, then paywall in finally
-  const handleContinue = async () => {
+  // Continue: kick off Apple review (fire-and-forget), then immediately trigger Superwall
+  const handleContinue = () => {
     if (continueInProgress.current) return;
     continueInProgress.current = true;
 
     const stars = starsLit || 5; // default to 5 if they tap Continue without selecting
 
+    // Immediately trigger Superwall — never wait for Apple review
+    onRate(stars);
+
+    // Fire-and-forget: Apple review is independent of Superwall
+    // This works in production App Store builds; silently no-ops in TestFlight/Expo Go
     try {
       const StoreReview = require('expo-store-review');
-      const isAvailable = await StoreReview.isAvailableAsync();
-      if (isAvailable) {
-        await StoreReview.requestReview();
-      }
+      StoreReview.isAvailableAsync().then((isAvailable: boolean) => {
+        if (isAvailable) StoreReview.requestReview();
+      });
     } catch (_e) {
-      // Not available in Expo Go — silently ignore
-    } finally {
-      // Always fire the paywall regardless of review outcome
-      onRate(stars);
+      // Not available — silently ignore
     }
   };
 
@@ -646,9 +647,9 @@ export default function OnboardingScreen() {
     void handleUnlock(stars === 5 ? PLACEMENTS.FIVE_STAR_UPSELL : undefined);
   };
 
-  // User taps "Maybe Later" → skip straight to paywall
+  // User taps "Maybe Later" → still show the five_star_upsell paywall
   const handleSkipRating = () => {
-    void handleUnlock();
+    void handleUnlock(PLACEMENTS.FIVE_STAR_UPSELL);
   };
 
   // ─── Render ──────────────────────────────────────────
