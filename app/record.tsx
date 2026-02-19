@@ -259,7 +259,7 @@ export default function RecordScreen() {
         </View>
 
         <ScrollView
-          style={styles.flex}
+          style={[styles.flex, { overflow: 'visible' }]}
           showsVerticalScrollIndicator={false}
           contentContainerStyle={styles.scrollContent}
           keyboardShouldPersistTaps="handled"
@@ -407,7 +407,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingHorizontal: SPACING.lg,
-    paddingBottom: SPACING.xxl,
+    paddingBottom: SPACING.xxl + 12,
   },
   titleInput: {
     fontSize: 28,
@@ -528,6 +528,8 @@ const styles = StyleSheet.create({
   tagIconImage: {
     width: '100%',
     aspectRatio: 1,
+    borderRadius: 999,
+    overflow: 'hidden',
   },
   tagIconLabel: {
     ...TYPOGRAPHY.caption,

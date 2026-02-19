@@ -15,7 +15,7 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.stardust.app",
-      "buildNumber": "5",
+      "buildNumber": "9",
       "infoPlist": {
         "UIBackgroundModes": [
           "audio",
@@ -30,7 +30,7 @@
         "backgroundColor": "#0C0A14"
       },
       "edgeToEdgeEnabled": true,
-      "versionCode": 5,
+      "versionCode": 9,
       "package": "com.stardust.app"
     },
     "web": {

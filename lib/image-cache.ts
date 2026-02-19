@@ -2,6 +2,7 @@ import { Asset } from 'expo-asset';
 
 // All local texture and background images to preload at app startup
 const LOCAL_IMAGES = [
+  // App screens
   require('../assets/bg-home.png'),
   require('../assets/bg-gallery.png'),
   require('../assets/bg-settings.png'),
@@ -9,11 +10,18 @@ const LOCAL_IMAGES = [
   require('../assets/bg-type-mode.png'),
   require('../assets/app-background-stars.png'),
   require('../assets/record-button.png'),
+  // Onboarding backgrounds
   require('../assets/onboarding-bg-1.png'),
   require('../assets/onboarding-bg-2.png'),
   require('../assets/onboarding-bg-3.png'),
   require('../assets/onboarding-bg-4.png'),
   require('../assets/onboarding-bg-5.png'),
+  // Onboarding watercolor hero images
+  require('../assets/flying.png'),
+  require('../assets/animal.png'),
+  require('../assets/ink.png'),
+  require('../assets/hope.png'),
+  require('../assets/star.png'),
 ];
 
 export async function preloadAllImages(): Promise<void> {

@@ -1,8 +1,9 @@
 import React from 'react';
-import { View, StyleSheet, ScrollView, Pressable, Linking, Alert } from 'react-native';
+import { View, StyleSheet, ScrollView, Pressable, Linking } from 'react-native';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { usePaywall, PLACEMENTS } from '../lib/hooks/usePaywall';
+import { useStardustPro } from '../lib/superwall';
 import { STARDUST_THEME } from '../lib/theme';
 import { RADIUS, SPACING } from '../lib/layout';
 import { StardustText } from '../components/ui/StardustText';
@@ -15,16 +16,11 @@ const TERMS_URL = 'https://stardust.app/terms';
 
 export default function SettingsScreen() {
   const { showPaywall, isPremium: isPro } = usePaywall();
+  const { restorePurchases } = useStardustPro();
 
   const handleShowPaywall = () => showPaywall(PLACEMENTS.SETTINGS_UPGRADE);
 
-  const handleRestorePurchases = () => {
-    Alert.alert(
-      'Restore Purchases',
-      'Purchase restoration is not available in development mode.',
-      [{ text: 'OK' }]
-    );
-  };
+  const handleRestorePurchases = () => restorePurchases();
 
   return (
     <ScreenContainer backgroundSource={require('../assets/bg-settings.png')}>

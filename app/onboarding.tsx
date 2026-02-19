@@ -7,6 +7,8 @@ import {
   StyleSheet,
   View,
 } from 'react-native';
+import { Image } from 'expo-image';
+import { Video, ResizeMode } from 'expo-av';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -15,7 +17,7 @@ import * as Haptics from 'expo-haptics';
 import { StatusBar } from 'expo-status-bar';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { StardustText } from '../components/ui/StardustText';
-import { usePaywall, PLACEMENTS } from '../lib/hooks/usePaywall';
+import { usePaywall, PLACEMENTS, type PaywallPlacement } from '../lib/hooks/usePaywall';
 import { SPACING, RADIUS } from '../lib/layout';
 
 const { width: SCREEN_W, height: SCREEN_H } = Dimensions.get('window');
@@ -37,12 +39,15 @@ type IconName = React.ComponentProps<typeof Ionicons>['name'];
 const ONBOARDED_KEY = 'hasOnboarded';
 const TOTAL_SLIDES = 5;
 
+// Slide backgrounds — flower (index 3) and star (index 4) both use the
+// lighter parchment texture from slide 1 (onboarding-bg-1.png) instead
+// of their original dark/busy backgrounds.
 const SLIDE_BACKGROUNDS = [
-  require('../assets/onboarding-bg-1.png'),
-  require('../assets/onboarding-bg-2.png'),
-  require('../assets/onboarding-bg-3.png'),
-  require('../assets/onboarding-bg-4.png'),
-  require('../assets/onboarding-bg-5.png'),
+  require('../assets/onboarding-bg-1.png'), // wings  — original
+  require('../assets/onboarding-bg-2.png'), // cat    — original
+  require('../assets/onboarding-bg-3.png'), // jar    — original
+  require('../assets/onboarding-bg-1.png'), // flower — lighter parchment (was bg-4)
+  require('../assets/onboarding-bg-1.png'), // star   — lighter parchment (was bg-5)
 ];
 
 // ─── Slide data ──────────────────────────────────────────
@@ -52,6 +57,7 @@ type SlideData = {
   title: string;
   subtitle: string;
   icon: IconName;
+  heroImage: ReturnType<typeof require>;
   highlights?: { icon: IconName; text: string }[];
   stat?: { value: string; label: string };
   kind: 'value' | 'feature' | 'social' | 'personal';
@@ -59,69 +65,72 @@ type SlideData = {
 
 const SLIDES: SlideData[] = [
   {
-    id: 'dreamer-type',
+    id: 'where-dreams-begin',
     kind: 'value',
     icon: 'moon-outline',
-    title: 'Discover Your\nDreamer Type',
+    heroImage: require('../assets/flying.png'),
+    title: 'Where Dreams\nBegin',
     subtitle:
-      'Stardust analyzes your dream patterns and builds a personalized protocol to unlock lucid dreaming.',
+      'Every night your mind goes somewhere. Droplett is where you bring it back.',
     highlights: [
-      { icon: 'sparkles-outline', text: 'AI-powered dream analysis' },
-      { icon: 'compass-outline', text: 'Personalized dream protocol' },
-      { icon: 'trending-up-outline', text: 'Track your progress over time' },
+      { icon: 'alarm-outline', text: 'Capture dreams the moment you wake' },
+      { icon: 'mic-outline', text: 'Voice or text — whatever comes naturally' },
+      { icon: 'checkmark-circle-outline', text: 'Nothing gets lost again' },
     ],
   },
   {
-    id: 'journal-feature',
+    id: 'let-dreams-take-flight',
     kind: 'feature',
-    icon: 'mic-outline',
-    title: 'Capture Dreams\nEffortlessly',
+    icon: 'navigate-outline',
+    heroImage: require('../assets/animal.png'),
+    title: 'Let Your Dreams\nTake Flight',
     subtitle:
-      'Speak or type your dreams. Our AI transcribes, interprets, and visualizes them instantly.',
+      'Your subconscious is speaking. AI helps you understand what it\'s saying.',
     highlights: [
-      { icon: 'mic-outline', text: 'Voice-to-text dream capture' },
-      { icon: 'bulb-outline', text: 'AI symbol interpretation' },
-      { icon: 'image-outline', text: 'AI-generated dream art' },
+      { icon: 'sparkles-outline', text: 'AI-powered dream interpretation' },
+      { icon: 'eye-outline', text: 'Symbol and emotion analysis' },
+      { icon: 'trending-up-outline', text: 'Patterns revealed over time' },
     ],
   },
   {
-    id: 'sounds-feature',
+    id: 'crafted-like-a-dream',
     kind: 'feature',
-    icon: 'musical-notes-outline',
-    title: 'Sleep Sounds\n& Rituals',
+    icon: 'color-palette-outline',
+    heroImage: require('../assets/ink.png'),
+    title: 'Crafted Like\na Dream',
     subtitle:
-      'Curated soundscapes and guided rituals designed to improve sleep quality and dream recall.',
+      'Droplett isn\'t just a journal. It\'s a hand-painted world your dreams live inside.',
     highlights: [
-      { icon: 'volume-medium-outline', text: 'Multi-layered sleep soundscapes' },
-      { icon: 'moon-outline', text: 'Guided bedtime rituals' },
-      { icon: 'timer-outline', text: 'Smart fade timer technology' },
+      { icon: 'image-outline', text: 'Watercolor parchment textures' },
+      { icon: 'brush-outline', text: 'Four ink styles: Nightmare, Lucid, Vivid, Ocean' },
+      { icon: 'diamond-outline', text: 'Every dream gets its own visual identity' },
     ],
   },
   {
-    id: 'social-proof',
-    kind: 'social',
-    icon: 'people-outline',
-    title: 'Join Thousands of\nLucid Dreamers',
-    subtitle:
-      'One guided workflow replaces scattered apps, ads, and random tips.',
-    stat: { value: '73%', label: 'of users report improved dream recall within 2 weeks' },
-    highlights: [
-      { icon: 'shield-checkmark-outline', text: 'No ads, no data selling' },
-      { icon: 'flash-outline', text: 'All-in-one dream system' },
-      { icon: 'lock-closed-outline', text: 'End-to-end encrypted journals' },
-    ],
-  },
-  {
-    id: 'value-prop',
+    id: 'dreams-in-full-bloom',
     kind: 'personal',
-    icon: 'diamond-outline',
-    title: 'Your Dream\nJourney Awaits',
+    icon: 'flower-outline',
+    heroImage: require('../assets/hope.png'),
+    title: 'Your Dreams,\nIn Full Bloom',
     subtitle:
-      'Everything you need to remember, understand, and control your dreams — in one beautiful app.',
+      'Watch your dream life grow. The more you capture, the more you understand yourself.',
+    highlights: [
+      { icon: 'flame-outline', text: 'Dream streak tracking' },
+      { icon: 'analytics-outline', text: 'Pattern insights over weeks' },
+      { icon: 'person-outline', text: 'Your personal dream language emerges' },
+    ],
+  },
+  {
+    id: 'universe-inside-you',
+    kind: 'value',
+    icon: 'planet-outline',
+    heroImage: require('../assets/star.png'),
+    title: 'A Universe\nInside You',
+    subtitle:
+      'Everything you need to remember, explore, and understand your dreams — bottled in one beautiful app.',
     highlights: [
       { icon: 'infinite-outline', text: 'Unlimited AI interpretations' },
-      { icon: 'images-outline', text: 'Unlimited dream artwork' },
-      { icon: 'analytics-outline', text: 'Dream pattern insights' },
+      { icon: 'images-outline', text: 'AI-generated dream artwork' },
       { icon: 'notifications-outline', text: 'Smart ritual reminders' },
     ],
   },
@@ -253,6 +262,7 @@ function DropletButton({ onPress, children }: { onPress: () => void; children: s
 }
 
 // ─── Dot indicator ───────────────────────────────────────
+// Total visual steps: 5 slides + 1 demo + 1 rating = 7 dots
 
 function DotIndicator({ current, total }: { current: number; total: number }) {
   return (
@@ -279,10 +289,232 @@ function HighlightRow({ icon, text }: { icon: IconName; text: string }) {
       <View style={styles.highlightIconWrap}>
         <Ionicons name={icon} size={18} color={DROPLET.blue} />
       </View>
-      <StardustText variant="body" color={DROPLET.body} style={{ flex: 1 }}>
+      <StardustText variant="body" color={DROPLET.body} style={{ flex: 1, lineHeight: 22 }}>
         {text}
       </StardustText>
     </View>
+  );
+}
+
+// ─── Demo video slide (slide 6 of 7) ────────────────────
+
+function DemoSlide({ onContinue }: { onContinue: () => void }) {
+  const videoRef = useRef<Video>(null);
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const hasAdvanced = useRef(false);
+  const insets = useSafeAreaInsets();
+
+  // Fill most of the screen between the header and footer CTA.
+  // 88% width lets a thin parchment border breathe on the sides.
+  // Height is constrained so the Continue button never gets pushed off-screen.
+  const PREVIEW_W = SCREEN_W * 0.88;
+  const FOOTER_H = 80 + insets.bottom;
+  const HEADER_H = 52 + insets.top;
+  const AVAILABLE_H = SCREEN_H - HEADER_H - FOOTER_H - SPACING.md * 2;
+  // Cap at available height so it always fits without scrolling
+  const PREVIEW_H = Math.min(PREVIEW_W * (16 / 9), AVAILABLE_H);
+
+  useEffect(() => {
+    Animated.timing(fadeAnim, { toValue: 1, duration: 400, useNativeDriver: true }).start();
+  }, []);
+
+  return (
+    <Animated.View style={[StyleSheet.absoluteFill, { opacity: fadeAnim }]}>
+      <StatusBar style="dark" />
+
+      {/* Onboarding parchment background — matches surrounding slides */}
+      <View style={[StyleSheet.absoluteFill, { backgroundColor: DROPLET.paper }]} />
+      <View style={[StyleSheet.absoluteFillObject, styles.waterStain1]} />
+      <View style={[StyleSheet.absoluteFillObject, styles.waterStain2]} />
+      <DropletParticles />
+
+      {/* Header dots — 7 total, demo is index 5 */}
+      <View style={[styles.header, { paddingTop: insets.top + SPACING.sm }]}>
+        <View style={styles.backButton} />
+        <DotIndicator current={5} total={7} />
+        <View style={styles.backButton} />
+      </View>
+
+      {/* Full-height centred device-frame — video dominates the screen */}
+      <View style={styles.demoContent}>
+        {/* Device frame fills the available vertical space */}
+        <View style={[styles.deviceFrame, { width: PREVIEW_W, height: PREVIEW_H }]}>
+          <Video
+            ref={videoRef}
+            source={require('../assets/best-demo.mp4')}
+            style={{ width: PREVIEW_W, height: PREVIEW_H }}
+            resizeMode={ResizeMode.COVER}
+            shouldPlay
+            isLooping={false}
+            isMuted={false}
+            onPlaybackStatusUpdate={(status) => {
+              if (status.isLoaded && status.didJustFinish && !hasAdvanced.current) {
+                hasAdvanced.current = true;
+                onContinue();
+              }
+            }}
+          />
+        </View>
+      </View>
+
+      {/* Footer CTA — sits below the video */}
+      <LinearGradient
+        colors={['transparent', 'rgba(240, 238, 232, 0.85)', 'rgba(240, 238, 232, 0.95)']}
+        locations={[0, 0.25, 1]}
+        style={[styles.footer, { paddingBottom: insets.bottom + SPACING.md }]}
+      >
+        <DropletButton onPress={onContinue}>
+          Continue
+        </DropletButton>
+      </LinearGradient>
+    </Animated.View>
+  );
+}
+
+// ─── Rating slide (slide 7 of 7, standalone) ────────────
+
+function RatingSlide({ onRate, onSkip }: { onRate: (stars: number) => void; onSkip: () => void }) {
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const insets = useSafeAreaInsets();
+
+  // Per-star scale animations for a staggered bounce on tap
+  const starScales = useRef([0, 1, 2, 3, 4].map(() => new Animated.Value(1))).current;
+  const [starsLit, setStarsLit] = useState(0);
+  // Guard against double-tap on Continue
+  const continueInProgress = useRef(false);
+
+  useEffect(() => {
+    Animated.timing(fadeAnim, { toValue: 1, duration: 400, useNativeDriver: true }).start();
+  }, []);
+
+  // Tapping a star just selects it (no review trigger yet)
+  const handleStarPress = (index: number) => {
+    setStarsLit(index + 1);
+
+    // Staggered bounce animation across stars 0..index only
+    const animations = [0, 1, 2, 3, 4]
+      .filter((i) => i <= index)
+      .map((i) =>
+        Animated.sequence([
+          Animated.delay(i * 60),
+          Animated.spring(starScales[i], {
+            toValue: 1.4,
+            speed: 20,
+            bounciness: 8,
+            useNativeDriver: true,
+          }),
+          Animated.spring(starScales[i], {
+            toValue: 1,
+            speed: 14,
+            bounciness: 4,
+            useNativeDriver: true,
+          }),
+        ])
+      );
+    Animated.parallel(animations).start();
+
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+  };
+
+  // Continue: trigger Apple review in try/finally, then paywall in finally
+  const handleContinue = async () => {
+    if (continueInProgress.current) return;
+    continueInProgress.current = true;
+
+    const stars = starsLit || 5; // default to 5 if they tap Continue without selecting
+
+    try {
+      const StoreReview = require('expo-store-review');
+      const isAvailable = await StoreReview.isAvailableAsync();
+      if (isAvailable) {
+        await StoreReview.requestReview();
+      }
+    } catch (_e) {
+      // Not available in Expo Go — silently ignore
+    } finally {
+      // Always fire the paywall regardless of review outcome
+      onRate(stars);
+    }
+  };
+
+  return (
+    <Animated.View style={[StyleSheet.absoluteFill, { opacity: fadeAnim }]}>
+      <StatusBar style="dark" />
+
+      {/* Lighter parchment background — same as wings / slide 1 */}
+      <ImageBackground
+        source={require('../assets/onboarding-bg-1.png')}
+        style={StyleSheet.absoluteFill}
+        resizeMode="cover"
+      />
+      <View style={[StyleSheet.absoluteFillObject, styles.backgroundOverlay]} />
+      <View style={[StyleSheet.absoluteFillObject, styles.waterStain1]} />
+      <View style={[StyleSheet.absoluteFillObject, styles.waterStain2]} />
+      <DropletParticles />
+
+      {/* Header dots — rating is index 6 (last) */}
+      <View style={[styles.header, { paddingTop: insets.top + SPACING.sm }]}>
+        <View style={styles.backButton} />
+        <DotIndicator current={6} total={7} />
+        <View style={styles.backButton} />
+      </View>
+
+      {/* Content */}
+      <View style={styles.ratingContent}>
+        {/* Serif headline */}
+        <StardustText
+          variant="heroTitle"
+          align="center"
+          color={DROPLET.title}
+          style={styles.ratingHeadline}
+        >
+          Loving Droplett?
+        </StardustText>
+
+        {/* Subtitle */}
+        <StardustText
+          variant="body"
+          align="center"
+          color={DROPLET.muted}
+          style={styles.ratingSubtitle}
+        >
+          Your review helps other dreamers find us
+        </StardustText>
+
+        {/* Five tappable gold stars */}
+        <View style={styles.starsRow}>
+          {[0, 1, 2, 3, 4].map((i) => (
+            <Pressable
+              key={i}
+              onPress={() => handleStarPress(i)}
+              hitSlop={10}
+            >
+              <Animated.View style={{ transform: [{ scale: starScales[i] }] }}>
+                <Ionicons
+                  name={i < starsLit ? 'star' : 'star-outline'}
+                  size={44}
+                  color="#C4A140"
+                />
+              </Animated.View>
+            </Pressable>
+          ))}
+        </View>
+
+        {/* Navy "Continue" CTA */}
+        <View style={styles.ratingCta}>
+          <DropletButton onPress={handleContinue}>
+            Continue
+          </DropletButton>
+        </View>
+
+        {/* Soft "Maybe Later" escape hatch */}
+        <Pressable onPress={onSkip} hitSlop={12} style={styles.skipButton}>
+          <StardustText variant="bodySmall" color={DROPLET.muted} align="center">
+            Maybe Later
+          </StardustText>
+        </Pressable>
+      </View>
+    </Animated.View>
   );
 }
 
@@ -293,6 +525,8 @@ export default function OnboardingScreen() {
   const { showPaywall, isPremium } = usePaywall();
 
   const [currentSlide, setCurrentSlide] = useState(0);
+  const [showDemo, setShowDemo] = useState(false);
+  const [showRating, setShowRating] = useState(false);
   const [isHydrating, setIsHydrating] = useState(true);
 
   const fadeAnim = useRef(new Animated.Value(1)).current;
@@ -302,7 +536,7 @@ export default function OnboardingScreen() {
 
   const slide = SLIDES[currentSlide];
   const isLastSlide = currentSlide === TOTAL_SLIDES - 1;
-  const canGoBack = currentSlide > 0;
+  const canGoBack = currentSlide > 0 || showDemo;
 
   // ─── Hydrate ─────────────────────────────────────────
 
@@ -329,6 +563,7 @@ export default function OnboardingScreen() {
   // ─── Hero entrance animation ─────────────────────────
 
   useEffect(() => {
+    if (showDemo || showRating) return;
     heroScaleAnim.setValue(0.8);
     heroOpacityAnim.setValue(0);
     Animated.parallel([
@@ -344,7 +579,7 @@ export default function OnboardingScreen() {
         useNativeDriver: true,
       }),
     ]).start();
-  }, [currentSlide]);
+  }, [currentSlide, showDemo, showRating]);
 
   // ─── Navigation ──────────────────────────────────────
 
@@ -365,13 +600,19 @@ export default function OnboardingScreen() {
 
   const handleContinue = () => {
     if (isLastSlide) {
-      void handleUnlock();
+      // After last value slide → show demo
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      setShowDemo(true);
       return;
     }
     animateToSlide(currentSlide + 1);
   };
 
   const handleBack = () => {
+    if (showDemo) {
+      setShowDemo(false);
+      return;
+    }
     if (!canGoBack) return;
     animateToSlide(currentSlide - 1);
   };
@@ -385,23 +626,49 @@ export default function OnboardingScreen() {
     router.replace('/');
   };
 
-  const handleUnlock = async () => {
+  const handleUnlock = async (placement?: PaywallPlacement) => {
     try {
-      const unlocked = await showPaywall(PLACEMENTS.APP_LAUNCH);
-      if (unlocked || isPremium) {
-        await completeOnboarding();
-      } else {
-        await completeOnboarding();
-      }
+      await showPaywall(placement ?? PLACEMENTS.ONBOARDING_COMPLETE);
     } catch (e) {
       console.error('Paywall error:', e);
-      await completeOnboarding();
     }
+    await completeOnboarding();
+  };
+
+  // Demo video ends or user taps Continue → show rating slide
+  const handleDemoComplete = () => {
+    setShowDemo(false);
+    setShowRating(true);
+  };
+
+  // User rates (tapped stars) → paywall (5-star gets dedicated upsell placement)
+  const handleRateComplete = (stars: number) => {
+    void handleUnlock(stars === 5 ? PLACEMENTS.FIVE_STAR_UPSELL : undefined);
+  };
+
+  // User taps "Maybe Later" → skip straight to paywall
+  const handleSkipRating = () => {
+    void handleUnlock();
   };
 
   // ─── Render ──────────────────────────────────────────
 
   if (isHydrating) return null;
+
+  // Rating slide (standalone, after demo)
+  if (showRating) {
+    return (
+      <RatingSlide
+        onRate={handleRateComplete}
+        onSkip={handleSkipRating}
+      />
+    );
+  }
+
+  // Demo video overlay (shown after slide 5, before rating)
+  if (showDemo) {
+    return <DemoSlide onContinue={handleDemoComplete} />;
+  }
 
   return (
     <View style={styles.container}>
@@ -427,7 +694,8 @@ export default function OnboardingScreen() {
         ) : (
           <View style={styles.backButton} />
         )}
-        <DotIndicator current={currentSlide} total={TOTAL_SLIDES} />
+        {/* 7 dots: 5 slides + 1 demo + 1 rating */}
+        <DotIndicator current={currentSlide} total={7} />
         <View style={styles.backButton} />
       </View>
 
@@ -438,17 +706,21 @@ export default function OnboardingScreen() {
           { opacity: fadeAnim, transform: [{ translateY: slideAnim }] },
         ]}
       >
-        {/* Hero icon */}
+        {/* Hero watercolor image — raw transparent PNG, no circle/container */}
         <Animated.View
           style={[
-            styles.heroCircle,
+            styles.heroImageWrap,
             {
               transform: [{ scale: heroScaleAnim }],
               opacity: heroOpacityAnim,
             },
           ]}
         >
-          <Ionicons name={slide.icon} size={40} color={DROPLET.blue} />
+          <Image
+            source={slide.heroImage}
+            style={styles.heroImage}
+            contentFit="contain"
+          />
         </Animated.View>
 
         {/* Title */}
@@ -500,7 +772,7 @@ export default function OnboardingScreen() {
         style={[styles.footer, { paddingBottom: insets.bottom + SPACING.md }]}
       >
         <DropletButton onPress={handleContinue}>
-          {currentSlide === 0 ? 'Get Started' : 'Continue'}
+          {currentSlide === 0 ? 'Get Started' : isLastSlide ? 'See It In Action' : 'Continue'}
         </DropletButton>
       </LinearGradient>
     </View>
@@ -574,21 +846,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  heroCircle: {
-    width: 96,
-    height: 96,
-    borderRadius: 48,
-    borderWidth: 1,
-    borderColor: 'rgba(46, 107, 158, 0.2)',
-    backgroundColor: 'rgba(46, 107, 158, 0.1)',
-    alignItems: 'center',
-    justifyContent: 'center',
+  // Hero image — raw transparent PNG, floats naturally, no clip/circle
+  heroImageWrap: {
+    width: 180,
+    height: 180,
+    alignSelf: 'center',
     marginBottom: SPACING.lg,
-    shadowColor: '#2E6B9E',
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.3,
-    shadowRadius: 20,
-    elevation: 4,
+  },
+  heroImage: {
+    width: '100%',
+    height: '100%',
   },
   title: {
     marginBottom: SPACING.sm,
@@ -596,7 +863,7 @@ const styles = StyleSheet.create({
     lineHeight: 38,
   },
   subtitle: {
-    marginBottom: SPACING.lg,
+    marginBottom: SPACING.md,
     maxWidth: 340,
     lineHeight: 22,
   },
@@ -623,18 +890,20 @@ const styles = StyleSheet.create({
   },
   highlightRow: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     gap: SPACING.md,
   },
   highlightIconWrap: {
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: 'rgba(46, 107, 158, 0.1)',
+    backgroundColor: 'rgba(27, 58, 92, 0.12)',
     borderWidth: 1,
-    borderColor: 'rgba(46, 107, 158, 0.15)',
+    borderColor: 'rgba(27, 58, 92, 0.2)',
     alignItems: 'center',
     justifyContent: 'center',
+    marginTop: 2,
+    flexShrink: 0,
   },
   ctaButton: {
     height: 48,
@@ -656,5 +925,58 @@ const styles = StyleSheet.create({
     right: 0,
     paddingHorizontal: SPACING.screenPadding,
     paddingTop: SPACING.xl,
+  },
+  // Demo slide
+  demoContent: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: SPACING.screenPadding,
+  },
+  deviceFrame: {
+    borderRadius: 20,
+    overflow: 'hidden',
+    backgroundColor: '#000',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.35,
+    shadowRadius: 20,
+    elevation: 16,
+    borderWidth: 2,
+    borderColor: 'rgba(27, 58, 92, 0.15)',
+  },
+  // Rating slide
+  ratingContent: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: SPACING.screenPadding + 4,
+  },
+  ratingHeadline: {
+    fontSize: 34,
+    lineHeight: 42,
+    marginBottom: SPACING.sm,
+  },
+  ratingSubtitle: {
+    maxWidth: 280,
+    lineHeight: 22,
+    marginBottom: SPACING.xl + SPACING.sm,
+    textAlign: 'center',
+  },
+  starsRow: {
+    flexDirection: 'row',
+    gap: SPACING.md,
+    marginBottom: SPACING.xl + SPACING.sm,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  ratingCta: {
+    width: '100%',
+    maxWidth: 320,
+    marginBottom: SPACING.md,
+  },
+  skipButton: {
+    paddingVertical: SPACING.sm,
+    paddingHorizontal: SPACING.lg,
   },
 });
