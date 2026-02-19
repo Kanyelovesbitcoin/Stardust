@@ -17,7 +17,7 @@ import * as Haptics from 'expo-haptics';
 import { StatusBar } from 'expo-status-bar';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { StardustText } from '../components/ui/StardustText';
-import { usePaywall, PLACEMENTS } from '../lib/hooks/usePaywall';
+import { usePaywall, PLACEMENTS, type PaywallPlacement } from '../lib/hooks/usePaywall';
 import { SPACING, RADIUS } from '../lib/layout';
 
 const { width: SCREEN_W, height: SCREEN_H } = Dimensions.get('window');
@@ -373,25 +373,22 @@ function DemoSlide({ onContinue }: { onContinue: () => void }) {
 
 // ─── Rating slide (slide 7 of 7, standalone) ────────────
 
-function RatingSlide({ onRate, onSkip }: { onRate: () => void; onSkip: () => void }) {
+function RatingSlide({ onRate, onSkip }: { onRate: (stars: number) => void; onSkip: () => void }) {
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const insets = useSafeAreaInsets();
 
   // Per-star scale animations for a staggered bounce on tap
   const starScales = useRef([0, 1, 2, 3, 4].map(() => new Animated.Value(1))).current;
   const [starsLit, setStarsLit] = useState(0);
-  // Guard against re-entrant taps (star + button, or rapid multi-star taps)
-  const ratingInProgress = useRef(false);
+  // Guard against double-tap on Continue
+  const continueInProgress = useRef(false);
 
   useEffect(() => {
     Animated.timing(fadeAnim, { toValue: 1, duration: 400, useNativeDriver: true }).start();
   }, []);
 
-  const handleStarPress = async (index: number) => {
-    if (ratingInProgress.current) return;
-    ratingInProgress.current = true;
-
-    // Light all stars up to the tapped index
+  // Tapping a star just selects it (no review trigger yet)
+  const handleStarPress = (index: number) => {
     setStarsLit(index + 1);
 
     // Staggered bounce animation across stars 0..index only
@@ -417,8 +414,15 @@ function RatingSlide({ onRate, onSkip }: { onRate: () => void; onSkip: () => voi
     Animated.parallel(animations).start();
 
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+  };
 
-    // Trigger native App Store review sheet
+  // Continue: trigger Apple review in try/finally, then paywall in finally
+  const handleContinue = async () => {
+    if (continueInProgress.current) return;
+    continueInProgress.current = true;
+
+    const stars = starsLit || 5; // default to 5 if they tap Continue without selecting
+
     try {
       const StoreReview = require('expo-store-review');
       const isAvailable = await StoreReview.isAvailableAsync();
@@ -427,10 +431,10 @@ function RatingSlide({ onRate, onSkip }: { onRate: () => void; onSkip: () => voi
       }
     } catch (_e) {
       // Not available in Expo Go — silently ignore
+    } finally {
+      // Always fire the paywall regardless of review outcome
+      onRate(stars);
     }
-
-    // Short pause so the OS sheet can appear before we move on
-    setTimeout(onRate, 800);
   };
 
   return (
@@ -496,10 +500,10 @@ function RatingSlide({ onRate, onSkip }: { onRate: () => void; onSkip: () => voi
           ))}
         </View>
 
-        {/* Navy "Rate Droplett" CTA */}
+        {/* Navy "Continue" CTA */}
         <View style={styles.ratingCta}>
-          <DropletButton onPress={() => handleStarPress(4)}>
-            Rate Droplett
+          <DropletButton onPress={handleContinue}>
+            Continue
           </DropletButton>
         </View>
 
@@ -622,18 +626,13 @@ export default function OnboardingScreen() {
     router.replace('/');
   };
 
-  const handleUnlock = async () => {
+  const handleUnlock = async (placement?: PaywallPlacement) => {
     try {
-      const unlocked = await showPaywall(PLACEMENTS.APP_LAUNCH);
-      if (unlocked || isPremium) {
-        await completeOnboarding();
-      } else {
-        await completeOnboarding();
-      }
+      await showPaywall(placement ?? PLACEMENTS.ONBOARDING_COMPLETE);
     } catch (e) {
       console.error('Paywall error:', e);
-      await completeOnboarding();
     }
+    await completeOnboarding();
   };
 
   // Demo video ends or user taps Continue → show rating slide
@@ -642,9 +641,9 @@ export default function OnboardingScreen() {
     setShowRating(true);
   };
 
-  // User rates (tapped stars) → paywall
-  const handleRateComplete = () => {
-    void handleUnlock();
+  // User rates (tapped stars) → paywall (5-star gets dedicated upsell placement)
+  const handleRateComplete = (stars: number) => {
+    void handleUnlock(stars === 5 ? PLACEMENTS.FIVE_STAR_UPSELL : undefined);
   };
 
   // User taps "Maybe Later" → skip straight to paywall

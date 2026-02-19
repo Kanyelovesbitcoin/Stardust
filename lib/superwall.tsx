@@ -108,6 +108,19 @@ function SuperwallProProvider({ children }: { children: React.ReactNode }) {
   const { registerPlacement } = usePlacement();
 
   const isPro = subscriptionStatus?.status === 'ACTIVE';
+
+  // Dev-mode diagnostics: log Superwall state on mount
+  useEffect(() => {
+    if (__DEV__) {
+      console.log('[Superwall Dev Diagnostics]', {
+        subscriptionStatus: subscriptionStatus?.status ?? 'unknown',
+        isPro,
+        isConfigured,
+        isLoading,
+      });
+    }
+  }, [subscriptionStatus, isPro, isConfigured, isLoading]);
+
   const { hasFreeImageToday, setHasFreeImageToday, refreshFreeImageStatus } = useFreeImageState(isPro);
 
   const registerFeature = useCallback(

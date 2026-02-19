@@ -5,7 +5,8 @@ import { useStardustPro } from '../superwall';
 export const PLACEMENTS = {
   APP_LAUNCH: 'app_launch',
   CONFIG_ATTRIBUTES: 'config_attributes',
-  ONBOARDING_COMPLETE: 'app_launch',
+  ONBOARDING_COMPLETE: 'onboarding_complete',
+  FIVE_STAR_UPSELL: 'five_star_upsell',
   INTERPRET_LIMIT: 'interpret_limit_reached',
   VISUALIZE_LIMIT: 'visualize_limit_reached',
   SESSION_PROMPT: 'session_prompt',
