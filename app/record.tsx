@@ -494,7 +494,7 @@ const styles = StyleSheet.create({
   },
   strokeImage: {
     width: '100%',
-    aspectRatio: 2,
+    aspectRatio: 1.2,
   },
   strokeLabel: {
     ...TYPOGRAPHY.caption,
