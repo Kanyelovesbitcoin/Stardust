@@ -493,14 +493,15 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: 'transparent',
     width: '48%',
+    minHeight: 140,
   },
   strokeItemActive: {
     borderColor: '#C4A265',
     backgroundColor: 'rgba(196, 162, 101, 0.08)',
   },
   strokeImage: {
-    width: 65,
-    height: 22,
+    width: 190,
+    height: 75,
   },
   strokeLabel: {
     ...TYPOGRAPHY.caption,

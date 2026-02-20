@@ -926,6 +926,7 @@ const styles = StyleSheet.create({
   slideContent: {
     flex: 1,
     paddingHorizontal: SPACING.screenPadding + 4,
+    paddingBottom: 100,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -949,6 +950,7 @@ const styles = StyleSheet.create({
     marginBottom: SPACING.md,
     maxWidth: 340,
     lineHeight: 22,
+    textAlign: 'center',
   },
   statCard: {
     width: '100%',
