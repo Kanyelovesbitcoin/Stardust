@@ -69,7 +69,7 @@ const SLIDES: SlideData[] = [
     id: 'where-dreams-begin',
     kind: 'value',
     icon: 'moon-outline',
-    heroImage: require('../assets/flying.png'),
+    heroImage: require('../assets/wing-3.png'),
     title: 'Where Dreams\nBegin',
     subtitle:
       'Every night your mind goes somewhere. Droplett is where you bring it back.',
@@ -97,7 +97,7 @@ const SLIDES: SlideData[] = [
     id: 'crafted-like-a-dream',
     kind: 'feature',
     icon: 'color-palette-outline',
-    heroImage: require('../assets/ink.png'),
+    heroImage: require('../assets/evil-eye.png'),
     title: 'Crafted Like\na Dream',
     subtitle:
       'Droplett isn\'t just a journal. It\'s a hand-painted world your dreams live inside.',
@@ -916,8 +916,8 @@ const styles = StyleSheet.create({
   },
   // Hero image — raw transparent PNG, floats naturally, no clip/circle
   heroImageWrap: {
-    width: 180,
-    height: 180,
+    width: 240,
+    height: 240,
     alignSelf: 'center',
     marginBottom: SPACING.lg,
   },

@@ -17,9 +17,9 @@ const LOCAL_IMAGES = [
   require('../assets/onboarding-bg-4.png'),
   require('../assets/onboarding-bg-5.png'),
   // Onboarding watercolor hero images
-  require('../assets/flying.png'),
+  require('../assets/wing-3.png'),
   require('../assets/animal.png'),
-  require('../assets/ink.png'),
+  require('../assets/evil-eye.png'),
   require('../assets/hope.png'),
   require('../assets/star.png'),
 ];

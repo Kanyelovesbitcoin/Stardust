@@ -86,9 +86,9 @@ export type DreamType = keyof typeof DREAM_TYPES;
 
 // Tag icons with watercolor artwork
 export const DREAM_TAGS = {
-  flying:   { key: 'flying',   label: 'Flying',       image: require('../assets/flying.png') },
+  flying:   { key: 'flying',   label: 'Flying',       image: require('../assets/wing-3.png') },
   animal:   { key: 'animal',   label: 'Animal',        image: require('../assets/animal.png') },
-  fear:     { key: 'fear',     label: 'Fear',          image: require('../assets/ink.png') },
+  fear:     { key: 'fear',     label: 'Fear',          image: require('../assets/evil-eye.png') },
   hope:     { key: 'hope',     label: 'Love/Hope',     image: require('../assets/hope.png') },
   favorite: { key: 'favorite', label: 'Favorite',      image: require('../assets/star.png') },
   chase:    { key: 'chase',    label: 'Chase',         image: require('../assets/tag-chase.png') },
