@@ -116,9 +116,8 @@ export default function DreamDetailScreen() {
   };
 
   const interp = dream.interpretation;
-  const title = dream.transcript
-    ? dream.transcript.split(/\s+/).slice(0, 5).join(' ') + (dream.transcript.length > 30 ? '...' : '')
-    : "Untitled Dream";
+  const title = dream.title
+    || (dream.transcript ? dream.transcript.split(/\s+/).slice(0, 8).join(' ') : "Untitled Dream");
 
   const interpretLabel = dream.isInterpreting ? "Interpreting..." : (interp ? "Re-interpret" : "Interpret");
   const visualizeLabel = dream.isGeneratingVisual ? "Painting..." : (dream.sceneUrl ? "Re-visualize" : "Visualize");
@@ -157,7 +156,7 @@ export default function DreamDetailScreen() {
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
 
         {/* 2. Title & Tags */}
-        <StardustText variant="cardTitle" color="#1A1A1A" style={styles.dreamTitle}>
+        <StardustText variant="cardTitle" color="#000000" style={styles.dreamTitle}>
           {title}
         </StardustText>
 

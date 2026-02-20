@@ -533,13 +533,13 @@ const styles = StyleSheet.create({
   },
   tagIconLabel: {
     ...TYPOGRAPHY.caption,
-    color: '#9B917F',
+    color: '#1A1A1A',
     marginTop: 6,
     textAlign: 'center',
     fontSize: 13,
     fontWeight: '600',
   },
   tagIconLabelActive: {
-    color: '#1A1A1A',
+    color: '#000000',
   },
 });

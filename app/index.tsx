@@ -104,7 +104,7 @@ export default function JournalHome() {
 
         {/* Title row: short title + large stroke */}
         <View style={styles.titleRow}>
-          <StardustText variant="cardTitle" color="#1A1A1A" numberOfLines={1} style={styles.titleText}>
+          <StardustText variant="cardTitle" color="#000000" style={styles.titleText}>
             {shortTitle}
           </StardustText>
           {strokeImage && (
@@ -113,7 +113,7 @@ export default function JournalHome() {
         </View>
 
         {/* Body preview — single line */}
-        <StardustText variant="bodySmall" color="#4A4A4A" numberOfLines={1} style={styles.bodyText}>
+        <StardustText variant="bodySmall" color="#1A1A1A" numberOfLines={2} style={styles.bodyText}>
           {bodyPreview}
         </StardustText>
 
@@ -129,14 +129,14 @@ export default function JournalHome() {
                 return (
                   <View key={i} style={styles.tagItem}>
                     <Image source={tagDef.image} style={styles.tagImage} contentFit="contain" />
-                    <StardustText variant="bodySmall" color="#6B6358" style={{ fontSize: 11 }}>
+                    <StardustText variant="bodySmall" color="#1A1A1A" style={{ fontSize: 11 }}>
                       {tagDef.label}
                     </StardustText>
                   </View>
                 );
               }
               return (
-                <StardustText key={i} variant="bodySmall" color="#6B6358" style={{ fontSize: 13 }}>
+                <StardustText key={i} variant="bodySmall" color="#1A1A1A" style={{ fontSize: 13 }}>
                   {tag}
                 </StardustText>
               );
