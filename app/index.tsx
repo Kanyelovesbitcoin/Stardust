@@ -267,8 +267,8 @@ const styles = StyleSheet.create({
     color: '#1A1A1A',
   },
   strokeImage: {
-    width: width * 0.55,
-    aspectRatio: 1.2,
+    width: width * 0.7,
+    aspectRatio: 0.6,
     marginLeft: 8,
   },
   bodyText: {
