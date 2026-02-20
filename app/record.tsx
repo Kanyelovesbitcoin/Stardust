@@ -388,6 +388,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: SPACING.lg,
     paddingVertical: SPACING.md,
+    zIndex: 20,
   },
   modeToggle: {
     flexDirection: 'row',
@@ -396,6 +397,7 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.surface,
     borderRadius: BORDER_RADIUS.md,
     padding: 3,
+    zIndex: 15,
   },
   modeTab: {
     flex: 1,
@@ -411,7 +413,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingHorizontal: SPACING.lg,
-    paddingBottom: SPACING.xxl + 12,
+    paddingBottom: SPACING.xxl + 40,
   },
   titleInput: {
     fontSize: 28,
@@ -497,8 +499,8 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(196, 162, 101, 0.08)',
   },
   strokeImage: {
-    width: '100%',
-    aspectRatio: 0.6,
+    width: 65,
+    height: 22,
   },
   strokeLabel: {
     ...TYPOGRAPHY.caption,

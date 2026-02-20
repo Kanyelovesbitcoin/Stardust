@@ -388,11 +388,8 @@ function RatingSlide({ onRate, onSkip }: { onRate: (stars: number) => void; onSk
     Animated.timing(fadeAnim, { toValue: 1, duration: 400, useNativeDriver: true }).start();
   }, []);
 
-  const handleStarPress = async (index: number) => {
-    if (ratingInProgress.current) return;
-    ratingInProgress.current = true;
-
-    // Light all stars up to the tapped index
+  const handleStarPress = (index: number) => {
+    // Just select stars — don't auto-advance
     setStarsLit(index + 1);
 
     // Staggered bounce animation across stars 0..index only
@@ -418,6 +415,11 @@ function RatingSlide({ onRate, onSkip }: { onRate: (stars: number) => void; onSk
     Animated.parallel(animations).start();
 
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+  };
+
+  const handleRateAndContinue = async () => {
+    if (ratingInProgress.current) return;
+    ratingInProgress.current = true;
 
     // Trigger native App Store review sheet
     try {
@@ -427,11 +429,17 @@ function RatingSlide({ onRate, onSkip }: { onRate: (stars: number) => void; onSk
         await StoreReview.requestReview();
       }
     } catch (_e) {
-      // Not available in Expo Go — silently ignore
+      // Not available in Expo Go / TestFlight — silently ignore
     }
 
-    // Short pause so the OS sheet can appear before we move on
-    setTimeout(() => onRate(index + 1), 800);
+    // Advance to next slide with the selected star count
+    setTimeout(() => onRate(starsLit || 5), 600);
+  };
+
+  const handleNext = () => {
+    if (ratingInProgress.current) return;
+    ratingInProgress.current = true;
+    onRate(starsLit || 5);
   };
 
   return (
@@ -497,10 +505,17 @@ function RatingSlide({ onRate, onSkip }: { onRate: (stars: number) => void; onSk
           ))}
         </View>
 
-        {/* Navy "Rate Droplett" CTA */}
+        {/* Rate on App Store */}
         <View style={styles.ratingCta}>
-          <DropletButton onPress={() => { if (!ratingInProgress.current) handleStarPress(4); }}>
+          <DropletButton onPress={handleRateAndContinue}>
             Rate Droplett
+          </DropletButton>
+        </View>
+
+        {/* Big "Next" button — always visible, always advances */}
+        <View style={[styles.ratingCta, { marginBottom: 0 }]}>
+          <DropletButton onPress={handleNext}>
+            Next
           </DropletButton>
         </View>
 

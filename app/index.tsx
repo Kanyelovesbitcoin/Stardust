@@ -228,7 +228,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'flex-start',
     paddingHorizontal: SPACING.screenPadding,
-    paddingTop: SPACING.md,
+    paddingTop: SPACING.lg,
     paddingBottom: SPACING.lg,
   },
   headerRight: {
@@ -247,6 +247,7 @@ const styles = StyleSheet.create({
     marginHorizontal: SPACING.screenPadding,
     marginBottom: 28,
     paddingVertical: 20,
+    minHeight: 200,
   },
   dateText: {
     fontSize: 14,
@@ -267,8 +268,8 @@ const styles = StyleSheet.create({
     color: '#1A1A1A',
   },
   strokeImage: {
-    width: width * 0.7,
-    aspectRatio: 0.6,
+    width: 190,
+    height: 175,
     marginLeft: 8,
   },
   bodyText: {
