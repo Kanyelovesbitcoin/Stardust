@@ -273,6 +273,10 @@ export default function RecordScreen() {
             onChangeText={(t) => setTitle(t.replace(/\s/g, ''))}
             maxLength={20}
             autoCapitalize="words"
+            autoCorrect={false}
+            autoComplete="off"
+            textContentType="none"
+            importantForAutofill="no"
           />
 
           {/* Voice Mode */}
@@ -317,7 +321,7 @@ export default function RecordScreen() {
               <TextInput
                 style={styles.contentInput}
                 placeholder="What did you dream last night? Describe everything you remember..."
-                placeholderTextColor={COLORS.textTertiary}
+                placeholderTextColor="#8B7355"
                 value={transcript}
                 onChangeText={setTranscript}
                 multiline
@@ -459,7 +463,7 @@ const styles = StyleSheet.create({
   },
   contentInput: {
     ...TYPOGRAPHY.body,
-    color: COLORS.textPrimary,
+    color: '#2C1810',
     fontSize: 17,
     minHeight: 70,
     lineHeight: 26,
@@ -519,8 +523,8 @@ const styles = StyleSheet.create({
   tagIconItem: {
     alignItems: 'center',
     opacity: 0.45,
-    width: '17%',
-    minHeight: 48,
+    width: '28%',
+    minHeight: 80,
   },
   tagIconItemActive: {
     opacity: 1,
