@@ -17,6 +17,7 @@ import { useMutation } from 'convex/react';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { api } from '../convex/_generated/api';
+import { Id } from '../convex/_generated/dataModel';
 import ScreenContainer from '../components/ui/ScreenContainer';
 import MoodSelector from '../components/journal/MoodSelector';
 import VoiceRecorder from '../components/journal/VoiceRecorder';
@@ -140,6 +141,7 @@ export default function RecordScreen() {
         const uploadUrl = await generateUploadUrl();
 
         const response = await fetch(recordingUri);
+        if (!response.ok) throw new Error('Failed to read audio file');
         const blob = await response.blob();
 
         const uploadResponse = await fetch(uploadUrl, {
@@ -147,12 +149,13 @@ export default function RecordScreen() {
           headers: { 'Content-Type': blob.type || 'audio/m4a' },
           body: blob,
         });
+        if (!uploadResponse.ok) throw new Error('Failed to upload audio');
 
         const { storageId } = (await uploadResponse.json()) as { storageId: string };
 
         await createDream({
           title: title.trim() || undefined,
-          audioStorageId: storageId as any,
+          audioStorageId: storageId as Id<"_storage">,
           mood: mood ?? undefined,
           dreamType: dreamType ?? undefined,
           tags: [...selectedTags, ...tags],
@@ -211,7 +214,7 @@ export default function RecordScreen() {
           >
             <StardustText variant="body" color={STARDUST_THEME.text.secondary}>Cancel</StardustText>
           </Pressable>
-          <StardustText variant="cardTitle" color={STARDUST_THEME.text.primary}>New Dream</StardustText>
+          <StardustText variant="cardTitle" color="#000000">New Dream</StardustText>
           <DropletButton
             onPress={handleSave}
             title={saving ? 'Saving...' : 'Save'}
@@ -273,6 +276,10 @@ export default function RecordScreen() {
             onChangeText={(t) => setTitle(t.replace(/\s/g, ''))}
             maxLength={20}
             autoCapitalize="words"
+            autoCorrect={false}
+            autoComplete="off"
+            textContentType="none"
+            importantForAutofill="no"
           />
 
           {/* Voice Mode */}
@@ -317,7 +324,7 @@ export default function RecordScreen() {
               <TextInput
                 style={styles.contentInput}
                 placeholder="What did you dream last night? Describe everything you remember..."
-                placeholderTextColor={COLORS.textTertiary}
+                placeholderTextColor="#8B7355"
                 value={transcript}
                 onChangeText={setTranscript}
                 multiline
@@ -384,6 +391,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: SPACING.lg,
     paddingVertical: SPACING.md,
+    zIndex: 20,
   },
   modeToggle: {
     flexDirection: 'row',
@@ -392,6 +400,7 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.surface,
     borderRadius: BORDER_RADIUS.md,
     padding: 3,
+    zIndex: 15,
   },
   modeTab: {
     flex: 1,
@@ -407,7 +416,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingHorizontal: SPACING.lg,
-    paddingBottom: SPACING.xxl + 12,
+    paddingBottom: SPACING.xxl + 40,
   },
   titleInput: {
     fontSize: 28,
@@ -459,7 +468,7 @@ const styles = StyleSheet.create({
   },
   contentInput: {
     ...TYPOGRAPHY.body,
-    color: COLORS.textPrimary,
+    color: '#2C1810',
     fontSize: 17,
     minHeight: 70,
     lineHeight: 26,
@@ -487,14 +496,15 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: 'transparent',
     width: '48%',
+    minHeight: 200,
   },
   strokeItemActive: {
     borderColor: '#C4A265',
     backgroundColor: 'rgba(196, 162, 101, 0.08)',
   },
   strokeImage: {
-    width: '100%',
-    aspectRatio: 2,
+    width: 340,
+    height: 150,
   },
   strokeLabel: {
     ...TYPOGRAPHY.caption,
@@ -519,8 +529,8 @@ const styles = StyleSheet.create({
   tagIconItem: {
     alignItems: 'center',
     opacity: 0.45,
-    width: '17%',
-    minHeight: 48,
+    width: '28%',
+    minHeight: 80,
   },
   tagIconItemActive: {
     opacity: 1,
@@ -533,13 +543,13 @@ const styles = StyleSheet.create({
   },
   tagIconLabel: {
     ...TYPOGRAPHY.caption,
-    color: '#9B917F',
+    color: '#1A1A1A',
     marginTop: 6,
     textAlign: 'center',
     fontSize: 13,
     fontWeight: '600',
   },
   tagIconLabelActive: {
-    color: '#1A1A1A',
+    color: '#000000',
   },
 });

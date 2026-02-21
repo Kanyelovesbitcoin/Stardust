@@ -38,6 +38,7 @@ type IconName = React.ComponentProps<typeof Ionicons>['name'];
 
 const ONBOARDED_KEY = 'hasOnboarded';
 const TOTAL_SLIDES = 5;
+const TOTAL_STEPS = 8; // 5 value slides + 1 demo + 1 rating + 1 paywall trigger
 
 // Slide backgrounds — flower (index 3) and star (index 4) both use the
 // lighter parchment texture from slide 1 (onboarding-bg-1.png) instead
@@ -68,7 +69,7 @@ const SLIDES: SlideData[] = [
     id: 'where-dreams-begin',
     kind: 'value',
     icon: 'moon-outline',
-    heroImage: require('../assets/flying.png'),
+    heroImage: require('../assets/wing-3.png'),
     title: 'Where Dreams\nBegin',
     subtitle:
       'Every night your mind goes somewhere. Droplett is where you bring it back.',
@@ -96,7 +97,7 @@ const SLIDES: SlideData[] = [
     id: 'crafted-like-a-dream',
     kind: 'feature',
     icon: 'color-palette-outline',
-    heroImage: require('../assets/ink.png'),
+    heroImage: require('../assets/evil-eye.png'),
     title: 'Crafted Like\na Dream',
     subtitle:
       'Droplett isn\'t just a journal. It\'s a hand-painted world your dreams live inside.',
@@ -328,10 +329,10 @@ function DemoSlide({ onContinue }: { onContinue: () => void }) {
       <View style={[StyleSheet.absoluteFillObject, styles.waterStain2]} />
       <DropletParticles />
 
-      {/* Header dots — 7 total, demo is index 5 */}
+      {/* Header dots — 8 total, demo is index 5 */}
       <View style={[styles.header, { paddingTop: insets.top + SPACING.sm }]}>
         <View style={styles.backButton} />
-        <DotIndicator current={5} total={7} />
+        <DotIndicator current={5} total={TOTAL_STEPS} />
         <View style={styles.backButton} />
       </View>
 
@@ -373,7 +374,7 @@ function DemoSlide({ onContinue }: { onContinue: () => void }) {
 
 // ─── Rating slide (slide 7 of 7, standalone) ────────────
 
-function RatingSlide({ onRate, onSkip }: { onRate: () => void; onSkip: () => void }) {
+function RatingSlide({ onRate, onSkip }: { onRate: (stars: number) => void; onSkip: () => void }) {
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const insets = useSafeAreaInsets();
 
@@ -387,11 +388,8 @@ function RatingSlide({ onRate, onSkip }: { onRate: () => void; onSkip: () => voi
     Animated.timing(fadeAnim, { toValue: 1, duration: 400, useNativeDriver: true }).start();
   }, []);
 
-  const handleStarPress = async (index: number) => {
-    if (ratingInProgress.current) return;
-    ratingInProgress.current = true;
-
-    // Light all stars up to the tapped index
+  const handleStarPress = (index: number) => {
+    // Just select stars — don't auto-advance
     setStarsLit(index + 1);
 
     // Staggered bounce animation across stars 0..index only
@@ -417,6 +415,11 @@ function RatingSlide({ onRate, onSkip }: { onRate: () => void; onSkip: () => voi
     Animated.parallel(animations).start();
 
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+  };
+
+  const handleRateAndContinue = async () => {
+    if (ratingInProgress.current) return;
+    ratingInProgress.current = true;
 
     // Trigger native App Store review sheet
     try {
@@ -426,11 +429,17 @@ function RatingSlide({ onRate, onSkip }: { onRate: () => void; onSkip: () => voi
         await StoreReview.requestReview();
       }
     } catch (_e) {
-      // Not available in Expo Go — silently ignore
+      // Not available in Expo Go / TestFlight — silently ignore
     }
 
-    // Short pause so the OS sheet can appear before we move on
-    setTimeout(onRate, 800);
+    // Advance to next slide with the selected star count
+    setTimeout(() => onRate(starsLit || 5), 600);
+  };
+
+  const handleNext = () => {
+    if (ratingInProgress.current) return;
+    ratingInProgress.current = true;
+    onRate(starsLit || 5);
   };
 
   return (
@@ -448,10 +457,10 @@ function RatingSlide({ onRate, onSkip }: { onRate: () => void; onSkip: () => voi
       <View style={[StyleSheet.absoluteFillObject, styles.waterStain2]} />
       <DropletParticles />
 
-      {/* Header dots — rating is index 6 (last) */}
+      {/* Header dots — rating is index 6 */}
       <View style={[styles.header, { paddingTop: insets.top + SPACING.sm }]}>
         <View style={styles.backButton} />
-        <DotIndicator current={6} total={7} />
+        <DotIndicator current={6} total={TOTAL_STEPS} />
         <View style={styles.backButton} />
       </View>
 
@@ -496,10 +505,17 @@ function RatingSlide({ onRate, onSkip }: { onRate: () => void; onSkip: () => voi
           ))}
         </View>
 
-        {/* Navy "Rate Droplett" CTA */}
+        {/* Rate on App Store */}
         <View style={styles.ratingCta}>
-          <DropletButton onPress={() => handleStarPress(4)}>
+          <DropletButton onPress={handleRateAndContinue}>
             Rate Droplett
+          </DropletButton>
+        </View>
+
+        {/* Big "Next" button — always visible, always advances */}
+        <View style={[styles.ratingCta, { marginBottom: 0 }]}>
+          <DropletButton onPress={handleNext}>
+            Next
           </DropletButton>
         </View>
 
@@ -523,12 +539,15 @@ export default function OnboardingScreen() {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [showDemo, setShowDemo] = useState(false);
   const [showRating, setShowRating] = useState(false);
+  const [showPaywallSlide, setShowPaywallSlide] = useState(false);
+  const [userRating, setUserRating] = useState<number | null>(null);
   const [isHydrating, setIsHydrating] = useState(true);
 
   const fadeAnim = useRef(new Animated.Value(1)).current;
   const slideAnim = useRef(new Animated.Value(0)).current;
   const heroScaleAnim = useRef(new Animated.Value(0.8)).current;
   const heroOpacityAnim = useRef(new Animated.Value(0)).current;
+  const paywallInFlight = useRef(false);
 
   const slide = SLIDES[currentSlide];
   const isLastSlide = currentSlide === TOTAL_SLIDES - 1;
@@ -619,21 +638,23 @@ export default function OnboardingScreen() {
     } catch (e) {
       console.error('Failed to complete onboarding:', e);
     }
-    router.replace('/');
+    // Auth happens AFTER onboarding + paywall (high-conversion flow)
+    router.replace('/sign-in');
   };
 
-  const handleUnlock = async () => {
+  const handleUnlock = async (rating: number | null) => {
+    if (paywallInFlight.current) return;
+    paywallInFlight.current = true;
+    const placement = rating === 5 || rating === null
+      ? PLACEMENTS.FIVE_STAR_UPSELL
+      : PLACEMENTS.ONBOARDING_COMPLETE;
     try {
-      const unlocked = await showPaywall(PLACEMENTS.APP_LAUNCH);
-      if (unlocked || isPremium) {
-        await completeOnboarding();
-      } else {
-        await completeOnboarding();
-      }
+      await showPaywall(placement);
     } catch (e) {
       console.error('Paywall error:', e);
-      await completeOnboarding();
     }
+    // Always complete onboarding after paywall dismisses/purchases
+    await completeOnboarding();
   };
 
   // Demo video ends or user taps Continue → show rating slide
@@ -642,19 +663,81 @@ export default function OnboardingScreen() {
     setShowRating(true);
   };
 
-  // User rates (tapped stars) → paywall
-  const handleRateComplete = () => {
-    void handleUnlock();
+  // User rates (tapped stars) → go to paywall trigger slide
+  const handleRateComplete = (stars: number) => {
+    setUserRating(stars);
+    setShowRating(false);
+    setShowPaywallSlide(true);
   };
 
-  // User taps "Maybe Later" → skip straight to paywall
+  // User taps "Maybe Later" → skip to paywall trigger slide (null = skipped)
   const handleSkipRating = () => {
-    void handleUnlock();
+    setUserRating(null);
+    setShowRating(false);
+    setShowPaywallSlide(true);
+  };
+
+  // Paywall trigger slide "Continue" → show paywall, then navigate home
+  const handlePaywallContinue = () => {
+    void handleUnlock(userRating);
   };
 
   // ─── Render ──────────────────────────────────────────
 
   if (isHydrating) return null;
+
+  // Paywall trigger slide (step 8, index 7)
+  if (showPaywallSlide) {
+    return (
+      <View style={styles.container}>
+        <StatusBar style="dark" />
+        <ImageBackground
+          source={require('../assets/onboarding-bg-1.png')}
+          style={StyleSheet.absoluteFill}
+          resizeMode="cover"
+        />
+        <View style={styles.backgroundOverlay} />
+        <View style={[StyleSheet.absoluteFillObject, styles.waterStain1]} />
+        <View style={[StyleSheet.absoluteFillObject, styles.waterStain2]} />
+        <DropletParticles />
+
+        <View style={[styles.header, { paddingTop: insets.top + SPACING.sm }]}>
+          <View style={styles.backButton} />
+          <DotIndicator current={7} total={TOTAL_STEPS} />
+          <View style={styles.backButton} />
+        </View>
+
+        <View style={styles.ratingContent}>
+          <Image
+            source={require('../assets/star.png')}
+            style={{ width: 140, height: 140, marginBottom: SPACING.lg }}
+            contentFit="contain"
+          />
+          <StardustText
+            variant="heroTitle"
+            align="center"
+            color={DROPLET.title}
+            style={styles.ratingHeadline}
+          >
+            Unlock Your{'\n'}Dream World
+          </StardustText>
+          <StardustText
+            variant="body"
+            align="center"
+            color={DROPLET.muted}
+            style={styles.ratingSubtitle}
+          >
+            Start your journey with unlimited interpretations, dream art, and more.
+          </StardustText>
+          <View style={styles.ratingCta}>
+            <DropletButton onPress={handlePaywallContinue}>
+              Continue
+            </DropletButton>
+          </View>
+        </View>
+      </View>
+    );
+  }
 
   // Rating slide (standalone, after demo)
   if (showRating) {
@@ -695,8 +778,8 @@ export default function OnboardingScreen() {
         ) : (
           <View style={styles.backButton} />
         )}
-        {/* 7 dots: 5 slides + 1 demo + 1 rating */}
-        <DotIndicator current={currentSlide} total={7} />
+        {/* 8 dots: 5 slides + 1 demo + 1 rating + 1 paywall */}
+        <DotIndicator current={currentSlide} total={TOTAL_STEPS} />
         <View style={styles.backButton} />
       </View>
 
@@ -844,13 +927,14 @@ const styles = StyleSheet.create({
   slideContent: {
     flex: 1,
     paddingHorizontal: SPACING.screenPadding + 4,
+    paddingBottom: 100,
     alignItems: 'center',
     justifyContent: 'center',
   },
   // Hero image — raw transparent PNG, floats naturally, no clip/circle
   heroImageWrap: {
-    width: 180,
-    height: 180,
+    width: 240,
+    height: 240,
     alignSelf: 'center',
     marginBottom: SPACING.lg,
   },
@@ -867,6 +951,7 @@ const styles = StyleSheet.create({
     marginBottom: SPACING.md,
     maxWidth: 340,
     lineHeight: 22,
+    textAlign: 'center',
   },
   statCard: {
     width: '100%',

@@ -105,7 +105,7 @@ export default function DreamDetailScreen() {
 
     registerFeatureWithDailyFree('visualize_dream', async () => {
       try {
-        await requestVisualization({ dreamId: dream._id, isPro });
+        await requestVisualization({ dreamId: dream._id });
       } catch (e: any) {
         const msg = e?.message?.includes('limit reached')
           ? 'You\'ve used your free visualization for today. Upgrade to Pro for unlimited.'

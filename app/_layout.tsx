@@ -1,12 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import { Stack, usePathname } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
+import { ClerkProvider, ClerkLoaded } from '@clerk/clerk-expo';
 import { ConvexProvider, ConvexReactClient } from 'convex/react';
 import { StardustProProvider } from '../lib/superwall';
 import { usePeriodicPaywall } from '../lib/hooks/usePeriodicPaywall';
 import { initializeNotifications } from '../lib/notifications';
 import { STARDUST_THEME } from '../lib/theme';
 import { preloadAllImages } from '../lib/image-cache';
+import { tokenCache } from '../lib/clerk';
 import * as SplashScreen from 'expo-splash-screen';
 import { useFonts } from 'expo-font';
 import {
@@ -35,6 +37,8 @@ const convex = new ConvexReactClient(
   process.env.EXPO_PUBLIC_CONVEX_URL as string
 );
 
+const clerkPublishableKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY;
+
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
 
@@ -55,7 +59,7 @@ export default function RootLayout() {
 
   useEffect(() => {
     preloadAllImages()
-      .catch((e) => console.warn('Image preload failed:', e))
+      .catch(() => {})
       .finally(() => setImagesReady(true));
   }, []);
 
@@ -98,14 +102,22 @@ export default function RootLayout() {
               contentStyle: { backgroundColor: '#F0EEE8' },
             }}
           />
+          <Stack.Screen
+            name="sign-in"
+            options={{
+              animation: 'fade',
+              contentStyle: { backgroundColor: '#F0EEE8' },
+            }}
+          />
         </Stack>
       </StardustProProvider>
     </ConvexProvider>
   );
 
   // Wrap in SuperwallProvider only if native module is available
+  let wrappedTree = appTree;
   if (SuperwallProvider) {
-    return (
+    wrappedTree = (
       <SuperwallProvider
         apiKeys={{
           ios: process.env.EXPO_PUBLIC_SUPERWALL_IOS_KEY,
@@ -117,7 +129,19 @@ export default function RootLayout() {
     );
   }
 
-  return appTree;
+  // Wrap in ClerkProvider if key is available
+  if (clerkPublishableKey) {
+    return (
+      <ClerkProvider publishableKey={clerkPublishableKey} tokenCache={tokenCache}>
+        <ClerkLoaded>
+          {wrappedTree}
+        </ClerkLoaded>
+      </ClerkProvider>
+    );
+  }
+
+  // No Clerk key — run without auth (dev mode)
+  return wrappedTree;
 }
 
 /** Tracks app sessions for periodic paywall triggers */

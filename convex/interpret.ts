@@ -53,11 +53,11 @@ export const interpretDream = internalAction({
           headers: {
             Authorization: `Bearer ${apiKey}`,
             "Content-Type": "application/json",
-            "HTTP-Referer": "https://stardust-app.com",
-            "X-Title": "Stardust Dream Journal",
+            "HTTP-Referer": "https://droplett.app",
+            "X-Title": "Droplett Dream Journal",
           },
           body: JSON.stringify({
-            model: "moonshotai/kimi-k2",
+            model: "moonshotai/kimi-k2.5",
             messages: [
               { role: "system", content: SYSTEM_PROMPT },
               {

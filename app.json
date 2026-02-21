@@ -15,10 +15,9 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.stardust.app",
-      "buildNumber": "9",
+      "buildNumber": "17",
       "infoPlist": {
         "UIBackgroundModes": [
-          "audio",
           "audio"
         ],
         "ITSAppUsesNonExemptEncryption": false
@@ -30,7 +29,7 @@
         "backgroundColor": "#0C0A14"
       },
       "edgeToEdgeEnabled": true,
-      "versionCode": 9,
+      "versionCode": 17,
       "package": "com.stardust.app"
     },
     "web": {
@@ -60,7 +59,9 @@
           "icon": "./assets/icon.png",
           "color": "#C4A265"
         }
-      ]
+      ],
+      "expo-secure-store",
+      "expo-web-browser"
     ],
     "extra": {
       "router": {},

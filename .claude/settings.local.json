@@ -1,0 +1,39 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx create-expo-app:*)",
+      "Bash(xcopy \"drift-temp\\\\*\" \"Drift\"\" /E /Y /I 2>&1 && rmdir /S /Q \"drift-temp \")",
+      "Bash(npx expo install:*)",
+      "Bash(pkill:*)",
+      "Bash(npx expo export:*)",
+      "Bash(npx tsc:*)",
+      "Bash(npm install:*)",
+      "Bash(npx convex dev:*)",
+      "Bash(npx convex codegen)",
+      "Bash(npx convex deploy)",
+      "Bash(npx convex --help:*)",
+      "Bash(del \"C:\\\\Users\\\\Luke\\\\Downloads\\\\Drift\\\\convex\\\\schema.js\" \"C:\\\\Users\\\\Luke\\\\Downloads\\\\Drift\\\\convex\\\\dreams.js\")",
+      "Bash(npx convex env set:*)",
+      "Bash(node -e:*)",
+      "Bash(test:*)",
+      "Bash(npx eas-cli:*)",
+      "Bash(ls:*)",
+      "Bash(npx eas whoami)",
+      "Bash(npx eas build:list:*)",
+      "WebFetch(domain:job-logs.eascdn.net)",
+      "Bash(git mv:*)",
+      "Bash(done)",
+      "Bash(grep:*)",
+      "Bash(git -C \"C:\\\\Users\\\\Luke\\\\Downloads\\\\Drift\" remote -v)",
+      "Bash(gh auth status:*)",
+      "Bash(gh repo create:*)",
+      "Bash(npx convex env ls:*)",
+      "Bash(npx convex env list:*)",
+      "Bash(git fsck:*)",
+      "Bash(git ls-tree:*)",
+      "Bash(del \".git\\\\objects\\\\fa\\\\025d9b363f7971f7f86f299553a2a2cfb98d1f\")",
+      "Bash(git hash-object:*)",
+      "Bash(git add:*)"
+    ]
+  }
+}

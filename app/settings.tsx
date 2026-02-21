@@ -3,6 +3,7 @@ import { View, StyleSheet, ScrollView, Pressable, Linking, Alert } from 'react-n
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { usePaywall, PLACEMENTS } from '../lib/hooks/usePaywall';
+import { useStardustPro } from '../lib/superwall';
 import { STARDUST_THEME } from '../lib/theme';
 import { RADIUS, SPACING } from '../lib/layout';
 import { StardustText } from '../components/ui/StardustText';
@@ -10,21 +11,16 @@ import { StardustCard } from '../components/ui/StardustCard';
 import ScreenContainer from '../components/ui/ScreenContainer';
 import { GoldDivider } from '../components/ui/GoldDivider';
 
-const PRIVACY_URL = 'https://stardust.app/privacy';
-const TERMS_URL = 'https://stardust.app/terms';
+const PRIVACY_URL = 'https://droplett.app/privacy';
+const TERMS_URL = 'https://droplett.app/terms';
 
 export default function SettingsScreen() {
   const { showPaywall, isPremium: isPro } = usePaywall();
+  const { restorePurchases } = useStardustPro();
 
   const handleShowPaywall = () => showPaywall(PLACEMENTS.SETTINGS_UPGRADE);
 
-  const handleRestorePurchases = () => {
-    Alert.alert(
-      'Restore Purchases',
-      'Purchase restoration is not available in development mode.',
-      [{ text: 'OK' }]
-    );
-  };
+  const handleRestorePurchases = () => restorePurchases();
 
   return (
     <ScreenContainer backgroundSource={require('../assets/bg-settings.png')}>
@@ -98,7 +94,7 @@ export default function SettingsScreen() {
         </View>
 
         <StardustText variant="timestamp" color={STARDUST_THEME.text.tertiary} align="center" style={styles.footer}>
-          Stardust v1.0 · Sweet dreams
+          Droplett v1.0 · Sweet dreams
         </StardustText>
       </ScrollView>
     </ScreenContainer>

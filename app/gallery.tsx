@@ -6,11 +6,15 @@ import {
   Pressable,
   Dimensions,
   ActivityIndicator,
+  Alert,
 } from 'react-native';
 import { Image } from 'expo-image';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useQuery } from 'convex/react';
 import { Ionicons } from '@expo/vector-icons';
+import * as Sharing from 'expo-sharing';
+import * as FileSystem from 'expo-file-system/legacy';
+import * as MediaLibrary from 'expo-media-library';
 import { api } from '../convex/_generated/api';
 import BottomTabBar from '../components/ui/BottomTabBar';
 import { STARDUST_THEME } from '../lib/theme';
@@ -29,6 +33,47 @@ const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', '
 function formatDate(ts: number): string {
   const d = new Date(ts);
   return `${MONTHS[d.getMonth()]} ${d.getDate()}`;
+}
+
+async function downloadToLocal(remoteUrl: string): Promise<string> {
+  const filename = `dream_${Date.now()}.png`;
+  const localUri = FileSystem.cacheDirectory + filename;
+  const { uri } = await FileSystem.downloadAsync(remoteUrl, localUri);
+  return uri;
+}
+
+async function handleShare(sceneUrl: string) {
+  try {
+    const available = await Sharing.isAvailableAsync();
+    if (!available) {
+      Alert.alert('Sharing not available', 'Sharing is not supported on this device.');
+      return;
+    }
+    const localUri = await downloadToLocal(sceneUrl);
+    await Sharing.shareAsync(localUri, { mimeType: 'image/png', dialogTitle: 'Share your dream' });
+  } catch (err) {
+    console.error('Share error:', err);
+    Alert.alert('Error', 'Failed to share image.');
+  }
+}
+
+async function handleSave(sceneUrl: string) {
+  try {
+    const { status } = await MediaLibrary.requestPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert(
+        'Permission needed',
+        'Please allow photo library access in Settings to save dream images.'
+      );
+      return;
+    }
+    const localUri = await downloadToLocal(sceneUrl);
+    await MediaLibrary.saveToLibraryAsync(localUri);
+    Alert.alert('Saved', 'Dream image saved to Photos.');
+  } catch (err) {
+    console.error('Save error:', err);
+    Alert.alert('Error', 'Failed to save image.');
+  }
 }
 
 export default function GalleryScreen() {
@@ -102,6 +147,24 @@ export default function GalleryScreen() {
               </StardustText>
             </View>
           )}
+
+          {/* Action buttons — bottom-right */}
+          <View style={styles.actionRow}>
+            <Pressable
+              style={styles.actionButton}
+              onPress={(e) => { e.stopPropagation(); handleShare(item.sceneUrl!); }}
+              hitSlop={8}
+            >
+              <Ionicons name="share-outline" size={16} color="#F5E6C8" />
+            </Pressable>
+            <Pressable
+              style={styles.actionButton}
+              onPress={(e) => { e.stopPropagation(); handleSave(item.sceneUrl!); }}
+              hitSlop={8}
+            >
+              <Ionicons name="download-outline" size={16} color="#F5E6C8" />
+            </Pressable>
+          </View>
 
           {/* Caption overlay — bottom */}
           {item.titlePreview && (
@@ -225,6 +288,21 @@ const styles = StyleSheet.create({
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: 4,
+  },
+  actionRow: {
+    position: 'absolute',
+    bottom: 32,
+    right: 6,
+    flexDirection: 'row',
+    gap: 4,
+  },
+  actionButton: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    backgroundColor: 'rgba(10, 10, 15, 0.65)',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   captionOverlay: {
     position: 'absolute',

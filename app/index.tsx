@@ -40,17 +40,24 @@ export default function JournalHome() {
   const pulseRef = useRef<Animated.CompositeAnimation | null>(null);
 
   useEffect(() => {
-    const checkOnboarding = async () => {
+    const checkFlow = async () => {
       try {
-        const hasOnboarded = await import('@react-native-async-storage/async-storage').then(m => m.default.getItem('hasOnboarded'));
+        const AsyncStorage = (await import('@react-native-async-storage/async-storage')).default;
+        const hasOnboarded = await AsyncStorage.getItem('hasOnboarded');
         if (!hasOnboarded) {
+          // Step 1: Not onboarded yet → onboarding first (no auth wall)
           router.replace('/onboarding');
+          return;
         }
-      } catch (e) {
-        console.error(e);
-      }
+        // Step 2: Onboarded but not signed in → sign-in
+        const hasSignedIn = await AsyncStorage.getItem('hasSignedIn');
+        if (!hasSignedIn) {
+          router.replace('/sign-in');
+          return;
+        }
+      } catch {}
     };
-    checkOnboarding();
+    checkFlow();
 
     const pulse = Animated.loop(
       Animated.sequence([
@@ -104,7 +111,7 @@ export default function JournalHome() {
 
         {/* Title row: short title + large stroke */}
         <View style={styles.titleRow}>
-          <StardustText variant="cardTitle" color="#1A1A1A" numberOfLines={1} style={styles.titleText}>
+          <StardustText variant="cardTitle" color="#000000" style={styles.titleText}>
             {shortTitle}
           </StardustText>
           {strokeImage && (
@@ -113,7 +120,7 @@ export default function JournalHome() {
         </View>
 
         {/* Body preview — single line */}
-        <StardustText variant="bodySmall" color="#4A4A4A" numberOfLines={1} style={styles.bodyText}>
+        <StardustText variant="bodySmall" color="#1A1A1A" numberOfLines={2} style={styles.bodyText}>
           {bodyPreview}
         </StardustText>
 
@@ -129,14 +136,14 @@ export default function JournalHome() {
                 return (
                   <View key={i} style={styles.tagItem}>
                     <Image source={tagDef.image} style={styles.tagImage} contentFit="contain" />
-                    <StardustText variant="bodySmall" color="#6B6358" style={{ fontSize: 11 }}>
+                    <StardustText variant="bodySmall" color="#1A1A1A" style={{ fontSize: 11 }}>
                       {tagDef.label}
                     </StardustText>
                   </View>
                 );
               }
               return (
-                <StardustText key={i} variant="bodySmall" color="#6B6358" style={{ fontSize: 13 }}>
+                <StardustText key={i} variant="bodySmall" color="#1A1A1A" style={{ fontSize: 13 }}>
                   {tag}
                 </StardustText>
               );
@@ -228,7 +235,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'flex-start',
     paddingHorizontal: SPACING.screenPadding,
-    paddingTop: SPACING.md,
+    paddingTop: SPACING.lg,
     paddingBottom: SPACING.lg,
   },
   headerRight: {
@@ -247,6 +254,7 @@ const styles = StyleSheet.create({
     marginHorizontal: SPACING.screenPadding,
     marginBottom: 28,
     paddingVertical: 20,
+    minHeight: 200,
   },
   dateText: {
     fontSize: 14,
@@ -262,14 +270,16 @@ const styles = StyleSheet.create({
   titleText: {
     flex: 1,
     fontSize: 32,
+    lineHeight: 44,
     fontWeight: '700',
     fontStyle: 'italic',
     color: '#1A1A1A',
+    includeFontPadding: true,
   },
   strokeImage: {
-    width: width * 0.45,
-    aspectRatio: 1.8,
-    marginLeft: 8,
+    width: 300,
+    height: 140,
+    marginLeft: -30,
   },
   bodyText: {
     color: '#4A4A4A',

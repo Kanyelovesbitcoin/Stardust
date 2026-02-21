@@ -177,11 +177,13 @@ function SuperwallProProvider({ children }: { children: React.ReactNode }) {
   );
 
   const restorePurchases = useCallback(async () => {
-    Alert.alert(
-      'Restore Purchases',
-      'To restore purchases, please use the "Restore" button on any paywall.',
-      [{ text: 'OK' }]
-    );
+    try {
+      const sw = require('expo-superwall').default;
+      await sw.restorePurchases();
+      Alert.alert('Restore Complete', 'Your purchases have been restored successfully.');
+    } catch (error: any) {
+      Alert.alert('Restore Failed', error?.message || 'Unable to restore purchases. Please try again.');
+    }
   }, []);
 
   return (
@@ -214,21 +216,30 @@ function DevFallbackProvider({ children }: { children: React.ReactNode }) {
   const presentPaywall = useCallback(
     (placement: string, feature?: () => void | Promise<void>): Promise<'unlocked' | 'dismissed'> => {
       return new Promise<'unlocked' | 'dismissed'>((resolve) => {
-        Alert.alert(
-          'Stardust Pro (Dev)',
-          `Paywall would appear here for "${placement}". Unlock in dev mode?`,
-          [
-            { text: 'Not now', style: 'cancel', onPress: () => resolve('dismissed') },
-            {
-              text: 'Unlock',
-              onPress: () => {
-                setDevProOverride(true);
-                if (feature) feature();
-                resolve('unlocked');
+        if (__DEV__) {
+          Alert.alert(
+            'Droplett Pro (Dev)',
+            `Paywall would appear here for "${placement}". Unlock in dev mode?`,
+            [
+              { text: 'Not now', style: 'cancel', onPress: () => resolve('dismissed') },
+              {
+                text: 'Unlock',
+                onPress: () => {
+                  setDevProOverride(true);
+                  if (feature) feature();
+                  resolve('unlocked');
+                },
               },
-            },
-          ]
-        );
+            ]
+          );
+        } else {
+          // Production fallback — don't allow free unlock
+          Alert.alert(
+            'Upgrade Required',
+            'This feature requires Droplett Pro. Please try again later.',
+            [{ text: 'OK', onPress: () => resolve('dismissed') }]
+          );
+        }
       });
     },
     []
@@ -280,11 +291,11 @@ function DevFallbackProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const restorePurchases = useCallback(async () => {
-    Alert.alert(
-      'Restore Purchases',
-      'Purchase restoration is not available in development mode.',
-      [{ text: 'OK' }]
-    );
+    if (__DEV__) {
+      Alert.alert('Restore Purchases', 'Purchase restoration is not available in development mode.', [{ text: 'OK' }]);
+    } else {
+      Alert.alert('Restore Purchases', 'Unable to restore purchases. Please try again later.', [{ text: 'OK' }]);
+    }
   }, []);
 
   return (

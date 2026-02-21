@@ -1,13 +1,23 @@
 import { internalMutation, mutation, query } from "./_generated/server";
 import { internal } from "./_generated/api";
 import { v } from "convex/values";
+import { QueryCtx, MutationCtx } from "./_generated/server";
+
+/** Get the authenticated user's ID, or fall back to "local" if auth is not configured */
+async function getUserId(ctx: QueryCtx | MutationCtx): Promise<string> {
+  const identity = await ctx.auth.getUserIdentity();
+  return identity?.subject ?? "local";
+}
 
 export const listDreams = query({
   args: {},
   handler: async (ctx) => {
-    // For Phase 1, we'll use a simple query without auth
-    // Auth will be added in a later phase
-    return await ctx.db.query("dreams").order("desc").collect();
+    const userId = await getUserId(ctx);
+    return await ctx.db
+      .query("dreams")
+      .withIndex("by_user", (q) => q.eq("userId", userId))
+      .order("desc")
+      .collect();
   },
 });
 
@@ -22,7 +32,12 @@ export const getDream = query({
 export const listGalleryDreams = query({
   args: {},
   handler: async (ctx) => {
-    const allDreams = await ctx.db.query("dreams").order("desc").collect();
+    const userId = await getUserId(ctx);
+    const allDreams = await ctx.db
+      .query("dreams")
+      .withIndex("by_user", (q) => q.eq("userId", userId))
+      .order("desc")
+      .collect();
     return allDreams
       .filter((d) => d.sceneUrl || d.isGeneratingVisual)
       .map((d) => ({
@@ -59,9 +74,10 @@ export const createDream = mutation({
     audioStorageId: v.optional(v.id("_storage")),
   },
   handler: async (ctx, args) => {
+    const userId = await getUserId(ctx);
     const hasAudio = args.audioStorageId !== undefined;
     const dreamId = await ctx.db.insert("dreams", {
-      userId: "local", // Placeholder until auth is added
+      userId,
       createdAt: Date.now(),
       title: args.title,
       audioStorageId: args.audioStorageId,
@@ -186,52 +202,16 @@ export const failInterpretation = internalMutation({
   },
 });
 
-/** Max free visualizations per day for non-pro users */
-const FREE_DAILY_VISUALIZATIONS = 1;
-
-function todayDateKey(): string {
-  return new Date().toISOString().slice(0, 10);
-}
-
 export const requestVisualization = mutation({
   args: {
     dreamId: v.id("dreams"),
-    isPro: v.optional(v.boolean()),
   },
-  handler: async (ctx, { dreamId, isPro }) => {
+  handler: async (ctx, { dreamId }) => {
     const dream = await ctx.db.get(dreamId);
     if (!dream) throw new Error("Dream not found");
 
     const transcript = dream.editedTranscript || dream.transcript;
     if (!transcript) throw new Error("No transcript to visualize");
-
-    // Server-side daily limit for free users
-    const userId = dream.userId;
-    const today = todayDateKey();
-
-    if (!isPro) {
-      const usage = await ctx.db
-        .query("usageLimits")
-        .withIndex("by_user_week", (q) => q.eq("userId", userId).eq("weekStartDate", today))
-        .first();
-
-      if (usage && usage.visualizations >= FREE_DAILY_VISUALIZATIONS) {
-        throw new Error("Daily free visualization limit reached. Upgrade to Stardust Pro for unlimited.");
-      }
-
-      // Increment or create usage record
-      if (usage) {
-        await ctx.db.patch(usage._id, { visualizations: usage.visualizations + 1 });
-      } else {
-        await ctx.db.insert("usageLimits", {
-          userId,
-          weekStartDate: today,
-          voiceRecordings: 0,
-          interpretations: 0,
-          visualizations: 1,
-        });
-      }
-    }
 
     await ctx.db.patch(dreamId, { isGeneratingVisual: true, imageError: undefined });
 
@@ -272,6 +252,18 @@ export const failVisualization = internalMutation({
       isGeneratingVisual: false,
       imageError: imageError ?? "Image generation failed",
     });
+  },
+});
+
+/** Clear all usage limits — useful for demo resets */
+export const clearUsageLimits = internalMutation({
+  args: {},
+  handler: async (ctx) => {
+    const all = await ctx.db.query("usageLimits").collect();
+    for (const record of all) {
+      await ctx.db.delete(record._id);
+    }
+    return { deleted: all.length };
   },
 });
 

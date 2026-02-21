@@ -86,18 +86,11 @@ export type DreamType = keyof typeof DREAM_TYPES;
 
 // Tag icons with watercolor artwork
 export const DREAM_TAGS = {
-  flying:   { key: 'flying',   label: 'Flying',       image: require('../assets/flying.png') },
+  flying:   { key: 'flying',   label: 'Flying',       image: require('../assets/wing-3.png') },
   animal:   { key: 'animal',   label: 'Animal',        image: require('../assets/animal.png') },
-  fear:     { key: 'fear',     label: 'Fear',          image: require('../assets/ink.png') },
+  fear:     { key: 'fear',     label: 'Fear',          image: require('../assets/evil-eye.png') },
   hope:     { key: 'hope',     label: 'Love/Hope',     image: require('../assets/hope.png') },
   favorite: { key: 'favorite', label: 'Favorite',      image: require('../assets/star.png') },
-  chase:    { key: 'chase',    label: 'Chase',         image: require('../assets/tag-chase.png') },
-  water:    { key: 'water',    label: 'Water',         image: require('../assets/tag-water.png') },
-  fire:     { key: 'fire',     label: 'Fire',          image: require('../assets/tag-fire.png') },
-  people:   { key: 'people',   label: 'People',        image: require('../assets/tag-people.png') },
-  death:    { key: 'death',    label: 'Death/Rebirth', image: require('../assets/tag-death.png') },
-  falling:  { key: 'falling',  label: 'Falling',       image: require('../assets/tag-falling.png') },
-  mystery:  { key: 'mystery',  label: 'Mystery',       image: require('../assets/tag-mystery.png') },
 } as const;
 
 export type DreamTagKey = keyof typeof DREAM_TAGS;

@@ -8,8 +8,8 @@ const OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions";
 const OPENROUTER_HEADERS = (apiKey: string) => ({
   Authorization: `Bearer ${apiKey}`,
   "Content-Type": "application/json",
-  "HTTP-Referer": "https://stardust-app.com",
-  "X-Title": "Stardust Dream Journal",
+  "HTTP-Referer": "https://droplett.app",
+  "X-Title": "Droplett Dream Journal",
 });
 
 const IMAGE_PROMPT_SYSTEM = `You are a dream visualization artist. Given a dream description, create a vivid image generation prompt that captures the dream's essence, mood, and key visual elements.
@@ -44,7 +44,7 @@ export const generateVisualization = internalAction({
         method: "POST",
         headers: OPENROUTER_HEADERS(apiKey),
         body: JSON.stringify({
-          model: "moonshotai/kimi-k2",
+          model: "moonshotai/kimi-k2.5",
           messages: [
             { role: "system", content: IMAGE_PROMPT_SYSTEM },
             {
@@ -73,6 +73,7 @@ export const generateVisualization = internalAction({
         headers: OPENROUTER_HEADERS(apiKey),
         body: JSON.stringify({
           model: "black-forest-labs/flux.2-pro",
+          modalities: ["image"],
           messages: [
             {
               role: "user",
@@ -87,35 +88,56 @@ export const generateVisualization = internalAction({
         throw new Error(`FLUX image gen error ${imageResponse.status}: ${err}`);
       }
 
-      const imageData = (await imageResponse.json()) as {
-        choices: {
-          message: {
-            content?: string;
-          };
-        }[];
-      };
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const imageData = (await imageResponse.json()) as any;
+      const msg = imageData.choices?.[0]?.message;
 
-      // OpenRouter returns base64 image data in the message content
-      const content = imageData.choices?.[0]?.message?.content ?? "";
-      const base64Match = content.match(
-        /^data:(image\/\w+);base64,(.+)$/
+      // OpenRouter returns images in message.images[] array, or as
+      // base64 / URL in message.content, or in top-level data field
+      const images: { image_url?: { url?: string }; url?: string }[] | undefined =
+        msg?.images ?? imageData.data;
+      const contentFallback: string = msg?.content ?? "";
+
+      // Extract URL from whichever field is populated
+      const imageUrl =
+        images?.[0]?.image_url?.url ??
+        images?.[0]?.url ??
+        (typeof images?.[0] === "string" ? (images[0] as string) : undefined);
+      const dataUrl = imageUrl ?? contentFallback;
+
+      if (!dataUrl) {
+        throw new Error("No image data in FLUX response");
+      }
+
+      const base64Match = dataUrl.match(
+        new RegExp("^data:(image/[\\w+]+);base64,(.+)$", "s")
       );
 
       let mimeType: string;
       let imageArrayBuffer: ArrayBuffer;
 
       if (base64Match) {
-        // Data URL format
+        // Data URL format (from images array or content)
         mimeType = base64Match[1];
         imageArrayBuffer = Buffer.from(base64Match[2], "base64").buffer;
-      } else if (content.startsWith("http")) {
+      } else if (dataUrl.startsWith("http")) {
         // URL format — download the image
-        const imageDownload = await fetch(content.trim());
+        const imageDownload = await fetch(dataUrl.trim());
         if (!imageDownload.ok) throw new Error("Failed to download generated image");
         imageArrayBuffer = await imageDownload.arrayBuffer();
         mimeType = imageDownload.headers.get("content-type") || "image/png";
       } else {
-        throw new Error("Unexpected FLUX response format");
+        // Last resort: treat entire content as raw base64 (no data: prefix)
+        try {
+          const raw = dataUrl.replace(/\s/g, "");
+          imageArrayBuffer = Buffer.from(raw, "base64").buffer;
+          mimeType = "image/png";
+          if (imageArrayBuffer.byteLength < 1000) {
+            throw new Error("Decoded buffer too small — likely not an image");
+          }
+        } catch {
+          throw new Error("Unexpected FLUX response format");
+        }
       }
 
       // Step 3: Process and store image in Convex storage

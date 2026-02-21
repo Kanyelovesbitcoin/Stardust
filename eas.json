@@ -15,7 +15,8 @@
         "EXPO_PUBLIC_CONVEX_URL": "https://dashing-marten-583.convex.cloud",
         "EXPO_PUBLIC_CONVEX_SITE_URL": "https://dashing-marten-583.convex.site",
         "EXPO_PUBLIC_SUPERWALL_IOS_KEY": "pk_iojepw_NrBBn0iJtt4iM5",
-        "EXPO_PUBLIC_SUPERWALL_ANDROID_KEY": "pk_placeholder_android"
+        "EXPO_PUBLIC_SUPERWALL_ANDROID_KEY": "pk_placeholder_android",
+        "EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY": "pk_test_aG9seS13YWhvby0yNC5jbGVyay5hY2NvdW50cy5kZXYk"
       }
     },
     "preview": {
@@ -29,7 +30,8 @@
         "EXPO_PUBLIC_CONVEX_URL": "https://dashing-marten-583.convex.cloud",
         "EXPO_PUBLIC_CONVEX_SITE_URL": "https://dashing-marten-583.convex.site",
         "EXPO_PUBLIC_SUPERWALL_IOS_KEY": "pk_iojepw_NrBBn0iJtt4iM5",
-        "EXPO_PUBLIC_SUPERWALL_ANDROID_KEY": "pk_placeholder_android"
+        "EXPO_PUBLIC_SUPERWALL_ANDROID_KEY": "pk_placeholder_android",
+        "EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY": "pk_test_aG9seS13YWhvby0yNC5jbGVyay5hY2NvdW50cy5kZXYk"
       }
     },
     "production": {
@@ -43,7 +45,8 @@
         "EXPO_PUBLIC_CONVEX_URL": "https://dashing-marten-583.convex.cloud",
         "EXPO_PUBLIC_CONVEX_SITE_URL": "https://dashing-marten-583.convex.site",
         "EXPO_PUBLIC_SUPERWALL_IOS_KEY": "pk_iojepw_NrBBn0iJtt4iM5",
-        "EXPO_PUBLIC_SUPERWALL_ANDROID_KEY": "pk_placeholder_android"
+        "EXPO_PUBLIC_SUPERWALL_ANDROID_KEY": "pk_placeholder_android",
+        "EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY": "pk_test_aG9seS13YWhvby0yNC5jbGVyay5hY2NvdW50cy5kZXYk"
       }
     }
   },

@@ -70,7 +70,7 @@ const WEEKLY_NUDGE_MESSAGES = [
   },
   {
     title: 'Your journal is waiting',
-    body: 'The best lucid dreamers journal regularly. Open Stardust and capture tonight\'s dream.',
+    body: 'The best lucid dreamers journal regularly. Open Droplett and capture tonight\'s dream.',
   },
   {
     title: 'Don\'t let your dreams fade',
