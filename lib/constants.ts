@@ -76,10 +76,10 @@ export const DREAM_MOODS = [
 
 // Watercolor stroke styles — each dream gets one
 export const DREAM_TYPES = {
-  nightmare: { key: 'nightmare', label: 'Nightmare', image: require('../assets/purple stroke.png') },
-  lucid: { key: 'lucid', label: 'Lucid', image: require('../assets/yellow stroke.png') },
-  vivid: { key: 'vivid', label: 'Vivid', image: require('../assets/redish stoke.png') },
-  ocean: { key: 'ocean', label: 'Ocean', image: require('../assets/blue stroke.png') },
+  nightmare: { key: 'nightmare', label: 'Nightmare', image: require('../assets/purple-stroke.png') },
+  lucid: { key: 'lucid', label: 'Lucid', image: require('../assets/yellow-stroke.png') },
+  vivid: { key: 'vivid', label: 'Vivid', image: require('../assets/redish-stroke.png') },
+  ocean: { key: 'ocean', label: 'Ocean', image: require('../assets/blue-stroke.png') },
 } as const;
 
 export type DreamType = keyof typeof DREAM_TYPES;
