@@ -2,11 +2,23 @@ import { internalMutation, mutation, query } from "./_generated/server";
 import { internal } from "./_generated/api";
 import { v } from "convex/values";
 import { QueryCtx, MutationCtx } from "./_generated/server";
+import { Id } from "./_generated/dataModel";
 
-/** Get the authenticated user's ID, or fall back to "local" if auth is not configured */
+/** Get the authenticated user's ID. Throws in production if not authenticated. */
 async function getUserId(ctx: QueryCtx | MutationCtx): Promise<string> {
   const identity = await ctx.auth.getUserIdentity();
-  return identity?.subject ?? "local";
+  if (identity) return identity.subject;
+  // Allow "local" fallback only in development
+  if (process.env.NODE_ENV !== "production") return "local";
+  throw new Error("Authentication required");
+}
+
+/** Fetch a dream and verify the caller owns it. Throws if not found or not owned. */
+async function getOwnedDream(ctx: QueryCtx | MutationCtx, dreamId: Id<"dreams">) {
+  const userId = await getUserId(ctx);
+  const dream = await ctx.db.get(dreamId);
+  if (!dream || dream.userId !== userId) throw new Error("Dream not found");
+  return dream;
 }
 
 export const listDreams = query({
@@ -24,7 +36,7 @@ export const listDreams = query({
 export const getDream = query({
   args: { dreamId: v.id("dreams") },
   handler: async (ctx, { dreamId }) => {
-    return await ctx.db.get(dreamId);
+    return await getOwnedDream(ctx, dreamId);
   },
 });
 
@@ -118,6 +130,7 @@ export const updateDream = mutation({
     isGeneratingVisual: v.optional(v.boolean()),
   },
   handler: async (ctx, { dreamId, ...updates }) => {
+    await getOwnedDream(ctx, dreamId);
     // Filter out undefined values
     const cleanUpdates: Record<string, unknown> = {};
     for (const [key, value] of Object.entries(updates)) {
@@ -134,6 +147,7 @@ export const updateDream = mutation({
 export const deleteDream = mutation({
   args: { dreamId: v.id("dreams") },
   handler: async (ctx, { dreamId }) => {
+    await getOwnedDream(ctx, dreamId);
     await ctx.db.delete(dreamId);
   },
 });
@@ -154,8 +168,7 @@ export const updateTranscript = internalMutation({
 export const requestInterpretation = mutation({
   args: { dreamId: v.id("dreams") },
   handler: async (ctx, { dreamId }) => {
-    const dream = await ctx.db.get(dreamId);
-    if (!dream) throw new Error("Dream not found");
+    const dream = await getOwnedDream(ctx, dreamId);
 
     const transcript = dream.editedTranscript || dream.transcript;
     if (!transcript) throw new Error("No transcript to interpret");
@@ -205,13 +218,37 @@ export const failInterpretation = internalMutation({
 export const requestVisualization = mutation({
   args: {
     dreamId: v.id("dreams"),
+    isPro: v.optional(v.boolean()),
   },
-  handler: async (ctx, { dreamId }) => {
-    const dream = await ctx.db.get(dreamId);
-    if (!dream) throw new Error("Dream not found");
+  handler: async (ctx, { dreamId, isPro }) => {
+    const dream = await getOwnedDream(ctx, dreamId);
 
     const transcript = dream.editedTranscript || dream.transcript;
     if (!transcript) throw new Error("No transcript to visualize");
+
+    // Server-side free usage enforcement (skip for Pro users)
+    if (!isPro) {
+      const today = new Date().toISOString().slice(0, 10);
+      const userId = dream.userId;
+      const existing = await ctx.db
+        .query("usageLimits")
+        .withIndex("by_user_week", (q) => q.eq("userId", userId).eq("weekStartDate", today))
+        .first();
+      if (existing && existing.visualizations >= 1) {
+        throw new Error("Daily free image limit reached");
+      }
+      if (existing) {
+        await ctx.db.patch(existing._id, { visualizations: existing.visualizations + 1 });
+      } else {
+        await ctx.db.insert("usageLimits", {
+          userId,
+          weekStartDate: today,
+          voiceRecordings: 0,
+          interpretations: 0,
+          visualizations: 1,
+        });
+      }
+    }
 
     await ctx.db.patch(dreamId, { isGeneratingVisual: true, imageError: undefined });
 

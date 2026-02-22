@@ -12,12 +12,18 @@ const OPENROUTER_HEADERS = (apiKey: string) => ({
   "X-Title": "Droplett Dream Journal",
 });
 
-const IMAGE_PROMPT_SYSTEM = `You are a dream visualization artist. Given a dream description, create a vivid image generation prompt that captures the dream's essence, mood, and key visual elements.
+const IMAGE_PROMPT_SYSTEM = `You are a surrealist dream visualization artist. Given a dream description, create a vivid image generation prompt that captures the dream's emotional core — not just its setting.
 
 Rules:
 - Write a single paragraph, 2-4 sentences
-- Focus on atmosphere, lighting, colors, composition, and emotion
-- Use painterly/surreal art direction: "ethereal", "dreamlike", "soft glow", "cinematic lighting"
+- Match the composition to the dream's emotional tone:
+  * If the dream involves chasing or pursuit: use diagonal lines, motion blur, a vanishing point the viewer can't reach, off-balance framing
+  * If the dream involves water (floods, oceans, pools, rain): make the image feel fluid — surfaces should ripple, colors should bleed, edges dissolve. If the water is threatening, use dark depths and rising levels. If it's peaceful, use luminous turquoise and infinite horizon.
+  * If the dream involves falling or loss of control: use extreme vertical perspective, ground dropping away, untethered objects
+  * If the dream involves nostalgia or a past place: use warm amber light, soft focus, slightly faded palette like a memory degrading
+  * If the dream involves intimacy or desire: use close framing, warm skin tones, shallow depth of field
+- Use surreal art direction: impossible architecture, scale distortions, objects that shouldn't coexist sharing the same space
+- Lighting should reflect emotion: harsh shadows for anxiety, golden hour for longing, blue twilight for melancholy, overexposed white for dissociation
 - Never include text or words in the scene
 - Never reference the dreamer directly — describe the scene itself
 - Return ONLY the prompt text, nothing else`;
@@ -44,7 +50,7 @@ export const generateVisualization = internalAction({
         method: "POST",
         headers: OPENROUTER_HEADERS(apiKey),
         body: JSON.stringify({
-          model: "moonshotai/kimi-k2.5",
+          model: "google/gemini-3-flash-preview",
           messages: [
             { role: "system", content: IMAGE_PROMPT_SYSTEM },
             {

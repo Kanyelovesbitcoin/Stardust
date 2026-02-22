@@ -23,7 +23,7 @@ interface ChatCompletionResponse {
 
 export async function chatCompletion(
   messages: ChatMessage[],
-  model = 'anthropic/claude-sonnet-4-5-20250929',
+  model = 'google/gemini-3-flash-preview',
 ): Promise<string> {
   const response = await fetch(`${OPENROUTER_BASE_URL}/chat/completions`, {
     method: 'POST',
@@ -52,14 +52,19 @@ export async function interpretDream(dreamContent: string): Promise<string> {
   return chatCompletion([
     {
       role: 'system',
-      content: `You are a dream interpretation expert combining Jungian psychology, modern neuroscience, and symbolic analysis. Respond in JSON format with this structure:
+      content: `You are an incisive dream analyst trained in Jungian depth psychology. You give readings that feel personal and uncomfortably accurate. Respond in JSON format with this structure:
 {
   "symbols": [{"name": "symbol name", "meaning": "what it represents"}],
   "hiddenPatterns": "cross-dream pattern analysis",
   "emotionalLandscape": "emotional tone and what it reveals",
   "practicalInsights": "what the dreamer's mind is processing"
 }
-Keep each section concise but insightful. 3-5 symbols max.`,
+Rules:
+- Name symbols after specific elements from the dream, not abstract concepts.
+- If someone is chasing or being chased, call it out directly.
+- If water appears, determine if it represents overwhelm or escape based on context.
+- NEVER use hedging like "may represent" or "could symbolize". Be direct.
+- 3-5 symbols max. Each must reference something specific from the dream.`,
     },
     {
       role: 'user',
@@ -72,7 +77,7 @@ export async function generateImagePrompt(dreamContent: string): Promise<string>
   return chatCompletion([
     {
       role: 'system',
-      content: 'You are a dream visualization artist. Given a dream description, create a vivid image generation prompt that captures the dream\'s essence, mood, and key visual elements. The prompt should be suitable for an AI image generator. Keep it to 2-3 sentences. Focus on atmosphere, lighting, colors, and composition.',
+      content: 'You are a surrealist dream visualization artist. Given a dream description, create a vivid image prompt that captures the emotional core. 2-3 sentences. Match composition to emotion: chasing = diagonal motion blur and vanishing points; water = fluid dissolving edges; nostalgia = warm amber soft focus; anxiety = harsh shadows. Use surreal art direction with impossible architecture and scale distortions. Lighting reflects emotion. Never include text or reference the dreamer.',
     },
     {
       role: 'user',
