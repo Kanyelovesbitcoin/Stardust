@@ -3,7 +3,6 @@ import { Alert } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { Session } from '@supabase/supabase-js';
 import { useSupabaseAuth } from './useSupabaseAuth';
-import { isReviewerAccount } from './reviewerAccount';
 
 // ─── Safely detect if expo-superwall native module is available ───
 let superwallAvailable = false;
@@ -119,7 +118,7 @@ function SuperwallProProvider({ children }: { children: React.ReactNode }) {
   const lastIdentifiedUserIdRef = useRef<string | null>(null);
 
   // Apple App Review access account
-  const isReviewerPro = isReviewerAccount(session?.user?.email);
+  const isReviewerPro = false /* reviewer check handled server-side via getEntitlement */;
   const isPro = subscriptionStatus?.status === 'ACTIVE' || isReviewerPro;
   const { hasFreeImageToday, setHasFreeImageToday, refreshFreeImageStatus } = useFreeImageState(isPro);
 
@@ -284,7 +283,7 @@ function DevFallbackProvider({ children }: { children: React.ReactNode }) {
   const [devProOverride, setDevProOverride] = useState(false);
   const { session } = useSupabaseAuth();
   // Apple App Review access account
-  const isReviewerPro = isReviewerAccount(session?.user?.email);
+  const isReviewerPro = false /* reviewer check handled server-side via getEntitlement */;
 
   const isPro = devProOverride || isReviewerPro;
   const { hasFreeImageToday, setHasFreeImageToday, refreshFreeImageStatus } = useFreeImageState(isPro);

@@ -35,7 +35,7 @@ export async function requirePro(ctx: MutationCtx, userId: string) {
   const identity = await ctx.auth.getUserIdentity();
   const user = await ensureUser(ctx, userId);
   // Apple App Review access account
-  if (isReviewerAccount(identity?.email)) {
+  if (isReviewerAccount(identity?.email, process.env.APPLE_REVIEWER_EMAIL)) {
     await ctx.db.patch(user._id, {
       subscriptionStatus: "pro",
       subscriptionStartedAt: user.subscriptionStartedAt ?? Date.now(),
@@ -57,7 +57,7 @@ export async function checkAndIncrementUsage(
 ) {
   const identity = await ctx.auth.getUserIdentity();
   // Apple App Review access account
-  if (isReviewerAccount(identity?.email)) {
+  if (isReviewerAccount(identity?.email, process.env.APPLE_REVIEWER_EMAIL)) {
     const user = await ensureUser(ctx, userId);
     await ctx.db.patch(user._id, {
       subscriptionStatus: "pro",
@@ -124,7 +124,7 @@ export const getEntitlement = query({
     if (!identity) return null;
     const userId = identity.subject;
     // Apple App Review access account
-    const reviewerPro = isReviewerAccount(identity.email);
+    const reviewerPro = isReviewerAccount(identity.email, process.env.APPLE_REVIEWER_EMAIL);
 
     const user = await getUserForQuery(ctx, userId);
     const month = currentMonth();

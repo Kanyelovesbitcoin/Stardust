@@ -51,7 +51,7 @@ export const generateVisualization = internalAction({
             { role: "system", content: IMAGE_PROMPT_SYSTEM },
             {
               role: "user",
-              content: `Create an image prompt for this dream:\n\n${transcript}`,
+              content: `Create an image prompt for this dream:\n\n${transcript.slice(0, 5000)}`,
             },
           ],
         }),

@@ -344,7 +344,14 @@ export const failVisualization = internalMutation({
 export const getImageUrl = query({
   args: { storageId: v.id("_storage") },
   handler: async (ctx, { storageId }) => {
-    await requireUserId(ctx);
+    const userId = await requireUserId(ctx);
+    // Verify the user owns a dream referencing this storage ID
+    const dream = await ctx.db
+      .query("dreams")
+      .withIndex("by_user", (q) => q.eq("userId", userId))
+      .filter((q) => q.eq(q.field("sceneStorageId"), storageId))
+      .first();
+    if (!dream) return null;
     return await ctx.storage.getUrl(storageId);
   },
 });
