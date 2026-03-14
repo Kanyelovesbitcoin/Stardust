@@ -48,11 +48,19 @@ export default defineSchema({
     .index("by_user", ["userId"])
     .index("by_user_date", ["userId", "createdAt"]),
 
-  usageLimits: defineTable({
+  users: defineTable({
     userId: v.string(),
-    weekStartDate: v.string(),
-    voiceRecordings: v.number(),
-    interpretations: v.number(),
-    visualizations: v.number(),
-  }).index("by_user_week", ["userId", "weekStartDate"]),
+    email: v.optional(v.string()),
+    subscriptionStatus: v.string(), // "free" | "pro"
+    subscriptionStartedAt: v.optional(v.number()),
+    createdAt: v.number(),
+  }).index("by_user", ["userId"]),
+
+  aiUsage: defineTable({
+    userId: v.string(),
+    month: v.string(), // "YYYY-MM"
+    interpretationsUsed: v.number(),
+    visualizationsUsed: v.number(),
+    createdAt: v.number(),
+  }).index("by_user_month", ["userId", "month"]),
 });

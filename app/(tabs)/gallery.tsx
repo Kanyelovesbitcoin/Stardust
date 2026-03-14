@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useCallback } from 'react';
+import React, { useRef, useEffect, useCallback, useMemo } from 'react';
 import {
   View,
   StyleSheet,
@@ -15,18 +15,17 @@ import { Ionicons } from '@expo/vector-icons';
 import * as Sharing from 'expo-sharing';
 import * as FileSystem from 'expo-file-system/legacy';
 import * as MediaLibrary from 'expo-media-library';
-import { api } from '../convex/_generated/api';
-import BottomTabBar from '../components/ui/BottomTabBar';
-import { STARDUST_THEME } from '../lib/theme';
-import { RADIUS, SPACING } from '../lib/layout';
-import { StardustText } from '../components/ui/StardustText';
-import ScreenContainer from '../components/ui/ScreenContainer';
+import { api } from '../../convex/_generated/api';
+import { DROPLETT_THEME } from '../../lib/theme';
+import { RADIUS, SPACING } from '../../lib/layout';
+import { DroplettText } from '../../components/ui/DroplettText';
+import ScreenContainer from '../../components/ui/ScreenContainer';
+import { useSupabaseAuth } from '../../lib/useSupabaseAuth';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const GRID_GAP = 12;
 const COLUMN_WIDTH = (SCREEN_WIDTH - SPACING.screenPadding * 2 - GRID_GAP) / 2;
 const IMAGE_HEIGHT = COLUMN_WIDTH * (4 / 3);
-const TAB_BAR_CLEARANCE = 100;
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
@@ -78,9 +77,11 @@ async function handleSave(sceneUrl: string) {
 
 export default function GalleryScreen() {
   const { highlight } = useLocalSearchParams<{ highlight?: string }>();
+  const { isAuthenticated: isSignedIn } = useSupabaseAuth();
+
   const galleryDreams = useQuery(api.dreams.listGalleryDreams) ?? [];
 
-  const visualizedCount = galleryDreams.filter((d) => d.sceneUrl).length;
+  const visualizedCount = useMemo(() => galleryDreams.filter((d) => d.sceneUrl).length, [galleryDreams]);
   const flatListRef = useRef<FlatList>(null);
 
   useEffect(() => {
@@ -108,11 +109,11 @@ export default function GalleryScreen() {
           onPress={() => router.push(`/dream/${item._id}`)}
         >
           <View style={styles.shimmerContainer}>
-            <ActivityIndicator size="small" color={STARDUST_THEME.gold.muted} />
-            <Ionicons name="brush-outline" size={24} color={STARDUST_THEME.gold.muted} style={{ marginTop: 6 }} />
-            <StardustText variant="label" color={STARDUST_THEME.gold.muted} style={{ marginTop: 8 }}>
+            <ActivityIndicator size="small" color={DROPLETT_THEME.gold.muted} />
+            <Ionicons name="brush-outline" size={24} color={DROPLETT_THEME.gold.muted} style={{ marginTop: 6 }} />
+            <DroplettText variant="label" color={DROPLETT_THEME.gold.muted} style={{ marginTop: 8 }}>
               Painting...
-            </StardustText>
+            </DroplettText>
           </View>
         </Pressable>
       );
@@ -133,22 +134,20 @@ export default function GalleryScreen() {
             recyclingKey={item._id}
           />
 
-          {/* Date badge — top-left */}
           <View style={styles.dateBadge}>
-            <StardustText variant="timestamp" color={STARDUST_THEME.text.primary} style={{ fontSize: 10 }}>
+            <DroplettText variant="timestamp" color={DROPLETT_THEME.text.primary} style={{ fontSize: 10 }}>
               {formatDate(item.createdAt)}
-            </StardustText>
+            </DroplettText>
           </View>
 
           {item.visualStyle && (
             <View style={styles.styleBadge}>
-              <StardustText variant="timestamp" color={STARDUST_THEME.gold.warm} style={{ fontSize: 9 }}>
+              <DroplettText variant="timestamp" color={DROPLETT_THEME.gold.warm} style={{ fontSize: 9 }}>
                 {item.visualStyle.toUpperCase()}
-              </StardustText>
+              </DroplettText>
             </View>
           )}
 
-          {/* Action buttons — bottom-right */}
           <View style={styles.actionRow}>
             <Pressable
               style={styles.actionButton}
@@ -166,12 +165,11 @@ export default function GalleryScreen() {
             </Pressable>
           </View>
 
-          {/* Caption overlay — bottom */}
           {item.titlePreview && (
             <View style={styles.captionOverlay}>
-              <StardustText variant="bodySmall" color="#F5E6C8" numberOfLines={1} style={{ fontSize: 11 }}>
+              <DroplettText variant="bodySmall" color="#F5E6C8" numberOfLines={1} style={{ fontSize: 11 }}>
                 {item.titlePreview}
-              </StardustText>
+              </DroplettText>
             </View>
           )}
         </View>
@@ -182,27 +180,49 @@ export default function GalleryScreen() {
   const renderEmpty = useCallback(() => (
     <View style={styles.emptyState}>
       <Ionicons name="images-outline" size={48} color="#2A2A35" style={{ marginBottom: SPACING.md }} />
-      <StardustText variant="screenTitle" color="#0A0A0F" style={{ marginBottom: SPACING.sm, textAlign: 'center' }}>
-        Your dream gallery awaits
-      </StardustText>
-      <StardustText variant="body" color="#2A2A35" align="center" style={{ maxWidth: 280 }}>
-        Visualize your dreams with AI to fill this space with your subconscious art.
-      </StardustText>
+      {isSignedIn ? (
+        <>
+          <DroplettText variant="screenTitle" color="#0A0A0F" style={{ marginBottom: SPACING.sm, textAlign: 'center' }}>
+            Your dream gallery awaits
+          </DroplettText>
+          <DroplettText variant="body" color="#2A2A35" align="center" style={{ maxWidth: 280 }}>
+            Visualize your dreams with AI to fill this space with your subconscious art.
+          </DroplettText>
+        </>
+      ) : (
+        <>
+          <DroplettText variant="screenTitle" color="#0A0A0F" style={{ marginBottom: SPACING.sm, textAlign: 'center' }}>
+            Sign in to see your gallery
+          </DroplettText>
+          <Pressable onPress={() => router.push('/sign-in')} style={{ marginTop: SPACING.md }}>
+            <DroplettText variant="label" color={DROPLETT_THEME.gold.bright}>
+              Sign In
+            </DroplettText>
+          </Pressable>
+        </>
+      )}
     </View>
-  ), []);
+  ), [isSignedIn]);
 
   const keyExtractor = useCallback((item: any) => item._id, []);
 
+  const ROW_HEIGHT = IMAGE_HEIGHT + GRID_GAP + SPACING.xs;
+  const getItemLayout = useCallback((_data: any, index: number) => ({
+    length: ROW_HEIGHT,
+    offset: ROW_HEIGHT * Math.floor(index / 2),
+    index,
+  }), []);
+
   return (
-    <ScreenContainer backgroundSource={require('../assets/bg-gallery.png')}>
+    <ScreenContainer backgroundSource={require('../../assets/bg-gallery.png')}>
       <View style={styles.header}>
         <View>
-          <StardustText variant="screenTitle" color="#0A0A0F">
+          <DroplettText variant="screenTitle" color="#0A0A0F">
             Gallery
-          </StardustText>
-          <StardustText variant="bodySmall" color="#2A2A35">
+          </DroplettText>
+          <DroplettText variant="bodySmall" color="#2A2A35">
             {visualizedCount} {visualizedCount === 1 ? 'creation' : 'creations'}
-          </StardustText>
+          </DroplettText>
         </View>
       </View>
 
@@ -219,9 +239,8 @@ export default function GalleryScreen() {
         removeClippedSubviews
         maxToRenderPerBatch={6}
         windowSize={5}
+        getItemLayout={getItemLayout}
       />
-
-      <BottomTabBar activeTab="gallery" />
     </ScreenContainer>
   );
 }
@@ -233,7 +252,7 @@ const styles = StyleSheet.create({
   },
   listContent: {
     paddingHorizontal: SPACING.screenPadding,
-    paddingBottom: TAB_BAR_CLEARANCE,
+    paddingBottom: 40,
     flexGrow: 1,
   },
   row: {
@@ -245,7 +264,7 @@ const styles = StyleSheet.create({
     marginBottom: SPACING.xs,
   },
   cellHighlighted: {
-    borderColor: STARDUST_THEME.gold.bright,
+    borderColor: DROPLETT_THEME.gold.bright,
     borderWidth: 1,
     borderRadius: RADIUS.md,
   },
@@ -256,9 +275,9 @@ const styles = StyleSheet.create({
     width: COLUMN_WIDTH,
     height: IMAGE_HEIGHT,
     borderRadius: RADIUS.md,
-    backgroundColor: STARDUST_THEME.bg.secondary,
+    backgroundColor: DROPLETT_THEME.bg.secondary,
     borderWidth: 1,
-    borderColor: STARDUST_THEME.gold.muted + '40',
+    borderColor: DROPLETT_THEME.gold.muted + '40',
   },
   shimmerContainer: {
     width: COLUMN_WIDTH,
@@ -266,9 +285,9 @@ const styles = StyleSheet.create({
     borderRadius: RADIUS.md,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: STARDUST_THEME.bg.secondary,
+    backgroundColor: DROPLETT_THEME.bg.secondary,
     borderWidth: 1,
-    borderColor: STARDUST_THEME.border,
+    borderColor: DROPLETT_THEME.border,
     borderStyle: 'dashed',
   },
   dateBadge: {

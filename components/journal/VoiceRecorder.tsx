@@ -5,6 +5,8 @@ import {
   StyleSheet,
   TouchableOpacity,
   Animated,
+  Alert,
+  Linking,
 } from 'react-native';
 import { Audio } from 'expo-av';
 import { Ionicons } from '@expo/vector-icons';
@@ -16,6 +18,7 @@ interface VoiceRecorderProps {
 
 export default function VoiceRecorder({ onRecordingComplete }: VoiceRecorderProps) {
   const [isRecording, setIsRecording] = useState(false);
+  const [permissionDenied, setPermissionDenied] = useState(false);
   const [durationSec, setDurationSec] = useState(0);
   const recordingRef = useRef<Audio.Recording | null>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -25,6 +28,7 @@ export default function VoiceRecorder({ onRecordingComplete }: VoiceRecorderProp
   useEffect(() => {
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
+      if (pulseLoop.current) pulseLoop.current.stop();
       if (recordingRef.current) {
         recordingRef.current.stopAndUnloadAsync().catch(() => {});
       }
@@ -57,7 +61,19 @@ export default function VoiceRecorder({ onRecordingComplete }: VoiceRecorderProp
   const startRecording = async () => {
     try {
       const permission = await Audio.requestPermissionsAsync();
-      if (!permission.granted) return;
+      if (!permission.granted) {
+        setPermissionDenied(true);
+        Alert.alert(
+          'Microphone Access Required',
+          'Droplett needs microphone access to record your dreams. Please enable it in Settings.',
+          [
+            { text: 'Cancel', style: 'cancel' },
+            { text: 'Open Settings', onPress: () => Linking.openSettings() },
+          ]
+        );
+        return;
+      }
+      setPermissionDenied(false);
 
       await Audio.setAudioModeAsync({
         allowsRecordingIOS: true,
@@ -79,6 +95,7 @@ export default function VoiceRecorder({ onRecordingComplete }: VoiceRecorderProp
       startPulse();
     } catch (err) {
       console.error('Failed to start recording:', err);
+      Alert.alert('Recording Error', 'Could not start recording. Please try again.');
     }
   };
 
@@ -152,8 +169,13 @@ export default function VoiceRecorder({ onRecordingComplete }: VoiceRecorderProp
       </Text>
 
       <Text style={styles.hint}>
-        {isRecording ? 'Tap to stop' : 'Tap to record your dream'}
+        {isRecording ? 'Tap to stop' : permissionDenied ? 'Microphone access denied' : 'Tap to record your dream'}
       </Text>
+      {permissionDenied && (
+        <TouchableOpacity onPress={() => Linking.openSettings()} activeOpacity={0.7}>
+          <Text style={styles.settingsLink}>Open Settings</Text>
+        </TouchableOpacity>
+      )}
     </View>
   );
 }
@@ -205,5 +227,11 @@ const styles = StyleSheet.create({
     ...TYPOGRAPHY.caption,
     color: COLORS.textTertiary,
     marginTop: SPACING.sm,
+  },
+  settingsLink: {
+    ...TYPOGRAPHY.caption,
+    color: COLORS.primary,
+    marginTop: SPACING.sm,
+    textDecorationLine: 'underline',
   },
 });

@@ -2,9 +2,9 @@ import React from 'react';
 import { View, StyleSheet, Pressable, ActivityIndicator } from 'react-native';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
-import { STARDUST_THEME } from '../../lib/theme';
+import { DROPLETT_THEME } from '../../lib/theme';
 import { RADIUS, SPACING } from '../../lib/layout';
-import { StardustText } from '../ui/StardustText';
+import { DroplettText } from '../ui/DroplettText';
 import { DropletButton } from '../ui/DropletButton';
 
 interface DreamSceneProps {
@@ -34,16 +34,16 @@ export default React.memo(function DreamScene({
     return (
       <View style={[styles.container, { aspectRatio, borderRadius }]}>
         <View style={[styles.shimmer, { borderRadius }]}>
-          <ActivityIndicator size="small" color={STARDUST_THEME.gold.muted} />
+          <ActivityIndicator size="small" color={DROPLETT_THEME.gold.muted} />
           <Ionicons
             name="brush-outline"
             size={28}
-            color={STARDUST_THEME.gold.muted}
+            color={DROPLETT_THEME.gold.muted}
             style={styles.shimmerIcon}
           />
-          <StardustText variant="label" color={STARDUST_THEME.gold.muted} style={styles.shimmerText}>
+          <DroplettText variant="label" color={DROPLETT_THEME.gold.muted} style={styles.shimmerText}>
             Painting your dream...
-          </StardustText>
+          </DroplettText>
         </View>
       </View>
     );
@@ -53,15 +53,15 @@ export default React.memo(function DreamScene({
     return (
       <View style={[styles.container, { aspectRatio, borderRadius }]}>
         <View style={[styles.errorContainer, { borderRadius }]}>
-          <Ionicons name="alert-circle-outline" size={32} color={STARDUST_THEME.mood.scared} />
-          <StardustText
+          <Ionicons name="alert-circle-outline" size={32} color={DROPLETT_THEME.mood.scared} />
+          <DroplettText
             variant="bodySmall"
-            color={STARDUST_THEME.text.secondary}
+            color={DROPLETT_THEME.text.secondary}
             align="center"
             style={styles.errorText}
           >
             {imageError}
-          </StardustText>
+          </DroplettText>
           {onRetry && (
             <DropletButton
               onPress={onRetry}
@@ -90,14 +90,14 @@ export default React.memo(function DreamScene({
           />
         </Pressable>
         {showCaption && (
-          <StardustText
+          <DroplettText
             variant="bodySmall"
-            color={STARDUST_THEME.text.tertiary}
+            color={DROPLETT_THEME.text.tertiary}
             align="center"
             style={styles.caption}
           >
             Generated based on your dream
-          </StardustText>
+          </DroplettText>
         )}
       </View>
     );
@@ -109,7 +109,7 @@ export default React.memo(function DreamScene({
 const styles = StyleSheet.create({
   container: {
     width: '100%',
-    backgroundColor: STARDUST_THEME.bg.secondary,
+    backgroundColor: DROPLETT_THEME.bg.secondary,
     overflow: 'hidden',
   },
   shimmer: {

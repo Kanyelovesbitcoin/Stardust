@@ -1,15 +1,15 @@
 import React, { useCallback, useRef } from 'react';
 import { View, Pressable, ViewStyle, StyleSheet, Animated } from 'react-native';
-import { STARDUST_THEME } from '../../lib/theme';
+import { DROPLETT_THEME } from '../../lib/theme';
 import { RADIUS, SPACING } from '../../lib/layout';
 
-interface StardustCardProps {
+interface DroplettCardProps {
     children: React.ReactNode;
     onPress?: () => void;
     style?: import('react-native').StyleProp<ViewStyle>;
 }
 
-export const StardustCard = React.memo(function StardustCard({ children, onPress, style }: StardustCardProps) {
+export const DroplettCard = React.memo(function DroplettCard({ children, onPress, style }: DroplettCardProps) {
     const scaleAnim = useRef(new Animated.Value(1)).current;
 
     const handlePressIn = useCallback(() => {
@@ -54,10 +54,10 @@ export const StardustCard = React.memo(function StardustCard({ children, onPress
 
 const styles = StyleSheet.create({
     card: {
-        backgroundColor: STARDUST_THEME.bg.secondary,
+        backgroundColor: DROPLETT_THEME.bg.secondary,
         borderRadius: RADIUS.lg,
         borderWidth: 1,
-        borderColor: STARDUST_THEME.border,
+        borderColor: DROPLETT_THEME.border,
         padding: SPACING.md,
         elevation: 2,
     },

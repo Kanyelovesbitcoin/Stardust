@@ -9,8 +9,11 @@
  */
 
 import type * as dreams from "../dreams.js";
+import type * as entitlements from "../entitlements.js";
+import type * as http from "../http.js";
 import type * as imageUtils from "../imageUtils.js";
 import type * as interpret from "../interpret.js";
+import type * as superwallWebhook from "../superwallWebhook.js";
 import type * as transcribe from "../transcribe.js";
 import type * as visualize from "../visualize.js";
 
@@ -22,8 +25,11 @@ import type {
 
 declare const fullApi: ApiFromModules<{
   dreams: typeof dreams;
+  entitlements: typeof entitlements;
+  http: typeof http;
   imageUtils: typeof imageUtils;
   interpret: typeof interpret;
+  superwallWebhook: typeof superwallWebhook;
   transcribe: typeof transcribe;
   visualize: typeof visualize;
 }>;

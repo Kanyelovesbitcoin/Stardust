@@ -1,7 +1,7 @@
 import React from 'react';
 import { StyleSheet, ViewStyle, ImageBackground, ImageSourcePropType } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { STARDUST_THEME } from '../../lib/theme';
+import { DROPLETT_THEME } from '../../lib/theme';
 
 const DEFAULT_BG = require('../../assets/app-background-stars.png');
 
@@ -48,11 +48,11 @@ const styles = StyleSheet.create({
     flex: 1,
     width: '100%',
     height: '100%',
-    backgroundColor: STARDUST_THEME.bg.primary, // Fallback
+    backgroundColor: DROPLETT_THEME.bg.primary, // Fallback
   },
   container: {
     flex: 1,
-    backgroundColor: STARDUST_THEME.bg.primary,
+    backgroundColor: DROPLETT_THEME.bg.primary,
   },
   containerTransparent: {
     flex: 1,

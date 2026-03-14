@@ -1,8 +1,11 @@
 export default {
   providers: [
     {
-      domain: process.env.CLERK_JWT_ISSUER_DOMAIN,
-      applicationID: "convex",
+      type: 'customJwt' as const,
+      issuer: 'https://qrdvcxfhmduaptlzbvas.supabase.co/auth/v1',
+      jwks: 'https://qrdvcxfhmduaptlzbvas.supabase.co/auth/v1/.well-known/jwks.json',
+      algorithm: 'ES256' as const,
+      applicationID: 'authenticated',
     },
   ],
 };

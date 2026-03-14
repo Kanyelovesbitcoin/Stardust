@@ -1,4 +1,4 @@
-// Stardust — Record it. Understand it. See it.
+// Droplett — Record it. Understand it. See it.
 // Deep indigo void + sacred gold
 
 export const COLORS = {

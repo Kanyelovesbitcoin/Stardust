@@ -1,10 +1,10 @@
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
-import { STARDUST_THEME } from '../../lib/theme';
+import { DROPLETT_THEME } from '../../lib/theme';
 import { RADIUS, SPACING } from '../../lib/layout';
-import { StardustText } from './StardustText';
+import { DroplettText } from './DroplettText';
 
-export type MoodType = keyof typeof STARDUST_THEME.mood;
+export type MoodType = keyof typeof DROPLETT_THEME.mood;
 
 interface MoodPillProps {
     mood: string;
@@ -13,20 +13,20 @@ interface MoodPillProps {
 export function MoodPill({ mood }: MoodPillProps) {
     // Normalize mood key
     const moodKeyRaw = mood.toLowerCase();
-    const isValidMood = Object.keys(STARDUST_THEME.mood).includes(moodKeyRaw);
+    const isValidMood = Object.keys(DROPLETT_THEME.mood).includes(moodKeyRaw);
     const moodKey = isValidMood ? (moodKeyRaw as MoodType) : 'neutral';
 
-    const color = STARDUST_THEME.mood[moodKey];
+    const color = DROPLETT_THEME.mood[moodKey];
 
     return (
         <View style={[styles.pill, { backgroundColor: `${color}1F`, borderColor: `${color}33`, borderWidth: 1 }]}>
-            <StardustText
+            <DroplettText
                 variant="label"
                 color={color}
                 style={styles.text}
             >
                 {mood}
-            </StardustText>
+            </DroplettText>
         </View>
     );
 }

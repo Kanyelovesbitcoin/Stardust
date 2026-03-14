@@ -20,7 +20,7 @@ interface DreamCardProps {
   onPress: () => void;
 }
 
-export default function DreamCard({ dream, onPress }: DreamCardProps) {
+export default React.memo(function DreamCard({ dream, onPress }: DreamCardProps) {
   const moodData = dream.mood
     ? DREAM_MOODS.find((m) => m.key === dream.mood)
     : null;
@@ -92,7 +92,7 @@ export default function DreamCard({ dream, onPress }: DreamCardProps) {
       )}
     </TouchableOpacity>
   );
-}
+});
 
 const styles = StyleSheet.create({
   card: {

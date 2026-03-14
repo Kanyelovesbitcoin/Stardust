@@ -2,8 +2,8 @@ import { LUCID_TOKENS } from './tokens';
 
 export { LUCID_TOKENS } from './tokens';
 
-// Deprecated STARDUST_THEME kept for backward compatibility
-export const STARDUST_THEME = {
+// Deprecated DROPLETT_THEME kept for backward compatibility
+export const DROPLETT_THEME = {
     // Backgrounds — deep, warm blacks (NOT pure #000)
     bg: {
         primary: '#0A0A0F',      // Near-black with blue undertone
@@ -47,8 +47,3 @@ export const STARDUST_THEME = {
     shadow: 'rgba(196, 162, 101, 0.08)',  // Gold-tinted shadows
     overlay: 'rgba(10, 10, 15, 0.85)',
 } as const;
-
-// Helper to apply typography tokens as a style object
-export const applyTypography = (key: keyof typeof LUCID_TOKENS.typography) => {
-    return LUCID_TOKENS.typography[key];
-};

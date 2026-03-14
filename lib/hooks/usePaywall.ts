@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import { useStardustPro } from '../superwall';
+import { useDroplettPro } from '../superwall';
 
 // All placement names — must match Superwall dashboard configuration
 export const PLACEMENTS = {
@@ -12,6 +12,7 @@ export const PLACEMENTS = {
   SESSION_PROMPT: 'session_prompt',
   GALLERY_UPSELL: 'gallery_upsell',
   SETTINGS_UPGRADE: 'settings_upgrade',
+  VOICE_RECORD: 'voice_record',
 } as const;
 
 export type PaywallPlacement = (typeof PLACEMENTS)[keyof typeof PLACEMENTS];
@@ -24,7 +25,7 @@ interface UsePaywallOptions {
 
 /**
  * Centralized paywall hook. Components should never import expo-superwall directly.
- * Delegates to StardustProProvider which integrates with Superwall SDK.
+ * Delegates to DroplettProProvider which integrates with Superwall SDK.
  */
 export function usePaywall(options?: UsePaywallOptions) {
   const {
@@ -34,7 +35,7 @@ export function usePaywall(options?: UsePaywallOptions) {
     registerFeatureWithDailyFree,
     hasFreeImageToday,
     setUserAttributes,
-  } = useStardustPro();
+  } = useDroplettPro();
 
   const showPaywall = useCallback(
     async (placement: PaywallPlacement) => {
@@ -62,7 +63,7 @@ export function usePaywall(options?: UsePaywallOptions) {
 
   const gateFeature = useCallback(
     (placement: PaywallPlacement, feature: () => void | Promise<void>) => {
-      // Delegates to StardustProProvider's registerFeature
+      // Delegates to DroplettProProvider's registerFeature
       // If user has active subscription, feature runs immediately
       // Otherwise, Superwall paywall is shown
       registerFeature(placement, feature);

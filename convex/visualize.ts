@@ -26,13 +26,15 @@ export const generateVisualization = internalAction({
   args: {
     dreamId: v.id("dreams"),
     transcript: v.string(),
+    userId: v.string(),
   },
-  handler: async (ctx, { dreamId, transcript }) => {
+  handler: async (ctx, { dreamId, transcript, userId }) => {
     const apiKey = process.env.OPENROUTER_API_KEY;
     if (!apiKey) {
       console.error("OPENROUTER_API_KEY not set");
       await ctx.runMutation(internal.dreams.failVisualization, {
         dreamId,
+        userId,
         imageError: "API key not configured",
       });
       return;
@@ -44,7 +46,7 @@ export const generateVisualization = internalAction({
         method: "POST",
         headers: OPENROUTER_HEADERS(apiKey),
         body: JSON.stringify({
-          model: "moonshotai/kimi-k2.5",
+          model: "google/gemini-3-flash-preview",
           messages: [
             { role: "system", content: IMAGE_PROMPT_SYSTEM },
             {
@@ -163,6 +165,7 @@ export const generateVisualization = internalAction({
       // Step 4: Save to dream (with storageId for URL regeneration)
       await ctx.runMutation(internal.dreams.saveVisualization, {
         dreamId,
+        userId,
         sceneStorageId: storageId,
         sceneUrl,
         imagePrompt,
@@ -172,7 +175,8 @@ export const generateVisualization = internalAction({
       console.error("Visualization failed:", error);
       await ctx.runMutation(internal.dreams.failVisualization, {
         dreamId,
-        imageError: error instanceof Error ? error.message : "Image generation failed",
+        userId,
+        imageError: "Image generation failed. Please try again.",
       });
     }
   },

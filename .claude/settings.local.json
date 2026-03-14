@@ -33,7 +33,29 @@
       "Bash(git ls-tree:*)",
       "Bash(del \".git\\\\objects\\\\fa\\\\025d9b363f7971f7f86f299553a2a2cfb98d1f\")",
       "Bash(git hash-object:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(git commit -m \"$\\(cat <<''EOF''\nDroplett: Clerk auth setup, onboarding polish, paywall integration\n\n- Add Clerk sign-in screen with Google OAuth\n- Add EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY to env\n- Polish onboarding slides, demo video, rating prompt\n- Wire up Superwall paywall with periodic triggers\n- Add theme system, typography, notifications\n- Clean up unused assets, fix gitignore\n\nCo-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(npx eas build:view 8e9ef9a4-74a0-4211-903e-698e55b4075b --non-interactive)",
+      "WebFetch(domain:expo.dev)",
+      "Bash(echo $EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY)",
+      "Bash(find \"/c/Users/Luke/Downloads/Drift/node_modules/@clerk\" -type f -name \"*.d.ts\" -exec grep -l \"useSignIn\" {} ;)",
+      "Bash(git -C /c/Users/Luke/Downloads/Drift show HEAD:components/ui/BottomTabBar.tsx)",
+      "Bash(npm uninstall @clerk/clerk-expo --legacy-peer-deps)",
+      "WebFetch(domain:qrdvcxfhmduaptlzbvas.supabase.co)",
+      "WebFetch(domain:docs.convex.dev)",
+      "Bash(npm run build)",
+      "Bash(npx vercel --yes)",
+      "Bash(npx vercel --yes --scope kanyelovesbitcoins-projects)",
+      "Bash(npx vercel link --scope kanyelovesbitcoins-projects --yes)",
+      "Bash(npx vercel --team team_22MKdvyxVRaTJIusI7mmOZiK --yes)",
+      "Bash(npx vercel inspect https://vercel.com/kanyelovesbitcoins-projects/droplett-bridge/6NExVpZvhoiPJ8bRoM4rNbAe1UK3)",
+      "Bash(npx vercel logs https://droplett-bridge-2q1fo4ido-kanyelovesbitcoins-projects.vercel.app)",
+      "Bash(npx vercel ls --scope kanyelovesbitcoins-projects)",
+      "Bash(npx vercel inspect droplett-bridge-72cy5gi30-kanyelovesbitcoins-projects.vercel.app)",
+      "Bash(xargs sed -i 's/STARDUST_THEME/DROPLETT_THEME/g; s/StardustProProvider/DroplettProProvider/g; s/StardustProContext/DroplettProContext/g; s/StardustProContextValue/DroplettProContextValue/g; s/useStardustPro/useDroplettPro/g; s/StardustText/DroplettText/g; s/StardustCard/DroplettCard/g; s/StardustButton/DroplettButton/g; s/StardustTextProps/DroplettTextProps/g; s/StardustCardProps/DroplettCardProps/g; s/StardustButtonProps/DroplettButtonProps/g')",
+      "Bash(xargs sed -i \"s|/StardustText''|/DroplettText''|g; s|/StardustCard''|/DroplettCard''|g; s|/StardustButton''|/DroplettButton''|g; s|/StardustText\"\"|/DroplettText\"\"|g; s|/StardustCard\"\"|/DroplettCard\"\"|g; s|/StardustButton\"\"|/DroplettButton\"\"|g\")",
+      "Bash(find /c/Users/Luke/Downloads/Drift/app -type d -name \"\\(tabs\\)\")",
+      "Bash(npx supabase:*)"
     ]
   }
 }

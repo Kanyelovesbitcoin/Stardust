@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Image } from 'expo-image';
 import {
   View,
@@ -7,6 +7,8 @@ import {
   Pressable,
   Alert,
   ActivityIndicator,
+  Modal,
+  Dimensions,
 } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useQuery, useMutation } from 'convex/react';
@@ -15,17 +17,19 @@ import { api } from '../../convex/_generated/api';
 import ScreenContainer from '../../components/ui/ScreenContainer';
 import ShieldBadge from '../../components/ui/ShieldBadge';
 import ProBadge from '../../components/ui/ProBadge';
-import { useStardustPro } from '../../lib/superwall';
-import { STARDUST_THEME } from '../../lib/theme';
+import { useDroplettPro } from '../../lib/superwall';
+import { DROPLETT_THEME } from '../../lib/theme';
 import { RADIUS, SPACING } from '../../lib/layout';
-import { StardustText } from '../../components/ui/StardustText';
-import { StardustCard } from '../../components/ui/StardustCard';
+import { requestVisualizationWithGate } from '../../lib/visualizationGate';
+import { DroplettText } from '../../components/ui/DroplettText';
+import { DroplettCard } from '../../components/ui/DroplettCard';
 import { DropletButton } from '../../components/ui/DropletButton';
 import { MoodPill } from '../../components/ui/MoodPill';
 import { GoldDivider } from '../../components/ui/GoldDivider';
 import DreamScene from '../../components/visualizer/DreamScene';
 import type { Id } from '../../convex/_generated/dataModel';
 import { DREAM_TAGS, DreamTagKey } from '../../lib/constants';
+import { useAIConsent } from '../../components/ui/AIConsentModal';
 
 export default function DreamDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -36,12 +40,13 @@ export default function DreamDetailScreen() {
   const updateDream = useMutation(api.dreams.updateDream);
   const requestInterpretation = useMutation(api.dreams.requestInterpretation);
   const requestVisualization = useMutation(api.dreams.requestVisualization);
-  const { isPro, registerFeature, registerFeatureWithDailyFree, hasFreeImageToday } = useStardustPro();
+  const { isPro, showPaywall, registerFeatureWithDailyFree, hasFreeImageToday } = useDroplettPro();
+  const { ensureConsent, consentModal } = useAIConsent();
 
   if (dream === undefined) {
     return (
       <ScreenContainer backgroundSource={require('../../assets/bg-settings.png')} style={styles.centered}>
-        <ActivityIndicator size="small" color={STARDUST_THEME.gold.warm} />
+        <ActivityIndicator size="small" color={DROPLETT_THEME.gold.warm} />
       </ScreenContainer>
     );
   }
@@ -49,9 +54,9 @@ export default function DreamDetailScreen() {
   if (dream === null) {
     return (
       <ScreenContainer backgroundSource={require('../../assets/bg-settings.png')} style={styles.centered}>
-        <StardustText variant="body" color={STARDUST_THEME.text.secondary}>Dream not found</StardustText>
+        <DroplettText variant="body" color={DROPLETT_THEME.text.secondary}>Dream not found</DroplettText>
         <Pressable onPress={() => router.back()} style={styles.goBackLink}>
-          <StardustText variant="button" color={STARDUST_THEME.gold.warm}>Go Back</StardustText>
+          <DroplettText variant="button" color={DROPLETT_THEME.gold.warm}>Go Back</DroplettText>
         </Pressable>
       </ScreenContainer>
     );
@@ -78,7 +83,7 @@ export default function DreamDetailScreen() {
     });
   };
 
-  const handleInterpret = () => {
+  const handleInterpret = async () => {
     const transcript = dream.editedTranscript || dream.transcript;
     if (!transcript) {
       Alert.alert('No Transcript', 'Wait for transcription to complete first.');
@@ -86,16 +91,24 @@ export default function DreamDetailScreen() {
     }
     if (dream.isInterpreting) return;
 
-    registerFeature('interpret_dream', async () => {
+    const consented = await ensureConsent();
+    if (!consented) return;
+
+    registerFeatureWithDailyFree('interpret_dream', async () => {
       try {
         await requestInterpretation({ dreamId: dream._id });
-      } catch {
-        Alert.alert('Error', 'Failed to start interpretation.');
+      } catch (e: any) {
+        const msg = e?.message?.includes('Monthly AI limit')
+          ? e.message
+          : e?.message?.includes('Pro subscription required')
+            ? 'This feature requires Droplett Pro.'
+            : 'Failed to start interpretation.';
+        Alert.alert('Error', msg);
       }
     });
   };
 
-  const handleVisualize = () => {
+  const handleVisualize = async () => {
     const transcript = dream.editedTranscript || dream.transcript;
     if (!transcript) {
       Alert.alert('No Transcript', 'Wait for transcription to complete first.');
@@ -103,18 +116,26 @@ export default function DreamDetailScreen() {
     }
     if (dream.isGeneratingVisual) return;
 
-    registerFeatureWithDailyFree('visualize_dream', async () => {
-      try {
+    const consented = await ensureConsent();
+    if (!consented) return;
+
+    void requestVisualizationWithGate({
+      isPro,
+      showPaywall,
+      startVisualization: async () => {
         await requestVisualization({ dreamId: dream._id });
-      } catch (e: any) {
-        const msg = e?.message?.includes('limit reached')
-          ? 'You\'ve used your free visualization for today. Upgrade to Pro for unlimited.'
-          : 'Failed to start visualization.';
+      },
+    }).catch((e: any) => {
+        const msg = e?.message?.includes('Monthly AI limit')
+          ? e.message
+          : e?.message?.includes('Pro subscription required')
+            ? 'This feature requires Droplett Pro.'
+            : 'Failed to start visualization.';
         Alert.alert('Error', msg);
-      }
     });
   };
 
+  const [imageModalVisible, setImageModalVisible] = useState(false);
   const interp = dream.interpretation;
   const title = dream.transcript
     ? dream.transcript.split(/\s+/).slice(0, 5).join(' ') + (dream.transcript.length > 30 ? '...' : '')
@@ -125,6 +146,7 @@ export default function DreamDetailScreen() {
 
   return (
     <ScreenContainer backgroundSource={require('../../assets/bg-settings.png')}>
+      {consentModal}
       {/* 1. Header */}
       <View style={styles.header}>
         <Pressable
@@ -133,9 +155,9 @@ export default function DreamDetailScreen() {
           style={styles.backButton}
         >
           <Ionicons name="arrow-back" size={24} color="#8B7355" />
-          <StardustText variant="bodySmall" color="#8B7355" style={styles.backLabel}>
+          <DroplettText variant="bodySmall" color="#8B7355" style={styles.backLabel}>
             BACK
-          </StardustText>
+          </DroplettText>
         </Pressable>
 
         <View style={styles.headerRight}>
@@ -145,11 +167,11 @@ export default function DreamDetailScreen() {
             <Ionicons
               name={dream.isFavorite ? 'heart' : 'heart-outline'}
               size={22}
-              color={dream.isFavorite ? STARDUST_THEME.gold.warm : STARDUST_THEME.gold.muted}
+              color={dream.isFavorite ? DROPLETT_THEME.gold.warm : DROPLETT_THEME.gold.muted}
             />
           </Pressable>
           <Pressable onPress={handleDelete} hitSlop={12}>
-            <Ionicons name="trash-outline" size={20} color={STARDUST_THEME.mood.scared} />
+            <Ionicons name="trash-outline" size={20} color={DROPLETT_THEME.mood.scared} />
           </Pressable>
         </View>
       </View>
@@ -157,9 +179,9 @@ export default function DreamDetailScreen() {
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
 
         {/* 2. Title & Tags */}
-        <StardustText variant="cardTitle" color="#1A1A1A" style={styles.dreamTitle}>
+        <DroplettText variant="cardTitle" color="#1A1A1A" style={styles.dreamTitle}>
           {title}
-        </StardustText>
+        </DroplettText>
 
         <View style={styles.moodRow}>
           {dream.tags.map((tag: string) => {
@@ -169,79 +191,79 @@ export default function DreamDetailScreen() {
                 {tagDef && (
                   <Image source={tagDef.image} style={{ width: 18, height: 18, marginRight: 4, borderRadius: 9, overflow: 'hidden' }} contentFit="contain" />
                 )}
-                <StardustText variant="bodySmall" color="#1A1A1A">
+                <DroplettText variant="bodySmall" color="#1A1A1A">
                   {tagDef?.label ?? tag}
-                </StardustText>
+                </DroplettText>
               </View>
             );
           })}
         </View>
 
         {/* 4. Transcript Card */}
-        <StardustCard style={styles.transcriptCard}>
+        <DroplettCard style={styles.transcriptCard}>
           {dream.isTranscribing ? (
             <View style={styles.loadingRow}>
-              <ActivityIndicator size="small" color={STARDUST_THEME.gold.muted} />
-              <StardustText variant="bodySmall" color={STARDUST_THEME.text.secondary} style={styles.loadingText}>
+              <ActivityIndicator size="small" color={DROPLETT_THEME.gold.muted} />
+              <DroplettText variant="bodySmall" color={DROPLETT_THEME.text.secondary} style={styles.loadingText}>
                 Transcribing dream...
-              </StardustText>
+              </DroplettText>
             </View>
           ) : (
-            <StardustText variant="body" color={STARDUST_THEME.text.primary} style={styles.transcriptText}>
+            <DroplettText variant="body" color={DROPLETT_THEME.text.primary} style={styles.transcriptText}>
               {dream.editedTranscript || dream.transcript || "No details recorded."}
-            </StardustText>
+            </DroplettText>
           )}
-        </StardustCard>
+        </DroplettCard>
 
         {/* 5. AI Section */}
         <View style={styles.aiButtons}>
           <Pressable onPress={handleInterpret} style={styles.outlineButton}>
-            <StardustText variant="button" color="#8B7355">{interpretLabel}</StardustText>
+            <DroplettText variant="button" color="#8B7355">{interpretLabel}</DroplettText>
           </Pressable>
 
           <Pressable onPress={handleVisualize} style={styles.outlineButton}>
-            <StardustText variant="button" color="#8B7355">{visualizeLabel}</StardustText>
+            <DroplettText variant="button" color="#8B7355">{visualizeLabel}</DroplettText>
           </Pressable>
         </View>
 
         {/* Free badge */}
-        {!isPro && hasFreeImageToday && !dream.sceneUrl && (
-          <StardustText variant="label" color={STARDUST_THEME.gold.bright} align="center" style={styles.freeBadge}>
-            1 FREE VISUALIZATION TODAY
-          </StardustText>
+        {!isPro && hasFreeImageToday && !interp && (
+          <DroplettText variant="label" color={DROPLETT_THEME.gold.bright} align="center" style={styles.freeBadge}>
+            1 FREE INTERPRETATION TODAY
+          </DroplettText>
         )}
 
         {/* 6. Interpretation Card */}
         {interp && !dream.isInterpreting && (
-          <StardustCard style={styles.interpCard}>
+          <DroplettCard style={styles.interpCard}>
             <View style={styles.interpHeader}>
-              <StardustText variant="cardTitle" color={STARDUST_THEME.gold.muted} style={styles.interpTitle}>
+              <DroplettText variant="cardTitle" color={DROPLETT_THEME.gold.muted} style={styles.interpTitle}>
                 Interpretation
-              </StardustText>
+              </DroplettText>
               <GoldDivider />
             </View>
 
             <View style={styles.interpSection}>
-              <StardustText variant="label" color={STARDUST_THEME.mood.bizarre} style={styles.interpLabel}>THEME</StardustText>
-              <StardustText variant="body" color={STARDUST_THEME.text.primary} style={styles.interpTheme}>
+              <DroplettText variant="label" color={DROPLETT_THEME.mood.bizarre} style={styles.interpLabel}>THEME</DroplettText>
+              <DroplettText variant="body" color={DROPLETT_THEME.text.primary} style={styles.interpTheme}>
                 {cleanText(interp.emotionalTheme)}
-              </StardustText>
+              </DroplettText>
             </View>
 
             <View style={styles.interpSection}>
-              <StardustText variant="label" color={STARDUST_THEME.mood.bizarre} style={styles.interpLabel}>ANALYSIS</StardustText>
-              <StardustText variant="body" color={STARDUST_THEME.text.primary}>
+              <DroplettText variant="label" color={DROPLETT_THEME.mood.bizarre} style={styles.interpLabel}>ANALYSIS</DroplettText>
+              <DroplettText variant="body" color={DROPLETT_THEME.text.primary}>
                 {cleanText(interp.fullAnalysis)}
-              </StardustText>
+              </DroplettText>
             </View>
 
             <View style={styles.insightBox}>
-              <Ionicons name="bulb-outline" size={16} color={STARDUST_THEME.gold.bright} />
-              <StardustText variant="bodySmall" color={STARDUST_THEME.text.primary} style={styles.insightText}>
+              <Ionicons name="bulb-outline" size={16} color={DROPLETT_THEME.gold.bright} />
+              <DroplettText variant="bodySmall" color={DROPLETT_THEME.text.primary} style={styles.insightText}>
                 {cleanText(interp.practicalInsight)}
-              </StardustText>
+              </DroplettText>
             </View>
-          </StardustCard>
+          </DroplettCard>
         )}
 
         {/* 7. Generated Image */}
@@ -252,22 +274,47 @@ export default function DreamDetailScreen() {
               isGenerating={dream.isGeneratingVisual}
               imageError={dream.imageError}
               onRetry={handleVisualize}
+              onPress={dream.sceneUrl ? () => setImageModalVisible(true) : handleVisualize}
             />
             {dream.sceneUrl && !dream.isGeneratingVisual && (
               <Pressable
                 onPress={() => router.push(`/gallery?highlight=${dream._id}`)}
                 style={styles.galleryLink}
               >
-                <StardustText variant="label" color={STARDUST_THEME.gold.warm}>
+                <DroplettText variant="label" color={DROPLETT_THEME.gold.warm}>
                   View in Gallery
-                </StardustText>
-                <Ionicons name="arrow-forward" size={14} color={STARDUST_THEME.gold.warm} />
+                </DroplettText>
+                <Ionicons name="arrow-forward" size={14} color={DROPLETT_THEME.gold.warm} />
               </Pressable>
             )}
           </View>
         )}
 
       </ScrollView>
+
+      {/* Fullscreen Image Modal */}
+      <Modal
+        visible={imageModalVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setImageModalVisible(false)}
+      >
+        <Pressable style={styles.modalBackdrop} onPress={() => setImageModalVisible(false)}>
+          <View style={styles.modalContent}>
+            {dream.sceneUrl && (
+              <Image
+                source={{ uri: dream.sceneUrl }}
+                style={styles.modalImage}
+                contentFit="contain"
+                transition={200}
+              />
+            )}
+            <Pressable style={styles.modalClose} onPress={() => setImageModalVisible(false)}>
+              <Ionicons name="close-circle" size={36} color="#fff" />
+            </Pressable>
+          </View>
+        </Pressable>
+      </Modal>
     </ScreenContainer>
   );
 }
@@ -315,7 +362,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingHorizontal: SPACING.screenPadding,
-    paddingBottom: 50,
+    paddingBottom: 150,
   },
   dreamTitle: {
     marginBottom: SPACING.md,
@@ -406,6 +453,27 @@ const styles = StyleSheet.create({
   },
   imageSection: {
     marginBottom: SPACING.xl,
+  },
+  modalBackdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.92)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    width: '100%',
+    height: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalImage: {
+    width: Dimensions.get('window').width,
+    height: Dimensions.get('window').width,
+  },
+  modalClose: {
+    position: 'absolute',
+    top: 60,
+    right: 20,
   },
   galleryLink: {
     flexDirection: 'row',

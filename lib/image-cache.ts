@@ -28,5 +28,5 @@ export async function preloadAllImages(): Promise<void> {
   const imageAssets = LOCAL_IMAGES.map((image) =>
     Asset.fromModule(image).downloadAsync()
   );
-  await Promise.all(imageAssets);
+  await Promise.allSettled(imageAssets);
 }

@@ -1,41 +1,44 @@
 {
   "expo": {
-    "name": "Stardust",
+    "name": "Droplett",
     "slug": "lucid",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
+    "icon": "./assets/droplet-icon.png",
     "userInterfaceStyle": "dark",
     "newArchEnabled": true,
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#0C0A14"
+      "backgroundColor": "#F0EBE0"
     },
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.stardust.app",
-      "buildNumber": "17",
+      "buildNumber": "33",
+      "entitlements": {
+        "com.apple.developer.applesignin": ["Default"],
+        "com.apple.developer.associated-domains": []
+      },
       "infoPlist": {
-        "UIBackgroundModes": [
-          "audio"
-        ],
+        "CFBundleDisplayName": "Droplett",
+        "NSMicrophoneUsageDescription": "Droplett needs microphone access so you can voice-record a dream journal entry. For example, tap the record button on the Record screen, speak your dream aloud, and Droplett will transcribe your spoken words into a private written journal entry. Audio is processed only while the app is open and is never shared with third parties.",
         "ITSAppUsesNonExemptEncryption": false
       }
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#0C0A14"
+        "foregroundImage": "./assets/droplet-icon.png",
+        "backgroundColor": "#F0EBE0"
       },
       "edgeToEdgeEnabled": true,
-      "versionCode": 17,
+      "versionCode": 33,
       "package": "com.stardust.app"
     },
     "web": {
       "favicon": "./assets/favicon.png"
     },
-    "scheme": "stardust",
+    "scheme": "droplett",
     "plugins": [
       "expo-router",
       [
@@ -56,12 +59,13 @@
       [
         "expo-notifications",
         {
-          "icon": "./assets/icon.png",
+          "icon": "./assets/droplet-icon.png",
           "color": "#C4A265"
         }
       ],
       "expo-secure-store",
-      "expo-web-browser"
+      "expo-web-browser",
+      "expo-apple-authentication"
     ],
     "extra": {
       "router": {},

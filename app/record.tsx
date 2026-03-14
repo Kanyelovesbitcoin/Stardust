@@ -22,22 +22,29 @@ import ScreenContainer from '../components/ui/ScreenContainer';
 import MoodSelector from '../components/journal/MoodSelector';
 import VoiceRecorder from '../components/journal/VoiceRecorder';
 import { DropletButton } from '../components/ui/DropletButton';
-import { StardustText } from '../components/ui/StardustText';
+import { DroplettText } from '../components/ui/DroplettText';
+import { usePaywall, PLACEMENTS } from '../lib/hooks/usePaywall';
 import { usePeriodicPaywall } from '../lib/hooks/usePeriodicPaywall';
-import { useReviewPrompt } from '../lib/hooks/useReviewPrompt';
+import { checkAndPromptReview } from '../lib/hooks/useReviewPrompt';
 import { onDreamSaved as notifyDreamSaved } from '../lib/notifications';
-import { STARDUST_THEME } from '../lib/theme';
+import { useAIConsent } from '../components/ui/AIConsentModal';
+import { useSupabaseAuth } from '../lib/useSupabaseAuth';
+
+import { DROPLETT_THEME } from '../lib/theme';
 import { COLORS, SPACING, TYPOGRAPHY, BORDER_RADIUS, DREAM_TYPES, DREAM_TAGS, DreamType, DreamTagKey } from '../lib/constants';
 
 type Mode = 'voice' | 'text';
 
 export default function RecordScreen() {
+  const { isAuthenticated: isSignedIn } = useSupabaseAuth();
+
   const createDream = useMutation(api.dreams.createDream);
   const generateUploadUrl = useMutation(api.dreams.generateUploadUrl);
   const { trackDreamSaved } = usePeriodicPaywall();
-  const { trackDreamForReview } = useReviewPrompt();
 
-  const [mode, setMode] = useState<Mode>('voice');
+  const { gateFeature, isPremium } = usePaywall();
+  const { ensureConsent, consentModal } = useAIConsent();
+  const [mode, setMode] = useState<Mode>(isPremium ? 'voice' : 'text');
   const [title, setTitle] = useState('');
   const [transcript, setTranscript] = useState('');
   const [mood, setMood] = useState<string | null>(null);
@@ -78,7 +85,7 @@ export default function RecordScreen() {
 
   const handleReRecord = () => {
     if (soundRef.current) {
-      soundRef.current.unloadAsync().catch(() => {});
+      soundRef.current.unloadAsync().catch(() => { });
       soundRef.current = null;
     }
     setRecordingUri(null);
@@ -134,6 +141,25 @@ export default function RecordScreen() {
       return;
     }
 
+    // Require sign-in to save
+    if (!isSignedIn) {
+      Alert.alert(
+        'Sign In Required',
+        'Sign in to save your dream. Your recording will be kept.',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          { text: 'Sign In', onPress: () => router.push('/sign-in') },
+        ]
+      );
+      return;
+    }
+
+    // Voice mode sends audio to Groq for transcription — require AI consent
+    if (mode === 'voice') {
+      const consented = await ensureConsent();
+      if (!consented) return;
+    }
+
     setSaving(true);
     try {
       if (mode === 'voice' && recordingUri) {
@@ -179,8 +205,8 @@ export default function RecordScreen() {
       // Track for periodic paywall
       await trackDreamSaved();
 
-      // Track for App Store review prompt (shows after 3rd dream)
-      await trackDreamForReview();
+      // Track for App Store review prompt (shows after 2nd dream)
+      await checkAndPromptReview();
 
       // Reset notification inactivity timer
       await notifyDreamSaved();
@@ -202,9 +228,11 @@ export default function RecordScreen() {
 
   return (
     <ScreenContainer backgroundSource={recordBg}>
+      {consentModal}
       <KeyboardAvoidingView
         style={styles.flex}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 100 : 0}
       >
         {/* Header */}
         <View style={styles.header}>
@@ -212,9 +240,9 @@ export default function RecordScreen() {
             onPress={() => router.back()}
             hitSlop={12}
           >
-            <StardustText variant="body" color={STARDUST_THEME.text.secondary}>Cancel</StardustText>
+            <DroplettText variant="body" color={DROPLETT_THEME.text.secondary}>Cancel</DroplettText>
           </Pressable>
-          <StardustText variant="cardTitle" color="#000000">New Dream</StardustText>
+          <DroplettText variant="cardTitle" color="#000000">New Dream</DroplettText>
           <DropletButton
             onPress={handleSave}
             title={saving ? 'Saving...' : 'Save'}
@@ -229,19 +257,22 @@ export default function RecordScreen() {
         <View style={styles.modeToggle}>
           <Pressable
             style={[styles.modeTab, mode === 'voice' && styles.modeTabActive]}
-            onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setMode('voice'); }}
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              gateFeature(PLACEMENTS.VOICE_RECORD, () => setMode('voice'));
+            }}
           >
             <Ionicons
               name="mic"
               size={18}
-              color={mode === 'voice' ? STARDUST_THEME.bg.primary : STARDUST_THEME.text.secondary}
+              color={mode === 'voice' ? DROPLETT_THEME.bg.primary : DROPLETT_THEME.text.secondary}
             />
-            <StardustText
+            <DroplettText
               variant="label"
-              color={mode === 'voice' ? STARDUST_THEME.bg.primary : STARDUST_THEME.text.secondary}
+              color={mode === 'voice' ? DROPLETT_THEME.bg.primary : DROPLETT_THEME.text.secondary}
             >
               Voice
-            </StardustText>
+            </DroplettText>
           </Pressable>
           <Pressable
             style={[styles.modeTab, mode === 'text' && styles.modeTabActive]}
@@ -250,14 +281,14 @@ export default function RecordScreen() {
             <Ionicons
               name="pencil"
               size={18}
-              color={mode === 'text' ? STARDUST_THEME.bg.primary : STARDUST_THEME.text.secondary}
+              color={mode === 'text' ? DROPLETT_THEME.bg.primary : DROPLETT_THEME.text.secondary}
             />
-            <StardustText
+            <DroplettText
               variant="label"
-              color={mode === 'text' ? STARDUST_THEME.bg.primary : STARDUST_THEME.text.secondary}
+              color={mode === 'text' ? DROPLETT_THEME.bg.primary : DROPLETT_THEME.text.secondary}
             >
               Type
-            </StardustText>
+            </DroplettText>
           </Pressable>
         </View>
 
@@ -298,22 +329,22 @@ export default function RecordScreen() {
                   <Ionicons
                     name={isPlaying ? 'pause' : 'play'}
                     size={28}
-                    color={STARDUST_THEME.gold.warm}
+                    color={DROPLETT_THEME.gold.warm}
                   />
                 </Pressable>
                 <View style={styles.previewInfo}>
-                  <StardustText variant="body" color={STARDUST_THEME.text.primary}>Dream Recording</StardustText>
-                  <StardustText variant="timestamp" color={STARDUST_THEME.text.secondary}>
+                  <DroplettText variant="body" color={DROPLETT_THEME.text.primary}>Dream Recording</DroplettText>
+                  <DroplettText variant="timestamp" color={DROPLETT_THEME.text.secondary}>
                     {formatDuration(recordingDuration)}
-                  </StardustText>
+                  </DroplettText>
                 </View>
               </View>
               <Pressable
                 style={styles.reRecordButton}
                 onPress={handleReRecord}
               >
-                <Ionicons name="refresh" size={16} color={STARDUST_THEME.mood.scared} />
-                <StardustText variant="label" color={STARDUST_THEME.mood.scared}>Re-record</StardustText>
+                <Ionicons name="refresh" size={16} color={DROPLETT_THEME.mood.scared} />
+                <DroplettText variant="label" color={DROPLETT_THEME.mood.scared}>Re-record</DroplettText>
               </Pressable>
             </View>
           )}
@@ -328,6 +359,7 @@ export default function RecordScreen() {
                 value={transcript}
                 onChangeText={setTranscript}
                 multiline
+                maxLength={5000}
                 textAlignVertical="top"
                 autoFocus
               />
@@ -412,21 +444,19 @@ const styles = StyleSheet.create({
     borderRadius: BORDER_RADIUS.sm,
   },
   modeTabActive: {
-    backgroundColor: STARDUST_THEME.gold.warm,
+    backgroundColor: DROPLETT_THEME.gold.warm,
   },
   scrollContent: {
     paddingHorizontal: SPACING.lg,
     paddingBottom: SPACING.xxl + 40,
   },
   titleInput: {
-    fontSize: 28,
-    fontWeight: '700',
-    fontStyle: 'italic',
+    fontSize: 22,
+    fontWeight: '600',
     color: '#1A1A1A',
-    marginBottom: SPACING.sm,
-    paddingVertical: 8,
-    borderBottomWidth: 1.5,
-    borderBottomColor: 'rgba(139, 115, 85, 0.2)',
+    marginBottom: SPACING.md,
+    paddingVertical: 10,
+    paddingHorizontal: 4,
   },
   previewCard: {
     backgroundColor: 'rgba(222, 210, 190, 0.5)',

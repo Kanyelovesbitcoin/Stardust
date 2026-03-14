@@ -1,23 +1,23 @@
 import React, { ReactNode } from 'react';
 import { Text, TextProps, StyleSheet } from 'react-native';
-import { STARDUST_THEME } from '../../lib/theme';
+import { DROPLETT_THEME } from '../../lib/theme';
 import { TYPE_SCALE } from '../../lib/typography';
 
-interface StardustTextProps extends TextProps {
+interface DroplettTextProps extends TextProps {
     children: ReactNode;
     variant?: keyof typeof TYPE_SCALE;
     color?: string;
     align?: 'auto' | 'left' | 'right' | 'center' | 'justify';
 }
 
-export function StardustText({
+export function DroplettText({
     children,
     variant = 'body',
-    color = STARDUST_THEME.text.primary,
+    color = DROPLETT_THEME.text.primary,
     align = 'left',
     style,
     ...props
-}: StardustTextProps) {
+}: DroplettTextProps) {
     return (
         <Text
             style={[

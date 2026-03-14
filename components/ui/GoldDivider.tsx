@@ -1,13 +1,13 @@
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { STARDUST_THEME } from '../../lib/theme';
+import { DROPLETT_THEME } from '../../lib/theme';
 import { SPACING } from '../../lib/layout';
 
 export function GoldDivider() {
     return (
         <LinearGradient
-            colors={['transparent', STARDUST_THEME.gold.muted, 'transparent']}
+            colors={['transparent', DROPLETT_THEME.gold.muted, 'transparent']}
             start={{ x: 0, y: 0.5 }}
             end={{ x: 1, y: 0.5 }}
             style={styles.divider}

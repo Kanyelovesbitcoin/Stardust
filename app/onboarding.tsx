@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Animated,
   Dimensions,
@@ -8,7 +8,6 @@ import {
   View,
 } from 'react-native';
 import { Image } from 'expo-image';
-import { Video, ResizeMode } from 'expo-av';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -16,13 +15,13 @@ import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 import { StatusBar } from 'expo-status-bar';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { StardustText } from '../components/ui/StardustText';
-import { usePaywall, PLACEMENTS } from '../lib/hooks/usePaywall';
+import { DroplettText } from '../components/ui/DroplettText';
+import { PLACEMENTS, usePaywall } from '../lib/hooks/usePaywall';
 import { SPACING, RADIUS } from '../lib/layout';
+import { ONBOARDED_KEY } from '../lib/launchRouting';
 
 const { width: SCREEN_W, height: SCREEN_H } = Dimensions.get('window');
 
-// ─── Droplet theme (onboarding-only) ─────────────────────
 const DROPLET = {
   navy: '#1B3A5C',
   blue: '#2E6B9E',
@@ -36,22 +35,17 @@ const DROPLET = {
 
 type IconName = React.ComponentProps<typeof Ionicons>['name'];
 
-const ONBOARDED_KEY = 'hasOnboarded';
 const TOTAL_SLIDES = 5;
-const TOTAL_STEPS = 8; // 5 value slides + 1 demo + 1 rating + 1 paywall trigger
+const TOTAL_STEPS = TOTAL_SLIDES + 1;
+const FINAL_STEP_INDEX = TOTAL_STEPS - 1;
 
-// Slide backgrounds — flower (index 3) and star (index 4) both use the
-// lighter parchment texture from slide 1 (onboarding-bg-1.png) instead
-// of their original dark/busy backgrounds.
 const SLIDE_BACKGROUNDS = [
-  require('../assets/onboarding-bg-1.png'), // wings  — original
-  require('../assets/onboarding-bg-2.png'), // cat    — original
-  require('../assets/onboarding-bg-3.png'), // jar    — original
-  require('../assets/onboarding-bg-1.png'), // flower — lighter parchment (was bg-4)
-  require('../assets/onboarding-bg-1.png'), // star   — lighter parchment (was bg-5)
+  require('../assets/onboarding-bg-1.png'),
+  require('../assets/onboarding-bg-2.png'),
+  require('../assets/onboarding-bg-3.png'),
+  require('../assets/onboarding-bg-1.png'),
+  require('../assets/onboarding-bg-1.png'),
 ];
-
-// ─── Slide data ──────────────────────────────────────────
 
 type SlideData = {
   id: string;
@@ -86,7 +80,7 @@ const SLIDES: SlideData[] = [
     heroImage: require('../assets/animal.png'),
     title: 'Let Your Dreams\nTake Flight',
     subtitle:
-      'Your subconscious is speaking. AI helps you understand what it\'s saying.',
+      "Your subconscious is speaking. AI helps you understand what it's saying.",
     highlights: [
       { icon: 'sparkles-outline', text: 'AI-powered dream interpretation' },
       { icon: 'eye-outline', text: 'Symbol and emotion analysis' },
@@ -100,7 +94,7 @@ const SLIDES: SlideData[] = [
     heroImage: require('../assets/evil-eye.png'),
     title: 'Crafted Like\na Dream',
     subtitle:
-      'Droplett isn\'t just a journal. It\'s a hand-painted world your dreams live inside.',
+      "Droplett isn't just a journal. It's a hand-painted world your dreams live inside.",
     highlights: [
       { icon: 'image-outline', text: 'Watercolor parchment textures' },
       { icon: 'brush-outline', text: 'Four ink styles: Nightmare, Lucid, Vivid, Ocean' },
@@ -137,7 +131,13 @@ const SLIDES: SlideData[] = [
   },
 ];
 
-// ─── Droplet particles (blue, onboarding-only) ──────────
+const FINAL_STEP = {
+  badge: 'DROPLETT PRO',
+  title: 'Continue\nto App',
+  subtitle:
+    'You will see the upgrade offer next. Close it anytime to keep using the free app and sign in.',
+  heroImage: require('../assets/star.png'),
+};
 
 const PARTICLE_COUNT = 18;
 
@@ -194,7 +194,7 @@ function DropletParticleDot({ particle }: { particle: Particle }) {
       floatLoop.stop();
       fadeIn.stop();
     };
-  }, []);
+  }, [fadeAnim, floatAnim, particle.delay, particle.duration, particle.opacity]);
 
   return (
     <Animated.View
@@ -219,28 +219,44 @@ function DropletParticleDot({ particle }: { particle: Particle }) {
 
 function DropletParticles() {
   const particles = useRef(createParticles()).current;
+
   return (
     <View style={StyleSheet.absoluteFill} pointerEvents="none">
-      {particles.map((p, i) => (
-        <DropletParticleDot key={i} particle={p} />
+      {particles.map((particle, index) => (
+        <DropletParticleDot key={index} particle={particle} />
       ))}
     </View>
   );
 }
 
-// ─── Droplet CTA button (onboarding-only) ────────────────
-
-function DropletButton({ onPress, children }: { onPress: () => void; children: string }) {
+function DropletButton({
+  onPress,
+  children,
+}: {
+  onPress: () => void;
+  children: string;
+}) {
   const scaleAnim = useRef(new Animated.Value(1)).current;
   const [isPressed, setIsPressed] = useState(false);
 
   const handlePressIn = () => {
     setIsPressed(true);
-    Animated.spring(scaleAnim, { toValue: 0.96, useNativeDriver: true, speed: 12, bounciness: 4 }).start();
+    Animated.spring(scaleAnim, {
+      toValue: 0.96,
+      useNativeDriver: true,
+      speed: 12,
+      bounciness: 4,
+    }).start();
   };
+
   const handlePressOut = () => {
     setIsPressed(false);
-    Animated.spring(scaleAnim, { toValue: 1, useNativeDriver: true, speed: 12, bounciness: 4 }).start();
+    Animated.spring(scaleAnim, {
+      toValue: 1,
+      useNativeDriver: true,
+      speed: 12,
+      bounciness: 4,
+    }).start();
   };
 
   return (
@@ -249,32 +265,26 @@ function DropletButton({ onPress, children }: { onPress: () => void; children: s
         onPress={onPress}
         onPressIn={handlePressIn}
         onPressOut={handlePressOut}
-        style={[
-          styles.ctaButton,
-          isPressed && styles.ctaButtonPressed,
-        ]}
+        style={[styles.ctaButton, isPressed && styles.ctaButtonPressed]}
       >
-        <StardustText variant="button" color="#FFFFFF" align="center">
+        <DroplettText variant="button" color="#FFFFFF" align="center">
           {children}
-        </StardustText>
+        </DroplettText>
       </Pressable>
     </Animated.View>
   );
 }
 
-// ─── Dot indicator ───────────────────────────────────────
-// Total visual steps: 5 slides + 1 demo + 1 rating = 7 dots
-
 function DotIndicator({ current, total }: { current: number; total: number }) {
   return (
     <View style={styles.dotRow}>
-      {Array.from({ length: total }).map((_, i) => (
+      {Array.from({ length: total }).map((_, index) => (
         <View
-          key={i}
+          key={index}
           style={[
             styles.dot,
-            i === current && styles.dotActive,
-            i < current && styles.dotComplete,
+            index === current && styles.dotActive,
+            index < current && styles.dotComplete,
           ]}
         />
       ))}
@@ -282,303 +292,67 @@ function DotIndicator({ current, total }: { current: number; total: number }) {
   );
 }
 
-// ─── Highlight row ───────────────────────────────────────
-
 function HighlightRow({ icon, text }: { icon: IconName; text: string }) {
   return (
     <View style={styles.highlightRow}>
       <View style={styles.highlightIconWrap}>
         <Ionicons name={icon} size={18} color={DROPLET.blue} />
       </View>
-      <StardustText variant="body" color={DROPLET.body} style={{ flex: 1, lineHeight: 22 }}>
+      <DroplettText variant="body" color={DROPLET.body} style={{ flex: 1, lineHeight: 22 }}>
         {text}
-      </StardustText>
+      </DroplettText>
     </View>
   );
 }
 
-// ─── Demo video slide (slide 6 of 7) ────────────────────
-
-function DemoSlide({ onContinue }: { onContinue: () => void }) {
-  const videoRef = useRef<Video>(null);
-  const fadeAnim = useRef(new Animated.Value(0)).current;
-  const hasAdvanced = useRef(false);
-  const insets = useSafeAreaInsets();
-
-  // Fill most of the screen between the header and footer CTA.
-  // 88% width lets a thin parchment border breathe on the sides.
-  // Height is constrained so the Continue button never gets pushed off-screen.
-  const PREVIEW_W = SCREEN_W * 0.88;
-  const FOOTER_H = 80 + insets.bottom;
-  const HEADER_H = 52 + insets.top;
-  const AVAILABLE_H = SCREEN_H - HEADER_H - FOOTER_H - SPACING.md * 2;
-  // Cap at available height so it always fits without scrolling
-  const PREVIEW_H = Math.min(PREVIEW_W * (16 / 9), AVAILABLE_H);
-
-  useEffect(() => {
-    Animated.timing(fadeAnim, { toValue: 1, duration: 400, useNativeDriver: true }).start();
-  }, []);
-
-  return (
-    <Animated.View style={[StyleSheet.absoluteFill, { opacity: fadeAnim }]}>
-      <StatusBar style="dark" />
-
-      {/* Onboarding parchment background — matches surrounding slides */}
-      <View style={[StyleSheet.absoluteFill, { backgroundColor: DROPLET.paper }]} />
-      <View style={[StyleSheet.absoluteFillObject, styles.waterStain1]} />
-      <View style={[StyleSheet.absoluteFillObject, styles.waterStain2]} />
-      <DropletParticles />
-
-      {/* Header dots — 8 total, demo is index 5 */}
-      <View style={[styles.header, { paddingTop: insets.top + SPACING.sm }]}>
-        <View style={styles.backButton} />
-        <DotIndicator current={5} total={TOTAL_STEPS} />
-        <View style={styles.backButton} />
-      </View>
-
-      {/* Full-height centred device-frame — video dominates the screen */}
-      <View style={styles.demoContent}>
-        {/* Device frame fills the available vertical space */}
-        <View style={[styles.deviceFrame, { width: PREVIEW_W, height: PREVIEW_H }]}>
-          <Video
-            ref={videoRef}
-            source={require('../assets/best-demo.mp4')}
-            style={{ width: PREVIEW_W, height: PREVIEW_H }}
-            resizeMode={ResizeMode.COVER}
-            shouldPlay
-            isLooping={false}
-            isMuted={false}
-            onPlaybackStatusUpdate={(status) => {
-              if (status.isLoaded && status.didJustFinish && !hasAdvanced.current) {
-                hasAdvanced.current = true;
-                onContinue();
-              }
-            }}
-          />
-        </View>
-      </View>
-
-      {/* Footer CTA — sits below the video */}
-      <LinearGradient
-        colors={['transparent', 'rgba(240, 238, 232, 0.85)', 'rgba(240, 238, 232, 0.95)']}
-        locations={[0, 0.25, 1]}
-        style={[styles.footer, { paddingBottom: insets.bottom + SPACING.md }]}
-      >
-        <DropletButton onPress={onContinue}>
-          Continue
-        </DropletButton>
-      </LinearGradient>
-    </Animated.View>
-  );
-}
-
-// ─── Rating slide (slide 7 of 7, standalone) ────────────
-
-function RatingSlide({ onRate, onSkip }: { onRate: (stars: number) => void; onSkip: () => void }) {
-  const fadeAnim = useRef(new Animated.Value(0)).current;
-  const insets = useSafeAreaInsets();
-
-  // Per-star scale animations for a staggered bounce on tap
-  const starScales = useRef([0, 1, 2, 3, 4].map(() => new Animated.Value(1))).current;
-  const [starsLit, setStarsLit] = useState(0);
-  // Guard against re-entrant taps (star + button, or rapid multi-star taps)
-  const ratingInProgress = useRef(false);
-
-  useEffect(() => {
-    Animated.timing(fadeAnim, { toValue: 1, duration: 400, useNativeDriver: true }).start();
-  }, []);
-
-  const handleStarPress = (index: number) => {
-    // Just select stars — don't auto-advance
-    setStarsLit(index + 1);
-
-    // Staggered bounce animation across stars 0..index only
-    const animations = [0, 1, 2, 3, 4]
-      .filter((i) => i <= index)
-      .map((i) =>
-        Animated.sequence([
-          Animated.delay(i * 60),
-          Animated.spring(starScales[i], {
-            toValue: 1.4,
-            speed: 20,
-            bounciness: 8,
-            useNativeDriver: true,
-          }),
-          Animated.spring(starScales[i], {
-            toValue: 1,
-            speed: 14,
-            bounciness: 4,
-            useNativeDriver: true,
-          }),
-        ])
-      );
-    Animated.parallel(animations).start();
-
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-  };
-
-  const handleRateAndContinue = async () => {
-    if (ratingInProgress.current) return;
-    ratingInProgress.current = true;
-
-    // Trigger native App Store review sheet
-    try {
-      const StoreReview = require('expo-store-review');
-      const isAvailable = await StoreReview.isAvailableAsync();
-      if (isAvailable) {
-        await StoreReview.requestReview();
-      }
-    } catch (_e) {
-      // Not available in Expo Go / TestFlight — silently ignore
-    }
-
-    // Advance to next slide with the selected star count
-    setTimeout(() => onRate(starsLit || 5), 600);
-  };
-
-  const handleNext = () => {
-    if (ratingInProgress.current) return;
-    ratingInProgress.current = true;
-    onRate(starsLit || 5);
-  };
-
-  return (
-    <Animated.View style={[StyleSheet.absoluteFill, { opacity: fadeAnim }]}>
-      <StatusBar style="dark" />
-
-      {/* Lighter parchment background — same as wings / slide 1 */}
-      <ImageBackground
-        source={require('../assets/onboarding-bg-1.png')}
-        style={StyleSheet.absoluteFill}
-        resizeMode="cover"
-      />
-      <View style={[StyleSheet.absoluteFillObject, styles.backgroundOverlay]} />
-      <View style={[StyleSheet.absoluteFillObject, styles.waterStain1]} />
-      <View style={[StyleSheet.absoluteFillObject, styles.waterStain2]} />
-      <DropletParticles />
-
-      {/* Header dots — rating is index 6 */}
-      <View style={[styles.header, { paddingTop: insets.top + SPACING.sm }]}>
-        <View style={styles.backButton} />
-        <DotIndicator current={6} total={TOTAL_STEPS} />
-        <View style={styles.backButton} />
-      </View>
-
-      {/* Content */}
-      <View style={styles.ratingContent}>
-        {/* Serif headline */}
-        <StardustText
-          variant="heroTitle"
-          align="center"
-          color={DROPLET.title}
-          style={styles.ratingHeadline}
-        >
-          Loving Droplett?
-        </StardustText>
-
-        {/* Subtitle */}
-        <StardustText
-          variant="body"
-          align="center"
-          color={DROPLET.muted}
-          style={styles.ratingSubtitle}
-        >
-          Your review helps other dreamers find us
-        </StardustText>
-
-        {/* Five tappable gold stars */}
-        <View style={styles.starsRow}>
-          {[0, 1, 2, 3, 4].map((i) => (
-            <Pressable
-              key={i}
-              onPress={() => handleStarPress(i)}
-              hitSlop={10}
-            >
-              <Animated.View style={{ transform: [{ scale: starScales[i] }] }}>
-                <Ionicons
-                  name={i < starsLit ? 'star' : 'star-outline'}
-                  size={44}
-                  color="#C4A140"
-                />
-              </Animated.View>
-            </Pressable>
-          ))}
-        </View>
-
-        {/* Rate on App Store */}
-        <View style={styles.ratingCta}>
-          <DropletButton onPress={handleRateAndContinue}>
-            Rate Droplett
-          </DropletButton>
-        </View>
-
-        {/* Big "Next" button — always visible, always advances */}
-        <View style={[styles.ratingCta, { marginBottom: 0 }]}>
-          <DropletButton onPress={handleNext}>
-            Next
-          </DropletButton>
-        </View>
-
-        {/* Soft "Maybe Later" escape hatch */}
-        <Pressable onPress={onSkip} hitSlop={12} style={styles.skipButton}>
-          <StardustText variant="bodySmall" color={DROPLET.muted} align="center">
-            Maybe Later
-          </StardustText>
-        </Pressable>
-      </View>
-    </Animated.View>
-  );
-}
-
-// ─── Main screen ─────────────────────────────────────────
-
 export default function OnboardingScreen() {
   const insets = useSafeAreaInsets();
-  const { showPaywall, isPremium } = usePaywall();
+  const [currentStep, setCurrentStep] = useState(0);
+  const [isPresentingPaywall, setIsPresentingPaywall] = useState(false);
+  const presentingPaywallRef = useRef(false);
+  const hasNavigatedRef = useRef(false);
 
-  const [currentSlide, setCurrentSlide] = useState(0);
-  const [showDemo, setShowDemo] = useState(false);
-  const [showRating, setShowRating] = useState(false);
-  const [showPaywallSlide, setShowPaywallSlide] = useState(false);
-  const [userRating, setUserRating] = useState<number | null>(null);
-  const [isHydrating, setIsHydrating] = useState(true);
+  const continueToSignIn = useCallback(() => {
+    if (hasNavigatedRef.current) {
+      return;
+    }
+
+    hasNavigatedRef.current = true;
+    try {
+      router.replace('/sign-in');
+    } catch (error) {
+      console.error('[Onboarding] Navigation failed, retrying:', error);
+      hasNavigatedRef.current = false;
+      // Retry once after a tick
+      setTimeout(() => {
+        if (!hasNavigatedRef.current) {
+          hasNavigatedRef.current = true;
+          router.replace('/sign-in');
+        }
+      }, 500);
+    }
+  }, []);
+
+  const paywallCallbacks = useMemo(
+    () => ({
+      onDismiss: continueToSignIn,
+      onPurchase: continueToSignIn,
+      onError: () => continueToSignIn(),
+    }),
+    [continueToSignIn]
+  );
+  const { showPaywall } = usePaywall(paywallCallbacks);
 
   const fadeAnim = useRef(new Animated.Value(1)).current;
   const slideAnim = useRef(new Animated.Value(0)).current;
   const heroScaleAnim = useRef(new Animated.Value(0.8)).current;
   const heroOpacityAnim = useRef(new Animated.Value(0)).current;
-  const paywallInFlight = useRef(false);
 
-  const slide = SLIDES[currentSlide];
-  const isLastSlide = currentSlide === TOTAL_SLIDES - 1;
-  const canGoBack = currentSlide > 0 || showDemo;
-
-  // ─── Hydrate ─────────────────────────────────────────
+  const slide = currentStep < TOTAL_SLIDES ? SLIDES[currentStep] : null;
+  const isPaywallStep = currentStep === FINAL_STEP_INDEX;
+  const canGoBack = currentStep > 0;
 
   useEffect(() => {
-    let mounted = true;
-    const hydrate = async () => {
-      try {
-        const completed = await AsyncStorage.getItem(ONBOARDED_KEY);
-        if (!mounted) return;
-        if (completed === 'true') {
-          router.replace('/');
-          return;
-        }
-      } catch (e) {
-        console.error('Hydration error:', e);
-      } finally {
-        if (mounted) setIsHydrating(false);
-      }
-    };
-    hydrate();
-    return () => { mounted = false; };
-  }, []);
-
-  // ─── Hero entrance animation ─────────────────────────
-
-  useEffect(() => {
-    if (showDemo || showRating) return;
     heroScaleAnim.setValue(0.8);
     heroOpacityAnim.setValue(0);
     Animated.parallel([
@@ -594,203 +368,125 @@ export default function OnboardingScreen() {
         useNativeDriver: true,
       }),
     ]).start();
-  }, [currentSlide, showDemo, showRating]);
+  }, [currentStep, heroOpacityAnim, heroScaleAnim]);
 
-  // ─── Navigation ──────────────────────────────────────
-
-  const animateToSlide = (next: number) => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+  const animateToStep = (next: number) => {
+    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     Animated.parallel([
       Animated.timing(fadeAnim, { toValue: 0, duration: 120, useNativeDriver: true }),
       Animated.timing(slideAnim, { toValue: -20, duration: 120, useNativeDriver: true }),
     ]).start(() => {
-      setCurrentSlide(Math.max(0, Math.min(next, TOTAL_SLIDES - 1)));
+      setCurrentStep(Math.max(0, Math.min(next, TOTAL_STEPS - 1)));
       slideAnim.setValue(20);
       Animated.parallel([
         Animated.timing(fadeAnim, { toValue: 1, duration: 200, useNativeDriver: true }),
-        Animated.spring(slideAnim, { toValue: 0, speed: 14, bounciness: 4, useNativeDriver: true }),
+        Animated.spring(slideAnim, {
+          toValue: 0,
+          speed: 14,
+          bounciness: 4,
+          useNativeDriver: true,
+        }),
       ]).start();
     });
   };
 
-  const handleContinue = () => {
-    if (isLastSlide) {
-      // After last value slide → show demo
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-      setShowDemo(true);
+  const handleContinue = async () => {
+    if (!isPaywallStep) {
+      animateToStep(currentStep + 1);
       return;
     }
-    animateToSlide(currentSlide + 1);
+
+    if (presentingPaywallRef.current) {
+      return;
+    }
+
+    presentingPaywallRef.current = true;
+    setIsPresentingPaywall(true);
+    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+
+    try {
+      await AsyncStorage.setItem(ONBOARDED_KEY, 'true');
+    } catch (error) {
+      console.error('Failed to complete onboarding:', error);
+    }
+
+    // Safety timeout — if paywall hangs for 10s, navigate anyway
+    const safetyTimer = setTimeout(() => {
+      console.warn('[Onboarding] Paywall timed out, continuing to sign-in');
+      continueToSignIn();
+    }, 10000);
+
+    try {
+      await showPaywall(PLACEMENTS.ONBOARDING_COMPLETE);
+    } catch (error) {
+      console.error('[Onboarding] Paywall error:', error);
+    } finally {
+      clearTimeout(safetyTimer);
+      presentingPaywallRef.current = false;
+      setIsPresentingPaywall(false);
+      continueToSignIn();
+    }
   };
 
   const handleBack = () => {
-    if (showDemo) {
-      setShowDemo(false);
+    if (!canGoBack || isPresentingPaywall) {
       return;
     }
-    if (!canGoBack) return;
-    animateToSlide(currentSlide - 1);
+
+    animateToStep(currentStep - 1);
   };
 
-  const completeOnboarding = async () => {
-    try {
-      await AsyncStorage.setItem(ONBOARDED_KEY, 'true');
-    } catch (e) {
-      console.error('Failed to complete onboarding:', e);
-    }
-    // Auth happens AFTER onboarding + paywall (high-conversion flow)
-    router.replace('/sign-in');
-  };
+  const currentBackground = SLIDE_BACKGROUNDS[Math.min(currentStep, SLIDE_BACKGROUNDS.length - 1)];
 
-  const handleUnlock = async (rating: number | null) => {
-    if (paywallInFlight.current) return;
-    paywallInFlight.current = true;
-    const placement = rating === 5 || rating === null
-      ? PLACEMENTS.FIVE_STAR_UPSELL
-      : PLACEMENTS.ONBOARDING_COMPLETE;
-    try {
-      await showPaywall(placement);
-    } catch (e) {
-      console.error('Paywall error:', e);
-    }
-    // Always complete onboarding after paywall dismisses/purchases
-    await completeOnboarding();
-  };
+  const renderContent = () => {
+    if (isPaywallStep) {
+      return (
+        <>
+          <Animated.View
+            style={[
+              styles.heroImageWrap,
+              {
+                transform: [{ scale: heroScaleAnim }],
+                opacity: heroOpacityAnim,
+              },
+            ]}
+          >
+            <Image source={FINAL_STEP.heroImage} style={styles.heroImage} contentFit="contain" />
+          </Animated.View>
 
-  // Demo video ends or user taps Continue → show rating slide
-  const handleDemoComplete = () => {
-    setShowDemo(false);
-    setShowRating(true);
-  };
+          <View style={styles.finalStepBadge}>
+            <DroplettText variant="label" color={DROPLET.navy} align="center">
+              {FINAL_STEP.badge}
+            </DroplettText>
+          </View>
 
-  // User rates (tapped stars) → go to paywall trigger slide
-  const handleRateComplete = (stars: number) => {
-    setUserRating(stars);
-    setShowRating(false);
-    setShowPaywallSlide(true);
-  };
-
-  // User taps "Maybe Later" → skip to paywall trigger slide (null = skipped)
-  const handleSkipRating = () => {
-    setUserRating(null);
-    setShowRating(false);
-    setShowPaywallSlide(true);
-  };
-
-  // Paywall trigger slide "Continue" → show paywall, then navigate home
-  const handlePaywallContinue = () => {
-    void handleUnlock(userRating);
-  };
-
-  // ─── Render ──────────────────────────────────────────
-
-  if (isHydrating) return null;
-
-  // Paywall trigger slide (step 8, index 7)
-  if (showPaywallSlide) {
-    return (
-      <View style={styles.container}>
-        <StatusBar style="dark" />
-        <ImageBackground
-          source={require('../assets/onboarding-bg-1.png')}
-          style={StyleSheet.absoluteFill}
-          resizeMode="cover"
-        />
-        <View style={styles.backgroundOverlay} />
-        <View style={[StyleSheet.absoluteFillObject, styles.waterStain1]} />
-        <View style={[StyleSheet.absoluteFillObject, styles.waterStain2]} />
-        <DropletParticles />
-
-        <View style={[styles.header, { paddingTop: insets.top + SPACING.sm }]}>
-          <View style={styles.backButton} />
-          <DotIndicator current={7} total={TOTAL_STEPS} />
-          <View style={styles.backButton} />
-        </View>
-
-        <View style={styles.ratingContent}>
-          <Image
-            source={require('../assets/star.png')}
-            style={{ width: 140, height: 140, marginBottom: SPACING.lg }}
-            contentFit="contain"
-          />
-          <StardustText
+          <DroplettText
             variant="heroTitle"
             align="center"
             color={DROPLET.title}
-            style={styles.ratingHeadline}
+            style={styles.title}
           >
-            Unlock Your{'\n'}Dream World
-          </StardustText>
-          <StardustText
+            {FINAL_STEP.title}
+          </DroplettText>
+
+          <DroplettText
             variant="body"
             align="center"
             color={DROPLET.muted}
-            style={styles.ratingSubtitle}
+            style={[styles.subtitle, styles.finalStepSubtitle]}
           >
-            Start your journey with unlimited interpretations, dream art, and more.
-          </StardustText>
-          <View style={styles.ratingCta}>
-            <DropletButton onPress={handlePaywallContinue}>
-              Continue
-            </DropletButton>
-          </View>
-        </View>
-      </View>
-    );
-  }
+            {FINAL_STEP.subtitle}
+          </DroplettText>
+        </>
+      );
+    }
 
-  // Rating slide (standalone, after demo)
-  if (showRating) {
+    if (!slide) {
+      return null;
+    }
+
     return (
-      <RatingSlide
-        onRate={handleRateComplete}
-        onSkip={handleSkipRating}
-      />
-    );
-  }
-
-  // Demo video overlay (shown after slide 5, before rating)
-  if (showDemo) {
-    return <DemoSlide onContinue={handleDemoComplete} />;
-  }
-
-  return (
-    <View style={styles.container}>
-      <StatusBar style="dark" />
-      <ImageBackground
-        source={SLIDE_BACKGROUNDS[currentSlide]}
-        style={StyleSheet.absoluteFill}
-        resizeMode="cover"
-      />
-      {/* Light overlay for text readability */}
-      <View style={styles.backgroundOverlay} />
-      {/* Blue water-stain radial gradients */}
-      <View style={styles.waterStain1} />
-      <View style={styles.waterStain2} />
-      <DropletParticles />
-
-      {/* Header */}
-      <View style={[styles.header, { paddingTop: insets.top + SPACING.sm }]}>
-        {canGoBack ? (
-          <Pressable onPress={handleBack} hitSlop={12} style={styles.backButton}>
-            <Ionicons name="arrow-back" size={20} color={DROPLET.mutedBlue} />
-          </Pressable>
-        ) : (
-          <View style={styles.backButton} />
-        )}
-        {/* 8 dots: 5 slides + 1 demo + 1 rating + 1 paywall */}
-        <DotIndicator current={currentSlide} total={TOTAL_STEPS} />
-        <View style={styles.backButton} />
-      </View>
-
-      {/* Slide content */}
-      <Animated.View
-        style={[
-          styles.slideContent,
-          { opacity: fadeAnim, transform: [{ translateY: slideAnim }] },
-        ]}
-      >
-        {/* Hero watercolor image — raw transparent PNG, no circle/container */}
+      <>
         <Animated.View
           style={[
             styles.heroImageWrap,
@@ -800,70 +496,95 @@ export default function OnboardingScreen() {
             },
           ]}
         >
-          <Image
-            source={slide.heroImage}
-            style={styles.heroImage}
-            contentFit="contain"
-          />
+          <Image source={slide.heroImage} style={styles.heroImage} contentFit="contain" />
         </Animated.View>
 
-        {/* Title */}
-        <StardustText
+        <DroplettText
           variant="heroTitle"
           align="center"
           color={DROPLET.title}
           style={styles.title}
         >
           {slide.title}
-        </StardustText>
+        </DroplettText>
 
-        {/* Subtitle */}
-        <StardustText
+        <DroplettText
           variant="body"
           align="center"
           color={DROPLET.muted}
           style={styles.subtitle}
         >
           {slide.subtitle}
-        </StardustText>
+        </DroplettText>
 
-        {/* Stat card (social proof slide) */}
         {slide.stat ? (
           <View style={styles.statCard}>
-            <StardustText variant="heroTitle" color={DROPLET.blue} style={styles.statValue}>
+            <DroplettText variant="heroTitle" color={DROPLET.blue} style={styles.statValue}>
               {slide.stat.value}
-            </StardustText>
-            <StardustText variant="bodySmall" color={DROPLET.muted} align="center">
+            </DroplettText>
+            <DroplettText variant="bodySmall" color={DROPLET.muted} align="center">
               {slide.stat.label}
-            </StardustText>
+            </DroplettText>
           </View>
         ) : null}
 
-        {/* Highlight list */}
         {slide.highlights ? (
           <View style={styles.highlightList}>
-            {slide.highlights.map((h) => (
-              <HighlightRow key={h.text} icon={h.icon} text={h.text} />
+            {slide.highlights.map((highlight) => (
+              <HighlightRow key={highlight.text} icon={highlight.icon} text={highlight.text} />
             ))}
           </View>
         ) : null}
+      </>
+    );
+  };
+
+  return (
+    <View style={styles.container}>
+      <StatusBar style="dark" />
+      <ImageBackground
+        source={currentBackground}
+        style={StyleSheet.absoluteFill}
+        resizeMode="cover"
+      />
+      <View pointerEvents="none" style={styles.backgroundOverlay} />
+      <View pointerEvents="none" style={styles.waterStain1} />
+      <View pointerEvents="none" style={styles.waterStain2} />
+      <DropletParticles />
+
+      <View style={[styles.header, { paddingTop: insets.top + SPACING.sm }]}>
+        {canGoBack ? (
+          <Pressable onPress={handleBack} hitSlop={12} style={styles.backButton}>
+            <Ionicons name="arrow-back" size={20} color={DROPLET.mutedBlue} />
+          </Pressable>
+        ) : (
+          <View style={styles.backButton} />
+        )}
+        <DotIndicator current={currentStep} total={TOTAL_STEPS} />
+        <View style={styles.backButton} />
+      </View>
+
+      <Animated.View
+        style={[
+          styles.slideContent,
+          { opacity: fadeAnim, transform: [{ translateY: slideAnim }] },
+        ]}
+      >
+        {renderContent()}
       </Animated.View>
 
-      {/* Footer */}
       <LinearGradient
         colors={['transparent', 'rgba(240, 238, 232, 0.85)', 'rgba(240, 238, 232, 0.95)']}
         locations={[0, 0.25, 1]}
         style={[styles.footer, { paddingBottom: insets.bottom + SPACING.md }]}
       >
         <DropletButton onPress={handleContinue}>
-          {currentSlide === 0 ? 'Get Started' : isLastSlide ? 'See It In Action' : 'Continue'}
+          {isPaywallStep ? 'Continue to App' : currentStep === 0 ? 'Get Started' : 'Continue'}
         </DropletButton>
       </LinearGradient>
     </View>
   );
 }
-
-// ─── Styles ──────────────────────────────────────────────
 
 const styles = StyleSheet.create({
   container: {
@@ -931,7 +652,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  // Hero image — raw transparent PNG, floats naturally, no clip/circle
   heroImageWrap: {
     width: 240,
     height: 240,
@@ -941,6 +661,15 @@ const styles = StyleSheet.create({
   heroImage: {
     width: '100%',
     height: '100%',
+  },
+  finalStepBadge: {
+    borderRadius: RADIUS.full,
+    borderWidth: 1,
+    borderColor: 'rgba(27, 58, 92, 0.22)',
+    backgroundColor: 'rgba(27, 58, 92, 0.08)',
+    paddingHorizontal: SPACING.lg,
+    paddingVertical: SPACING.xs,
+    marginBottom: SPACING.md,
   },
   title: {
     marginBottom: SPACING.sm,
@@ -952,6 +681,9 @@ const styles = StyleSheet.create({
     maxWidth: 340,
     lineHeight: 22,
     textAlign: 'center',
+  },
+  finalStepSubtitle: {
+    maxWidth: 320,
   },
   statCard: {
     width: '100%',
@@ -1011,58 +743,5 @@ const styles = StyleSheet.create({
     right: 0,
     paddingHorizontal: SPACING.screenPadding,
     paddingTop: SPACING.xl,
-  },
-  // Demo slide
-  demoContent: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: SPACING.screenPadding,
-  },
-  deviceFrame: {
-    borderRadius: 20,
-    overflow: 'hidden',
-    backgroundColor: '#000',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.35,
-    shadowRadius: 20,
-    elevation: 16,
-    borderWidth: 2,
-    borderColor: 'rgba(27, 58, 92, 0.15)',
-  },
-  // Rating slide
-  ratingContent: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: SPACING.screenPadding + 4,
-  },
-  ratingHeadline: {
-    fontSize: 34,
-    lineHeight: 42,
-    marginBottom: SPACING.sm,
-  },
-  ratingSubtitle: {
-    maxWidth: 280,
-    lineHeight: 22,
-    marginBottom: SPACING.xl + SPACING.sm,
-    textAlign: 'center',
-  },
-  starsRow: {
-    flexDirection: 'row',
-    gap: SPACING.md,
-    marginBottom: SPACING.xl + SPACING.sm,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  ratingCta: {
-    width: '100%',
-    maxWidth: 320,
-    marginBottom: SPACING.md,
-  },
-  skipButton: {
-    paddingVertical: SPACING.sm,
-    paddingHorizontal: SPACING.lg,
   },
 });

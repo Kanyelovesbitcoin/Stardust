@@ -1,124 +1,154 @@
-import React, { useCallback, useEffect } from 'react';
-import { View, StyleSheet, Pressable, Alert } from 'react-native';
+import React, { useCallback, useEffect, useState } from 'react';
+import {
+  View,
+  StyleSheet,
+  Pressable,
+  Alert,
+  ActivityIndicator,
+  TextInput,
+  KeyboardAvoidingView,
+  Platform,
+} from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import * as WebBrowser from 'expo-web-browser';
 import { router } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
+import { supabase } from '../lib/supabase';
 import ScreenContainer from '../components/ui/ScreenContainer';
-import { StardustText } from '../components/ui/StardustText';
-import { STARDUST_THEME } from '../lib/theme';
-import { SPACING } from '../lib/constants';
+import { DroplettText } from '../components/ui/DroplettText';
+import { SPACING } from '../lib/layout';
 
-WebBrowser.maybeCompleteAuthSession();
+const NAVY = '#1F4068';
+const TEAL = '#3A7D82';
+const SAGE = '#9BAF94';
 
-// Safely import Clerk hooks — they require ClerkProvider in the tree
-let useAuth: any = null;
-let useOAuth: any = null;
-try {
-  const clerk = require('@clerk/clerk-expo');
-  useAuth = clerk.useAuth;
-  useOAuth = clerk.useOAuth;
-} catch {}
-
-const clerkAvailable = !!process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY && !!useAuth;
-
-export default function SignInScreen() {
-  // If Clerk isn't configured, skip auth entirely
-  useEffect(() => {
-    if (!clerkAvailable) {
-      AsyncStorage.setItem('hasSignedIn', 'true').then(() => {
-        router.replace('/');
-      });
-    }
-  }, []);
-
-  if (!clerkAvailable) {
-    return null; // Brief flash while redirecting
-  }
-
-  return <ClerkSignIn />;
+function goHome() {
+  AsyncStorage.setItem('hasSignedIn', 'true').then(() => {
+    router.replace('/');
+  });
 }
 
-function ClerkSignIn() {
-  const { isSignedIn } = useAuth();
-  const { startOAuthFlow } = useOAuth({ strategy: 'oauth_google' });
+export default function SignInScreen() {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
+  // If already signed in, go straight to app
   useEffect(() => {
-    if (isSignedIn) {
-      AsyncStorage.setItem('hasSignedIn', 'true').then(() => {
-        router.replace('/');
-      });
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) goHome();
+    });
+  }, []);
+
+  // Sign in with email + password
+  const handlePasswordSignIn = useCallback(async () => {
+    if (isLoading) return;
+    if (!email.trim()) {
+      Alert.alert('Missing Email', 'Please enter your email address.');
+      return;
     }
-  }, [isSignedIn]);
-
-  const handleGoogleSignIn = useCallback(async () => {
+    if (!password.trim()) {
+      Alert.alert('Missing Password', 'Please enter your password.');
+      return;
+    }
+    setIsLoading(true);
     try {
-      const { createdSessionId, setActive } = await startOAuthFlow();
-
-      if (createdSessionId && setActive) {
-        await setActive({ session: createdSessionId });
-        await AsyncStorage.setItem('hasSignedIn', 'true');
-        router.replace('/');
+      const { error } = await supabase.auth.signInWithPassword({
+        email: email.trim(),
+        password: password.trim(),
+      });
+      if (error) {
+        Alert.alert('Sign In Failed', error.message);
+      } else {
+        goHome();
       }
     } catch (err: any) {
-      if (err?.errors?.[0]?.code === 'session_exists') {
-        await AsyncStorage.setItem('hasSignedIn', 'true');
-        router.replace('/');
-        return;
-      }
-      Alert.alert('Sign In Failed', 'Unable to sign in with Google. Please try again.');
+      Alert.alert('Error', err.message || 'Please try again.');
+    } finally {
+      setIsLoading(false);
     }
-  }, [startOAuthFlow]);
+  }, [email, password, isLoading]);
 
   return (
     <ScreenContainer backgroundSource={require('../assets/bg-settings.png')}>
-      <View style={styles.container}>
-        {/* Logo area */}
+      <KeyboardAvoidingView
+        style={styles.container}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      >
         <View style={styles.logoArea}>
           <Image
-            source={require('../assets/star.png')}
+            source={require('../assets/animal.png')}
             style={styles.logo}
             contentFit="contain"
           />
-          <StardustText variant="heroTitle" color={STARDUST_THEME.text.primary} align="center">
-            Stardust
-          </StardustText>
-          <StardustText
-            variant="body"
-            color={STARDUST_THEME.text.secondary}
-            align="center"
-            style={styles.subtitle}
-          >
-            Your dream journal awaits
-          </StardustText>
+          <DroplettText variant="heroTitle" color={NAVY} align="center">
+            Droplett
+          </DroplettText>
+          <DroplettText variant="body" color={TEAL} align="center" style={styles.subtitle}>
+            Enter your email to continue
+          </DroplettText>
         </View>
 
-        {/* Sign in buttons */}
-        <View style={styles.buttonArea}>
+        <View style={styles.formArea}>
+          <TextInput
+            style={styles.input}
+            placeholder="Email"
+            placeholderTextColor="#999"
+            value={email}
+            onChangeText={setEmail}
+            keyboardType="email-address"
+            autoCapitalize="none"
+            autoCorrect={false}
+            textContentType="emailAddress"
+          />
+
+          <TextInput
+            style={styles.input}
+            placeholder="Password"
+            placeholderTextColor="#999"
+            value={password}
+            onChangeText={setPassword}
+            secureTextEntry
+            autoCapitalize="none"
+            autoCorrect={false}
+            textContentType="password"
+          />
+
           <Pressable
             style={({ pressed }) => [
-              styles.googleButton,
+              styles.submitButton,
               pressed && styles.buttonPressed,
+              isLoading && { opacity: 0.5 },
             ]}
-            onPress={handleGoogleSignIn}
+            onPress={handlePasswordSignIn}
+            disabled={isLoading}
           >
-            <Ionicons name="logo-google" size={22} color="#000" />
-            <StardustText variant="body" color="#000" style={styles.buttonText}>
-              Continue with Google
-            </StardustText>
+            {isLoading ? (
+              <ActivityIndicator size="small" color="#FFF" />
+            ) : (
+              <DroplettText variant="body" color="#FFF" style={styles.buttonText}>
+                Sign In
+              </DroplettText>
+            )}
           </Pressable>
+
+          <Pressable style={styles.linkWrap} onPress={() => router.push('/forgot-password')}>
+            <DroplettText variant="timestamp" color={TEAL} align="center" style={styles.linkText}>
+              Forgot Password?
+            </DroplettText>
+          </Pressable>
+
+          <Pressable style={styles.linkWrap} onPress={() => router.replace('/sign-up')}>
+            <DroplettText variant="timestamp" color={TEAL} align="center" style={styles.linkText}>
+              Don't have an account? Sign Up
+            </DroplettText>
+          </Pressable>
+
         </View>
 
-        <StardustText
-          variant="timestamp"
-          color={STARDUST_THEME.text.tertiary}
-          align="center"
-          style={styles.footer}
-        >
+        <DroplettText variant="timestamp" color={SAGE} align="center" style={styles.footer}>
           By continuing, you agree to our Terms of Service and Privacy Policy
-        </StardustText>
-      </View>
+        </DroplettText>
+      </KeyboardAvoidingView>
     </ScreenContainer>
   );
 }
@@ -131,7 +161,7 @@ const styles = StyleSheet.create({
   },
   logoArea: {
     alignItems: 'center',
-    marginBottom: 60,
+    marginBottom: 32,
   },
   logo: {
     width: 120,
@@ -142,23 +172,28 @@ const styles = StyleSheet.create({
     marginTop: 8,
     opacity: 0.8,
   },
-  buttonArea: {
-    gap: 16,
-    marginBottom: 40,
+  formArea: {
+    gap: 12,
+    marginBottom: 16,
   },
-  googleButton: {
-    flexDirection: 'row',
+  input: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    fontSize: 16,
+    color: '#1a1a1a',
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
+  },
+  submitButton: {
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 12,
-    backgroundColor: '#FFFFFF',
-    paddingVertical: 16,
-    borderRadius: 14,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    backgroundColor: NAVY,
+    paddingVertical: 14,
+    borderRadius: 30,
+    marginTop: 4,
+    minHeight: 48,
   },
   buttonPressed: {
     opacity: 0.85,
@@ -166,7 +201,16 @@ const styles = StyleSheet.create({
   },
   buttonText: {
     fontWeight: '600',
-    fontSize: 17,
+    fontSize: 16,
+  },
+  linkWrap: {
+    marginTop: 4,
+    alignSelf: 'center',
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+  },
+  linkText: {
+    opacity: 0.92,
   },
   footer: {
     paddingHorizontal: 20,

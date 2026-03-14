@@ -8,14 +8,16 @@ export const transcribeAudio = internalAction({
   args: {
     dreamId: v.id("dreams"),
     audioStorageId: v.id("_storage"),
+    userId: v.string(),
   },
-  handler: async (ctx, { dreamId, audioStorageId }) => {
+  handler: async (ctx, { dreamId, audioStorageId, userId }) => {
     const apiKey = process.env.GROQ_API_KEY;
     if (!apiKey) {
       console.error("GROQ_API_KEY not set");
       await ctx.runMutation(internal.dreams.updateTranscript, {
         dreamId,
         transcript: "[Transcription failed: API key not configured]",
+        userId,
       });
       return;
     }
@@ -58,12 +60,14 @@ export const transcribeAudio = internalAction({
       await ctx.runMutation(internal.dreams.updateTranscript, {
         dreamId,
         transcript: result.text,
+        userId,
       });
     } catch (error) {
       console.error("Transcription failed:", error);
       await ctx.runMutation(internal.dreams.updateTranscript, {
         dreamId,
-        transcript: `[Transcription failed: ${error instanceof Error ? error.message : "Unknown error"}]`,
+        transcript: "[Transcription failed. Please try again.]",
+        userId,
       });
     }
   },

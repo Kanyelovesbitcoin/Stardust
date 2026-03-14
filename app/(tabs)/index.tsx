@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useCallback, useMemo } from 'react';
+import React, { useRef, useEffect, useCallback, useMemo, useState } from 'react';
 import {
   View,
   StyleSheet,
@@ -11,15 +11,15 @@ import { Image } from 'expo-image';
 import { router } from 'expo-router';
 import { useQuery } from 'convex/react';
 import { Ionicons } from '@expo/vector-icons';
-import { api } from '../convex/_generated/api';
-import BottomTabBar from '../components/ui/BottomTabBar';
-import { STARDUST_THEME } from '../lib/theme';
-import { RADIUS, SPACING } from '../lib/layout';
-import { StardustText } from '../components/ui/StardustText';
-import { StardustCard } from '../components/ui/StardustCard';
-import { MoodPill } from '../components/ui/MoodPill';
-import ScreenContainer from '../components/ui/ScreenContainer';
-import { DREAM_TYPES, DREAM_TAGS, DreamType, DreamTagKey } from '../lib/constants';
+import { api } from '../../convex/_generated/api';
+import { DROPLETT_THEME } from '../../lib/theme';
+import { RADIUS, SPACING } from '../../lib/layout';
+import { DroplettText } from '../../components/ui/DroplettText';
+import { DroplettCard } from '../../components/ui/DroplettCard';
+import { MoodPill } from '../../components/ui/MoodPill';
+import ScreenContainer from '../../components/ui/ScreenContainer';
+import { DREAM_TYPES, DREAM_TAGS, DreamType, DreamTagKey } from '../../lib/constants';
+import { useSupabaseAuth } from '../../lib/useSupabaseAuth';
 
 const { width } = Dimensions.get('window');
 
@@ -32,6 +32,7 @@ const getGreeting = () => {
 };
 
 export default function JournalHome() {
+  const { isAuthenticated: isSignedIn } = useSupabaseAuth();
   const dreams = useQuery(api.dreams.listDreams) ?? [];
   const greeting = getGreeting();
 
@@ -40,25 +41,6 @@ export default function JournalHome() {
   const pulseRef = useRef<Animated.CompositeAnimation | null>(null);
 
   useEffect(() => {
-    const checkFlow = async () => {
-      try {
-        const AsyncStorage = (await import('@react-native-async-storage/async-storage')).default;
-        const hasOnboarded = await AsyncStorage.getItem('hasOnboarded');
-        if (!hasOnboarded) {
-          // Step 1: Not onboarded yet → onboarding first (no auth wall)
-          router.replace('/onboarding');
-          return;
-        }
-        // Step 2: Onboarded but not signed in → sign-in
-        const hasSignedIn = await AsyncStorage.getItem('hasSignedIn');
-        if (!hasSignedIn) {
-          router.replace('/sign-in');
-          return;
-        }
-      } catch {}
-    };
-    checkFlow();
-
     const pulse = Animated.loop(
       Animated.sequence([
         Animated.timing(scaleAnim, { toValue: 1.05, duration: 2000, useNativeDriver: true }),
@@ -91,7 +73,6 @@ export default function JournalHome() {
   }, []);
 
   const renderDreamItem = useCallback(({ item }: { item: any }) => {
-    // Short title: use custom title field or first word of transcript
     const shortTitle = item.title
       || (item.transcript ? item.transcript.split(/\s+/)[0] : "Dream");
 
@@ -104,30 +85,25 @@ export default function JournalHome() {
         onPress={() => router.push(`/dream/${item._id}`)}
         style={styles.dreamCard}
       >
-        {/* Date */}
-        <StardustText variant="label" color="#8B7355" style={styles.dateText}>
+        <DroplettText variant="label" color="#8B7355" style={styles.dateText}>
           {new Date(item.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }).toUpperCase()}
-        </StardustText>
+        </DroplettText>
 
-        {/* Title row: short title + large stroke */}
         <View style={styles.titleRow}>
-          <StardustText variant="cardTitle" color="#000000" style={styles.titleText}>
+          <DroplettText variant="cardTitle" color="#000000" style={styles.titleText}>
             {shortTitle}
-          </StardustText>
+          </DroplettText>
           {strokeImage && (
             <Image source={strokeImage} style={styles.strokeImage} contentFit="contain" />
           )}
         </View>
 
-        {/* Body preview — single line */}
-        <StardustText variant="bodySmall" color="#1A1A1A" numberOfLines={2} style={styles.bodyText}>
+        <DroplettText variant="bodySmall" color="#1A1A1A" numberOfLines={2} style={styles.bodyText}>
           {bodyPreview}
-        </StardustText>
+        </DroplettText>
 
-        {/* Teal divider */}
         <View style={styles.tealDivider} />
 
-        {/* Tag icons row */}
         {item.tags && item.tags.length > 0 && (
           <View style={styles.tagRow}>
             {item.tags.slice(0, 5).map((tag: string, i: number) => {
@@ -136,16 +112,16 @@ export default function JournalHome() {
                 return (
                   <View key={i} style={styles.tagItem}>
                     <Image source={tagDef.image} style={styles.tagImage} contentFit="contain" />
-                    <StardustText variant="bodySmall" color="#1A1A1A" style={{ fontSize: 11 }}>
+                    <DroplettText variant="bodySmall" color="#1A1A1A" style={{ fontSize: 11 }}>
                       {tagDef.label}
-                    </StardustText>
+                    </DroplettText>
                   </View>
                 );
               }
               return (
-                <StardustText key={i} variant="bodySmall" color="#1A1A1A" style={{ fontSize: 13 }}>
+                <DroplettText key={i} variant="bodySmall" color="#1A1A1A" style={{ fontSize: 13 }}>
                   {tag}
-                </StardustText>
+                </DroplettText>
               );
             })}
           </View>
@@ -156,16 +132,16 @@ export default function JournalHome() {
 
   const renderSectionHeader = useCallback(({ section: { title } }: { section: { title: string } }) => (
     <View style={styles.stickyHeader}>
-      <StardustText variant="label" color="#8B7355">
+      <DroplettText variant="label" color="#8B7355">
         {title}
-      </StardustText>
+      </DroplettText>
     </View>
   ), []);
 
   const keyExtractor = useCallback((item: any) => item._id, []);
 
   return (
-    <ScreenContainer backgroundSource={require('../assets/bg-home.png')}>
+    <ScreenContainer backgroundSource={require('../../assets/bg-home.png')}>
       <SectionList
         sections={sections}
         keyExtractor={keyExtractor}
@@ -179,13 +155,19 @@ export default function JournalHome() {
         ListHeaderComponent={
           <View style={styles.header}>
             <View>
-              <StardustText variant="heroTitle" color="#1A1A1A" style={{ fontSize: 36, letterSpacing: 1, fontStyle: 'italic' }}>Droplett</StardustText>
-              <StardustText variant="body" color="#6B6358" style={{ letterSpacing: 0.5, marginTop: 2 }}>
+              <DroplettText variant="heroTitle" color="#1A1A1A" style={{ fontSize: 36, letterSpacing: 1, fontStyle: 'italic' }}>Droplett</DroplettText>
+              <DroplettText variant="body" color="#6B6358" style={{ letterSpacing: 0.5, marginTop: 2 }}>
                 {greeting}
-              </StardustText>
+              </DroplettText>
             </View>
             <View style={styles.headerRight}>
-              <StardustText variant="label" color="#C4A265" style={{ marginRight: 12 }}>PRO</StardustText>
+              {isSignedIn ? (
+                <DroplettText variant="label" color="#C4A265" style={{ marginRight: 12 }}>PRO</DroplettText>
+              ) : (
+                <Pressable onPress={() => router.push('/sign-in')} style={{ marginRight: 12 }}>
+                  <DroplettText variant="label" color="#C4A265">Sign In</DroplettText>
+                </Pressable>
+              )}
               <Pressable onPress={() => router.push('/settings')}>
                 <Ionicons name="settings-outline" size={24} color="#1A1A1A" />
               </Pressable>
@@ -195,12 +177,25 @@ export default function JournalHome() {
         ListEmptyComponent={
           <View style={styles.emptyRecent}>
             <Ionicons name="moon-outline" size={32} color="#C4A265" style={{ marginBottom: SPACING.md }} />
-            <StardustText variant="dreamTitle" color="#4A4A4A" align="center">
-              Your journal awaits its first story
-            </StardustText>
-            <StardustText variant="bodySmall" color="#6B6358" align="center" style={{ marginTop: SPACING.sm }}>
-              Tap the button to record your first dream
-            </StardustText>
+            {isSignedIn ? (
+              <>
+                <DroplettText variant="dreamTitle" color="#4A4A4A" align="center">
+                  Your journal awaits its first story
+                </DroplettText>
+                <DroplettText variant="bodySmall" color="#6B6358" align="center" style={{ marginTop: SPACING.sm }}>
+                  Tap the button to record your first dream
+                </DroplettText>
+              </>
+            ) : (
+              <>
+                <DroplettText variant="dreamTitle" color="#4A4A4A" align="center">
+                  Sign in to start your journal
+                </DroplettText>
+                <Pressable onPress={() => router.push('/sign-in')} style={{ marginTop: SPACING.md }}>
+                  <DroplettText variant="label" color="#C4A265">Sign In</DroplettText>
+                </Pressable>
+              </>
+            )}
           </View>
         }
       />
@@ -216,15 +211,13 @@ export default function JournalHome() {
           onPressOut={handleFabPressOut}
         >
           <Image
-            source={require('../assets/record-button.png')}
+            source={require('../../assets/record-button.png')}
             style={styles.fab}
             contentFit="contain"
             cachePolicy="memory"
           />
         </Pressable>
       </Animated.View>
-
-      <BottomTabBar activeTab="journal" />
     </ScreenContainer>
   );
 }
@@ -243,7 +236,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   listContent: {
-    paddingBottom: 160,
+    paddingBottom: 120,
   },
   stickyHeader: {
     paddingHorizontal: SPACING.screenPadding,
@@ -317,13 +310,13 @@ const styles = StyleSheet.create({
   },
   fabContainer: {
     position: 'absolute',
-    bottom: 120,
-    right: 24,
+    bottom: 180,
+    right: 20,
     zIndex: 100,
     elevation: 6,
   },
   fab: {
-    width: 96,
-    height: 96,
+    width: 100,
+    height: 100,
   },
 });

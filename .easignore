@@ -1,0 +1,40 @@
+# Dependencies (installed on EAS servers)
+node_modules/
+
+# Git
+.git/
+
+# Expo
+.expo/
+dist/
+web-build/
+
+# Claude / dev tooling
+.claude/
+
+# Native build folders (rebuilt by EAS)
+android/
+ios/
+
+# Debug / logs
+npm-debug.*
+yarn-debug.*
+yarn-error.*
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Environment
+.env
+.env.local
+
+# Tests
+test/
+__tests__/
+coverage/
+
+# Convex generated JS (not needed for build)
+convex/*.js
+!convex/_generated/

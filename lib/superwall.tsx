@@ -1,6 +1,9 @@
-import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
+import React, { createContext, useContext, useState, useCallback, useEffect, useRef } from 'react';
 import { Alert } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import type { Session } from '@supabase/supabase-js';
+import { useSupabaseAuth } from './useSupabaseAuth';
+import { isReviewerAccount } from './reviewerAccount';
 
 // ─── Safely detect if expo-superwall native module is available ───
 let superwallAvailable = false;
@@ -19,7 +22,7 @@ try {
 }
 
 // ─── Daily free image helpers ───────────────────────────
-const FREE_IMAGE_KEY = 'free_daily_image_date';
+const FREE_IMAGE_KEY = 'free_daily_interpret_date';
 
 /** Returns today as YYYY-MM-DD string */
 function todayKey(): string {
@@ -38,7 +41,7 @@ async function consumeFreeImage(): Promise<void> {
 }
 
 // ─── Types ──────────────────────────────────────────────
-interface StardustProContextValue {
+interface DroplettProContextValue {
   isPro: boolean;
   isLoading: boolean;
   /** Gate a feature behind the paywall. If Pro, runs immediately. Otherwise shows paywall. */
@@ -60,7 +63,7 @@ interface StardustProContextValue {
   restorePurchases: () => Promise<void>;
 }
 
-const StardustProContext = createContext<StardustProContextValue>({
+const DroplettProContext = createContext<DroplettProContextValue>({
   isPro: false,
   isLoading: false,
   registerFeature: () => { },
@@ -73,8 +76,14 @@ const StardustProContext = createContext<StardustProContextValue>({
 });
 
 // ─── Provider (Superwall SDK with dev fallback) ─────────
-export function StardustProProvider({ children }: { children: React.ReactNode }) {
-  if (superwallAvailable) {
+export function DroplettProProvider({
+  children,
+  forceFallback = false,
+}: {
+  children: React.ReactNode;
+  forceFallback?: boolean;
+}) {
+  if (superwallAvailable && !forceFallback) {
     return <SuperwallProProvider>{children}</SuperwallProProvider>;
   }
   return <DevFallbackProvider>{children}</DevFallbackProvider>;
@@ -104,11 +113,72 @@ function useFreeImageState(isPro: boolean) {
 // ─── Real Superwall Provider ────────────────────────────
 function SuperwallProProvider({ children }: { children: React.ReactNode }) {
   const { isLoading, isConfigured } = useSuperwall();
-  const { subscriptionStatus, update } = useUser();
+  const { subscriptionStatus, identify, signOut, update } = useUser();
+  const { session } = useSupabaseAuth();
   const { registerPlacement } = usePlacement();
+  const lastIdentifiedUserIdRef = useRef<string | null>(null);
 
-  const isPro = subscriptionStatus?.status === 'ACTIVE';
+  // Apple App Review access account
+  const isReviewerPro = isReviewerAccount(session?.user?.email);
+  const isPro = subscriptionStatus?.status === 'ACTIVE' || isReviewerPro;
   const { hasFreeImageToday, setHasFreeImageToday, refreshFreeImageStatus } = useFreeImageState(isPro);
+
+  const syncAuthenticatedUser = useCallback(
+    async (session: Session | null) => {
+      if (!isConfigured) {
+        return;
+      }
+
+      const userId = session?.user?.id ?? null;
+      if (!userId) {
+        lastIdentifiedUserIdRef.current = null;
+        try {
+          await signOut();
+        } catch (error) {
+          console.error('[Superwall] Failed to clear user identity:', error);
+        }
+        return;
+      }
+
+      try {
+        if (lastIdentifiedUserIdRef.current !== userId) {
+          await identify(userId);
+          lastIdentifiedUserIdRef.current = userId;
+        }
+
+        await update((oldAttributes: Record<string, any>) => ({
+          ...(oldAttributes ?? {}),
+          convexUserId: userId,
+          supabaseUserId: userId,
+          email: session?.user?.email ?? '',
+        }));
+      } catch (error) {
+        console.error('[Superwall] Failed to sync authenticated user:', error);
+      }
+    },
+    [identify, isConfigured, signOut, update]
+  );
+
+  useEffect(() => {
+    if (!isConfigured) {
+      return;
+    }
+
+    let cancelled = false;
+
+    const handleSession = async (currentSession: Session | null) => {
+      if (cancelled) {
+        return;
+      }
+      await syncAuthenticatedUser(currentSession);
+    };
+
+    void handleSession(session);
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isConfigured, session, syncAuthenticatedUser]);
 
   const registerFeature = useCallback(
     (placement: string, feature: () => void | Promise<void>) => {
@@ -154,8 +224,12 @@ function SuperwallProProvider({ children }: { children: React.ReactNode }) {
             unlocked = true;
           },
         });
-      } catch (error) {
-        console.error('[Superwall] Failed to show paywall:', error);
+      } catch (error: any) {
+        console.error('[Superwall] Failed to show paywall:', JSON.stringify(error, null, 2));
+        Alert.alert(
+          'Purchase Error',
+          error?.message || 'Something went wrong presenting the paywall. Please try again.'
+        );
       }
       return unlocked;
     },
@@ -187,7 +261,7 @@ function SuperwallProProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   return (
-    <StardustProContext.Provider
+    <DroplettProContext.Provider
       value={{
         isPro,
         isLoading: isLoading || !isConfigured,
@@ -201,15 +275,18 @@ function SuperwallProProvider({ children }: { children: React.ReactNode }) {
       }}
     >
       {children}
-    </StardustProContext.Provider>
+    </DroplettProContext.Provider>
   );
 }
 
 // ─── Dev Fallback Provider (Alert-based, no native module) ──
 function DevFallbackProvider({ children }: { children: React.ReactNode }) {
   const [devProOverride, setDevProOverride] = useState(false);
+  const { session } = useSupabaseAuth();
+  // Apple App Review access account
+  const isReviewerPro = isReviewerAccount(session?.user?.email);
 
-  const isPro = devProOverride;
+  const isPro = devProOverride || isReviewerPro;
   const { hasFreeImageToday, setHasFreeImageToday, refreshFreeImageStatus } = useFreeImageState(isPro);
 
   /** Show an Alert-based dev paywall. Returns a promise. */
@@ -299,7 +376,7 @@ function DevFallbackProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   return (
-    <StardustProContext.Provider
+    <DroplettProContext.Provider
       value={{
         isPro,
         isLoading: false,
@@ -313,11 +390,11 @@ function DevFallbackProvider({ children }: { children: React.ReactNode }) {
       }}
     >
       {children}
-    </StardustProContext.Provider>
+    </DroplettProContext.Provider>
   );
 }
 
 // ─── Hook ───────────────────────────────────────────────
-export function useStardustPro(): StardustProContextValue {
-  return useContext(StardustProContext);
+export function useDroplettPro(): DroplettProContextValue {
+  return useContext(DroplettProContext);
 }

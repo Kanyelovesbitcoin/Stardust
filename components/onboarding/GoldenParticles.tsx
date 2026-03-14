@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, memo } from 'react';
 import { View, StyleSheet, Animated, Dimensions } from 'react-native';
-import { STARDUST_THEME } from '../../lib/theme';
+import { DROPLETT_THEME } from '../../lib/theme';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 const PARTICLE_COUNT = 10;
@@ -72,7 +72,7 @@ const ParticleDot = memo(function ParticleDot({ particle }: { particle: Particle
           borderRadius: particle.size / 2,
           opacity: fadeAnim,
           transform: [{ translateY: floatAnim }],
-          backgroundColor: STARDUST_THEME.gold.warm,
+          backgroundColor: DROPLETT_THEME.gold.warm,
         },
       ]}
     />

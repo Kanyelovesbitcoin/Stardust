@@ -1,10 +1,10 @@
 import React, { useCallback, useRef } from 'react';
 import { Pressable, StyleSheet, Animated, ViewStyle } from 'react-native';
-import { STARDUST_THEME } from '../../lib/theme';
+import { DROPLETT_THEME } from '../../lib/theme';
 import { RADIUS, SPACING } from '../../lib/layout';
-import { StardustText } from './StardustText';
+import { DroplettText } from './DroplettText';
 
-interface StardustButtonProps {
+interface DroplettButtonProps {
     children: React.ReactNode;
     onPress: () => void;
     variant?: 'primary' | 'ghost';
@@ -12,13 +12,13 @@ interface StardustButtonProps {
     style?: import('react-native').StyleProp<ViewStyle>;
 }
 
-export const StardustButton = React.memo(function StardustButton({
+export const DroplettButton = React.memo(function DroplettButton({
     children,
     onPress,
     variant = 'primary',
     fullWidth = false,
     style
-}: StardustButtonProps) {
+}: DroplettButtonProps) {
     const scaleAnim = useRef(new Animated.Value(1)).current;
 
     const handlePressIn = useCallback(() => {
@@ -54,13 +54,13 @@ export const StardustButton = React.memo(function StardustButton({
                     style,
                 ]}
             >
-                <StardustText
+                <DroplettText
                     variant="button"
-                    color={isPrimary ? STARDUST_THEME.text.inverse : STARDUST_THEME.gold.warm}
+                    color={isPrimary ? DROPLETT_THEME.text.inverse : DROPLETT_THEME.gold.warm}
                     align="center"
                 >
                     {children}
-                </StardustText>
+                </DroplettText>
             </Pressable>
         </Animated.View>
     );
@@ -75,11 +75,11 @@ const styles = StyleSheet.create({
         paddingHorizontal: SPACING.xl,
     },
     primary: {
-        backgroundColor: STARDUST_THEME.gold.warm,
+        backgroundColor: DROPLETT_THEME.gold.warm,
     },
     ghost: {
         backgroundColor: 'transparent',
         borderWidth: 1,
-        borderColor: STARDUST_THEME.gold.muted,
+        borderColor: DROPLETT_THEME.gold.muted,
     },
 });

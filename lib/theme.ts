@@ -1,4 +1,4 @@
-export const STARDUST_THEME = {
+export const DROPLETT_THEME = {
   // Backgrounds — deep, warm blacks (NOT pure #000)
   bg: {
     primary: '#0A0A0F',      // Near-black with blue undertone
